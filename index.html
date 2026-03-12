@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velothrix aurantis — Evolution Simulation · Ian Handy</title>
+<link rel="stylesheet" href="../styles.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div class="vx-loader" id="loader">
+  <div>
+    <div class="vx-loader-title">Velothrix<br>aurantis</div>
+    <div class="vx-loader-sub" style="margin-top:.5rem">Evolution Simulation</div>
+  </div>
+  <div class="vx-loader-bar"><div class="vx-loader-fill" id="loader-fill"></div></div>
+  <div class="vx-loader-status" id="loader-status">Loading Python runtime…</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="../" class="nav-logo">Ian Handy</a>
+  <ul class="nav-links">
+    <li><a href="../#photography">Photography</a></li>
+    <li><a href="../#coding">Coding</a></li>
+    <li><a href="../#about">About</a></li>
+  </ul>
+</nav>
+
+<!-- PAGE HEADER -->
+<header class="vx-header" style="margin-top:60px">
+  <div>
+    <div class="vx-header-title">Velothrix <span>aurantis</span></div>
+    <div class="vx-header-sub">Amber Marsh Stalker · Multi-Equation Evolution Model · Python via Pyodide</div>
+  </div>
+  <div class="vx-tabs" id="tabs">
+    <button class="vx-tab active" data-tab="overview">Overview</button>
+    <button class="vx-tab" data-tab="selection">Selection</button>
+    <button class="vx-tab" data-tab="lifehistory">Life History</button>
+    <button class="vx-tab" data-tab="stats">Stats</button>
+  </div>
+</header>
+
+<!-- MOBILE TOGGLE -->
+<button class="vx-mobile-toggle" onclick="toggleSidebar()">⚙ Parameters</button>
+
+<div class="vx-app">
+
+  <!-- SIDEBAR -->
+  <aside class="vx-sidebar" id="sidebar">
+
+    <div class="vx-param-section">Population</div>
+
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Initial N</span><span id="v-N0">200</span></div>
+      <input type="range" class="vx-slider" id="N0" min="50" max="800" step="10" value="200">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Carrying Capacity K</span><span id="v-K">500</span></div>
+      <input type="range" class="vx-slider" id="K" min="100" max="2000" step="50" value="500">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Growth Rate r</span><span id="v-r">0.22</span></div>
+      <input type="range" class="vx-slider" id="r" min="0.05" max="0.5" step="0.01" value="0.22">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Generations</span><span id="v-gens">120</span></div>
+      <input type="range" class="vx-slider" id="gens" min="40" max="300" step="10" value="120">
+    </div>
+
+    <div class="vx-param-section">Selection</div>
+
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Crest Advantage s+</span><span id="v-s_bright">0.15</span></div>
+      <input type="range" class="vx-slider" id="s_bright" min="0" max="0.4" step="0.01" value="0.15">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Predation Cost s−</span><span id="v-s_pred">0.25</span></div>
+      <input type="range" class="vx-slider" id="s_pred" min="0" max="0.5" step="0.01" value="0.25">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Het Advantage w₁₂</span><span id="v-w12">1.05</span></div>
+      <input type="range" class="vx-slider" id="w12" min="0.9" max="1.3" step="0.01" value="1.05">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Predator Pressure</span><span id="v-pred_strength">0.40</span></div>
+      <input type="range" class="vx-slider" id="pred_strength" min="0.1" max="0.9" step="0.05" value="0.4">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Cycle Length (gens)</span><span id="v-cycle">20</span></div>
+      <input type="range" class="vx-slider" id="cycle" min="5" max="50" step="5" value="20">
+    </div>
+
+    <div class="vx-param-section">Genetics</div>
+
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Initial p(crest)</span><span id="v-p0">0.30</span></div>
+      <input type="range" class="vx-slider" id="p0" min="0.05" max="0.95" step="0.05" value="0.3">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Migrant p</span><span id="v-p_mig">0.70</span></div>
+      <input type="range" class="vx-slider" id="p_mig" min="0.1" max="0.95" step="0.05" value="0.7">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Migration Rate m</span><span id="v-mig_rate">0.030</span></div>
+      <input type="range" class="vx-slider" id="mig_rate" min="0" max="0.15" step="0.005" value="0.03">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Spine h²</span><span id="v-h2_spine">0.50</span></div>
+      <input type="range" class="vx-slider" id="h2_spine" min="0.1" max="0.9" step="0.05" value="0.5">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Spine Optimum θ</span><span id="v-theta_spine">9.0</span></div>
+      <input type="range" class="vx-slider" id="theta_spine" min="4" max="16" step="0.5" value="9">
+    </div>
+    <div class="vx-slider-row">
+      <div class="vx-slider-label"><span>Optimal Litter C*</span><span id="v-C_opt">5</span></div>
+      <input type="range" class="vx-slider" id="C_opt" min="2" max="10" step="1" value="5">
+    </div>
+
+    <button class="vx-run-btn" id="run-btn">▶ Run Simulation</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="vx-main">
+
+    <!-- KPI STRIP -->
+    <div class="vx-kpi-strip">
+      <div class="vx-kpi">
+        <div class="vx-kpi-label">Final p(crest)</div>
+        <div class="vx-kpi-val" id="kpi-p" style="color:var(--ember)">—</div>
+      </div>
+      <div class="vx-kpi">
+        <div class="vx-kpi-label">Mean Spines</div>
+        <div class="vx-kpi-val" id="kpi-spine" style="color:var(--straw)">—</div>
+      </div>
+      <div class="vx-kpi">
+        <div class="vx-kpi-label">Population N</div>
+        <div class="vx-kpi-val" id="kpi-N" style="color:var(--fog)">—</div>
+      </div>
+      <div class="vx-kpi">
+        <div class="vx-kpi-label">Mean Fitness w̄</div>
+        <div class="vx-kpi-val" id="kpi-wbar" style="color:var(--gold)">—</div>
+      </div>
+    </div>
+
+    <!-- ── OVERVIEW PANEL ── -->
+    <div id="panel-overview" class="vx-panel active">
+
+      <div class="vx-profile">
+        <div class="vx-profile-name"><em>Velothrix aurantis</em> — Amber Marsh Stalker</div>
+        <p class="vx-profile-desc">A slender, semi-aquatic ambush predator (~0.4 kg) inhabiting the brackish tidal marshes of Kel Nara. Males sport iridescent dorsal crests — brilliant in low-predator zones, muted near the deep channels where the Kelp Leviathan hunts by bioluminescent flicker. Lateral spines protect against gape-limited predators. Litter size is under Lack-type optimization. A coastal megapopulation continuously seeds inland marsh isolates via tidal corridor migration.</p>
+        <div class="vx-trait-chips">
+          <div class="vx-chip"><strong>Crest C</strong> — sexual selection vs. predation</div>
+          <div class="vx-chip"><strong>Spine Count</strong> — Gaussian stabilizing selection</div>
+          <div class="vx-chip"><strong>Litter Size</strong> — Lack optimum</div>
+          <div class="vx-chip"><strong>Body Size</strong> — h²=0.55 + drift</div>
+        </div>
+      </div>
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">Crest Color Allele Frequency p</span>
+          <span class="vx-chart-sub">HWE + dominance selection + drift + migration · red bands = predator active</span>
+        </div>
+        <div class="vx-chart-body">
+          <canvas class="vx-canvas" id="chart-p" height="180"></canvas>
+        </div>
+      </div>
+
+      <div class="vx-two-col">
+        <div class="vx-chart-panel">
+          <div class="vx-chart-header">
+            <span class="vx-chart-title">Mean Fitness w̄</span>
+            <span class="vx-chart-sub">p²w₁₁ + 2pqw₁₂ + q²w₂₂</span>
+          </div>
+          <div class="vx-chart-body">
+            <canvas class="vx-canvas" id="chart-wbar" height="150"></canvas>
+          </div>
+        </div>
+        <div class="vx-chart-panel">
+          <div class="vx-chart-header">
+            <span class="vx-chart-title">Population Size N</span>
+            <span class="vx-chart-sub">Logistic · predator penalises r</span>
+          </div>
+          <div class="vx-chart-body">
+            <canvas class="vx-canvas" id="chart-N" height="150"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── SELECTION PANEL ── -->
+    <div id="panel-selection" class="vx-panel">
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">HWE Genotype Frequencies</span>
+          <span class="vx-chart-sub">AA (bright) · Aa (het) · aa (dull) — stacked proportions</span>
+        </div>
+        <div class="vx-chart-body">
+          <canvas class="vx-canvas" id="chart-hwe" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="vx-two-col">
+        <div class="vx-chart-panel">
+          <div class="vx-chart-header">
+            <span class="vx-chart-title">Drift Variance σ²</span>
+            <span class="vx-chart-sub">σ² = p(1−p)/2N</span>
+          </div>
+          <div class="vx-chart-body">
+            <canvas class="vx-canvas" id="chart-drift" height="160"></canvas>
+          </div>
+        </div>
+        <div class="vx-chart-panel">
+          <div class="vx-chart-header">
+            <span class="vx-chart-title">Kimura P(fixation)</span>
+            <span class="vx-chart-sub">(1−e⁻²ˢ)/(1−e⁻⁴ᴺˢ)</span>
+          </div>
+          <div class="vx-chart-body">
+            <canvas class="vx-canvas" id="chart-pfix" height="160"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">Spine Count — Stabilizing Selection</span>
+          <span class="vx-chart-sub">Breeder's R=h²S · W(z)=exp(−(z−θ)²/2ω²) · additive variance V_A</span>
+        </div>
+        <div class="vx-chart-body">
+          <canvas class="vx-canvas" id="chart-spine" height="180"></canvas>
+        </div>
+      </div>
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">Body Size (kg) — Heritable Continuous Trait</span>
+          <span class="vx-chart-sub">h²=0.55 · stabilizing selection · drift ∝ 1/√N</span>
+        </div>
+        <div class="vx-chart-body">
+          <canvas class="vx-canvas" id="chart-body" height="150"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── LIFE HISTORY PANEL ── -->
+    <div id="panel-lifehistory" class="vx-panel">
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">Litter Size — Lack Optimum</span>
+          <span class="vx-chart-sub">W(C) = C · exp(−k(C−C*)²) · optimum shifts with predation &amp; food</span>
+        </div>
+        <div class="vx-chart-body">
+          <canvas class="vx-canvas" id="chart-litter" height="180"></canvas>
+        </div>
+      </div>
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">Euler-Lotka Intrinsic Rate r</span>
+          <span class="vx-chart-sub">Σ e^(−rx)·l(x)·m(x) = 1 · solved per generation via Newton's method</span>
+        </div>
+        <div class="vx-chart-body">
+          <canvas class="vx-canvas" id="chart-euler" height="180"></canvas>
+        </div>
+      </div>
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">Food Availability &amp; Predator Phase</span>
+          <span class="vx-chart-sub">Sinusoidal food cycle · predator phase modulates survival and Lack optimum</span>
+        </div>
+        <div class="vx-chart-body">
+          <canvas class="vx-canvas" id="chart-env" height="140"></canvas>
+        </div>
+      </div>
+
+      <div class="vx-chart-panel" style="border-left:3px solid var(--ember)">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">Life History Equations</span>
+        </div>
+        <div class="vx-chart-body">
+          <div class="vx-eq-grid">
+            <div class="vx-eq-item"><div class="vx-eq-name">Lack Optimum</div><div class="vx-eq-formula">W(C) = C · exp(−k(C−C*)²)</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Euler-Lotka</div><div class="vx-eq-formula">Σ e^(−rx)·l(x)·m(x) = 1</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Net Reprod. Rate</div><div class="vx-eq-formula">R₀ = Σ l(x)·m(x)</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Logistic Growth</div><div class="vx-eq-formula">dN/dt = rN(1 − N/K)</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── STATS PANEL ── -->
+    <div id="panel-stats" class="vx-panel">
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">Summary Statistics</span>
+        </div>
+        <div class="vx-chart-body">
+          <div class="vx-stats-grid" id="stats-table"></div>
+        </div>
+      </div>
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">p(crest) vs. Mean Fitness w̄</span>
+          <span class="vx-chart-sub">Each point = one generation</span>
+        </div>
+        <div class="vx-chart-body">
+          <canvas class="vx-canvas" id="chart-scatter" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="vx-chart-panel">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">All Traits — Normalised (0–1)</span>
+          <span class="vx-chart-sub">Scaled to individual ranges for cross-trait phase comparison</span>
+        </div>
+        <div class="vx-chart-body">
+          <canvas class="vx-canvas" id="chart-norm" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="vx-chart-panel" style="border-left:3px solid var(--ember)">
+        <div class="vx-chart-header">
+          <span class="vx-chart-title">All Active Equations</span>
+        </div>
+        <div class="vx-chart-body">
+          <div class="vx-eq-grid">
+            <div class="vx-eq-item"><div class="vx-eq-name">HWE</div><div class="vx-eq-formula">p² + 2pq + q² = 1</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Selection (dominance)</div><div class="vx-eq-formula">Δp = pq[p(w₁₁−w₁₂)+q(w₁₂−w₂₂)] / w̄</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Mean Fitness</div><div class="vx-eq-formula">w̄ = p²w₁₁ + 2pqw₁₂ + q²w₂₂</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Drift Variance</div><div class="vx-eq-formula">σ² = p(1−p) / 2N</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Gene Flow</div><div class="vx-eq-formula">Δp = m(p_m − p)</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Breeder's Equation</div><div class="vx-eq-formula">R = h²S</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Stabilizing Selection</div><div class="vx-eq-formula">W(z) = exp(−(z−θ)²/2ω²)</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Lack Litter Optimum</div><div class="vx-eq-formula">W(C) = C·exp(−k(C−C*)²)</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Euler-Lotka r</div><div class="vx-eq-formula">Σ e^(−rx)·l(x)·m(x) = 1</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Logistic Growth</div><div class="vx-eq-formula">dN/dt = rN(1−N/K)</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Kimura P(fix)</div><div class="vx-eq-formula">P=(1−e⁻²ˢ)/(1−e⁻⁴ᴺˢ)</div></div>
+            <div class="vx-eq-item"><div class="vx-eq-name">Mutation-Sel. Balance</div><div class="vx-eq-formula">q̂ ≈ √(μ/s)</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Ian Handy · <a href="../">ianhandy.com</a></p>
+  <p>Simulation runs entirely in your browser via <a href="https://pyodide.org" target="_blank">Pyodide</a> (CPython + WebAssembly). No server.</p>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────
+//  CHART PALETTE — maps to ianhandy.com tokens
+// ─────────────────────────────────────────────────────────
+const C = {
+  ember:     '#c4581f',
+  gold:      '#d4942a',
+  straw:     '#e8c96a',
+  fog:       '#c8b89a',
+  parchment: '#f2e8d0',
+  umber:     '#3d2410',
+  soil:      '#2c1a0e',
+  bark:      '#1a1008',
+  rust:      '#8b3a1a',
+  // data colours that complement the palette
+  teal:      '#5aaf98',   // muted teal — visible on dark bark
+  violet:    '#9a6abf',   // muted violet
+  blue:      '#5a88b8',   // muted blue
+  grid:      '#2a1a0c',
+  text:      '#7a6050',
+  white:     '#f2e8d0',
+};
+
+// ─────────────────────────────────────────────────────────
+//  PYTHON SIMULATION
+// ─────────────────────────────────────────────────────────
+const PYTHON_SIM = `
+import random
+import math
+import json
+
+def clamp(v, lo, hi):
+    return max(lo, min(hi, v))
+
+def randn():
+    u, v = 0.0, 0.0
+    while u == 0: u = random.random()
+    while v == 0: v = random.random()
+    return math.sqrt(-2.0 * math.log(u)) * math.cos(2.0 * math.pi * v)
+
+def binomial_sample(n, p):
+    if n <= 0: return 0
+    mean = n * p
+    std = math.sqrt(n * p * (1 - p))
+    sample = round(mean + std * randn())
+    return int(clamp(sample, 0, n))
+
+def update_allele_freq(p, s_bright, s_pred, predator, N, mu, mig_rate, p_mig, w12_het):
+    w11 = 1.0 - s_pred if predator else 1.0 + s_bright
+    w12 = w12_het
+    w22 = 1.0 + 0.3 if predator else 1.0 - s_bright * 0.4
+    q = 1.0 - p
+    wbar = p*p*w11 + 2*p*q*w12 + q*q*w22
+    if wbar < 1e-10: wbar = 1e-10
+    dp = (p * q * (p * (w11 - w12) + q * (w12 - w22))) / wbar
+    p_new = p + dp
+    p_new = p_new * (1 - mu) + (1 - p_new) * mu * 0.01
+    p_new = p_new + mig_rate * (p_mig - p_new)
+    succ = binomial_sample(2 * N, clamp(p_new, 0.001, 0.999))
+    return clamp(succ / (2 * N), 0.001, 0.999)
+
+def update_spine(mean, va, N, h2, omega2, theta):
+    Vp = va / h2
+    S = -va * (mean - theta) / (Vp + omega2)
+    R = h2 * S
+    new_va = clamp(va + 0.05 - va*va/(va + omega2 + Vp), 0.1, 8.0)
+    drift = math.sqrt(max(0, va) / N) * randn() * 0.8
+    return clamp(mean + R + drift, 1.0, 20.0), new_va
+
+def lack_litter(C_opt, predator, food):
+    shift = -1.2 if predator else 0.0
+    food_shift = (food - 0.5) * 2.0
+    return max(1, round(C_opt + shift + food_shift + randn() * 0.5))
+
+def litter_fitness(C, C_opt, k=0.15):
+    return C * math.exp(-k * (C - C_opt)**2)
+
+def update_body(mean, h2, theta, Va, N, omega):
+    S = -h2 * Va * (mean - theta) / (Va / h2 + omega)
+    R = h2 * S
+    drift = math.sqrt(Va / N) * randn() * 0.6
+    return clamp(mean + R + drift, 0.15, 0.8)
+
+def update_pop(N, r, K, predator):
+    eff_r = r * 0.6 if predator else r
+    dN = eff_r * N * (1 - N / K)
+    return max(20, round(N + dN + math.sqrt(N) * randn() * 2))
+
+def euler_lotka_r(l1, l2, m1, m2):
+    r = 0.1
+    for _ in range(60):
+        f = math.exp(-r)*l1*m1 + math.exp(-2*r)*l2*m2 - 1
+        df = -math.exp(-r)*l1*m1 - 2*math.exp(-2*r)*l2*m2
+        if abs(df) < 1e-12: break
+        r -= f / df
+    return clamp(r, -0.5, 1.0)
+
+def p_fix(s, N):
+    if abs(s) < 1e-7: return 1.0 / (2 * N)
+    num = 1 - math.exp(-2 * s)
+    den = 1 - math.exp(-4 * N * s)
+    if abs(den) < 1e-12: return 1.0 / (2 * N)
+    return clamp(num / den, 0.0, 1.0)
+
+def run_simulation(cfg_json):
+    if isinstance(cfg_json, str):
+        cfg = json.loads(cfg_json)
+    else:
+        cfg = dict(cfg_json)
+    gens      = int(cfg['gens'])
+    N         = int(cfg['N0'])
+    K         = float(cfg['K'])
+    r         = float(cfg['r'])
+    pred_str  = float(cfg['pred_strength'])
+    mig_rate  = float(cfg['mig_rate'])
+    p         = float(cfg['p0'])
+    s_bright  = float(cfg['s_bright'])
+    s_pred    = float(cfg['s_pred'])
+    w12       = float(cfg['w12'])
+    mu        = float(cfg['mu'])
+    h2_spine  = float(cfg['h2_spine'])
+    theta_s   = float(cfg['theta_spine'])
+    C_opt     = float(cfg['C_opt'])
+    food_base = float(cfg['food_base'])
+    p_mig     = float(cfg['p_mig'])
+    cycle     = int(cfg['cycle'])
+
+    spine_mean = theta_s + 2.0
+    spine_va   = 2.0
+    body_size  = 0.43
+    history    = []
+
+    for g in range(gens):
+        phase    = (g % cycle) / cycle
+        predator = phase < pred_str
+        food     = food_base + 0.2 * math.sin(2 * math.pi * phase)
+
+        p = update_allele_freq(p, s_bright, s_pred, predator, N, mu, mig_rate, p_mig, w12)
+        spine_mean, spine_va = update_spine(spine_mean, spine_va, N, h2_spine, 3.0, theta_s)
+        body_size = update_body(body_size, 0.55, 0.38, 0.008, N, 0.02)
+
+        litter  = lack_litter(C_opt, predator, food)
+        W_lit   = litter_fitness(litter, C_opt - 1 if predator else C_opt)
+        N = update_pop(N, r, K, predator)
+
+        l1 = 0.45 if predator else 0.70
+        l2 = 0.25 if predator else 0.50
+        r_el = euler_lotka_r(l1, l2, litter * 0.4, litter * 0.6)
+
+        q = 1.0 - p
+        w11 = 1.0 - s_pred if predator else 1.0 + s_bright
+        w22 = 1.0 + 0.3 if predator else 1.0 - s_bright * 0.4
+        wbar = p*p*w11 + 2*p*q*w12 + q*q*w22
+        s_net = -s_pred if predator else s_bright
+
+        history.append({
+            'g': g, 'p': round(p,5), 'q': round(1-p,5),
+            'spine': round(spine_mean,3), 'spine_va': round(spine_va,4),
+            'body': round(body_size,4), 'litter': litter,
+            'W_lit': round(W_lit,4), 'N': N,
+            'wbar': round(wbar,5), 'r_el': round(r_el,5),
+            'predator': predator,
+            'drift_var': round(p*q/(2*N),6),
+            'p_fix': round(p_fix(s_net, N),6),
+            'food': round(food,4),
+            'AA': round(p*p,5), 'Aa': round(2*p*q,5), 'aa': round(q*q,5),
+        })
+    return json.dumps(history)
+
+def compute_stats(history):
+    n = len(history)
+    if n == 0: return '[]'
+    def mean(key): return sum(d[key] for d in history) / n
+    def std(key):
+        m = mean(key)
+        return math.sqrt(sum((d[key]-m)**2 for d in history) / n)
+    def corr(k1, k2):
+        m1, m2 = mean(k1), mean(k2)
+        num = sum((d[k1]-m1)*(d[k2]-m2) for d in history)
+        d1 = math.sqrt(sum((d[k1]-m1)**2 for d in history))
+        d2 = math.sqrt(sum((d[k2]-m2)**2 for d in history))
+        return 0 if d1*d2 < 1e-12 else num/(d1*d2)
+    return json.dumps([
+        {'label': 'Crest Allele p — Mean',    'value': f'{mean("p"):.4f}',  'unit': ''},
+        {'label': 'Crest Allele p — Std Dev', 'value': f'{std("p"):.4f}',   'unit': ''},
+        {'label': f'Final p (gen {n-1})',      'value': f'{history[-1]["p"]:.4f}', 'unit': ''},
+        {'label': 'Spine Count — Mean',        'value': f'{mean("spine"):.2f}', 'unit': 'spines'},
+        {'label': 'Spine Count — Std Dev',     'value': f'{std("spine"):.2f}',  'unit': 'spines'},
+        {'label': 'Body Size — Mean',          'value': f'{mean("body"):.3f}',  'unit': 'kg'},
+        {'label': 'Litter Size — Mean',        'value': f'{mean("litter"):.2f}','unit': 'pups'},
+        {'label': 'Mean Fitness w̄ — Avg',     'value': f'{mean("wbar"):.4f}',  'unit': ''},
+        {'label': 'Population N — Mean',       'value': str(round(mean("N"))),   'unit': 'indiv.'},
+        {'label': 'Corr(p_crest, wBar)',       'value': f'{corr("p","wbar"):.4f}',    'unit': ''},
+        {'label': 'Corr(spineCount, wBar)',    'value': f'{corr("spine","wbar"):.4f}', 'unit': ''},
+        {'label': 'Corr(litterSize, wBar)',    'value': f'{corr("litter","wbar"):.4f}','unit': ''},
+    ])
+`;
+
+// ─────────────────────────────────────────────────────────
+//  CANVAS CHART ENGINE
+// ─────────────────────────────────────────────────────────
+function dpr() { return window.devicePixelRatio || 1; }
+
+function initCanvas(id) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return null;
+  const w = canvas.parentElement.clientWidth || 600;
+  const h = parseInt(canvas.getAttribute('height')) || 180;
+  const r = dpr();
+  canvas.width  = w * r;
+  canvas.height = h * r;
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(r, r);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+const PAD = { l: 44, r: 14, t: 12, b: 28 };
+function plotArea(w, h) {
+  return {
+    x0: PAD.l, y0: PAD.t,
+    x1: w - PAD.r, y1: h - PAD.b,
+    pw: w - PAD.l - PAD.r,
+    ph: h - PAD.t - PAD.b,
+  };
+}
+function toX(a, v, lo, hi) { return a.x0 + ((v - lo) / (hi - lo)) * a.pw; }
+function toY(a, v, lo, hi) { return a.y1 - ((v - lo) / (hi - lo)) * a.ph; }
+
+function drawGrid(ctx, a, xMin, xMax, yMin, yMax) {
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  const xT = 6, yT = 4;
+  for (let i = 0; i <= xT; i++) {
+    const x = a.x0 + (i / xT) * a.pw;
+    ctx.beginPath(); ctx.moveTo(x, a.y0); ctx.lineTo(x, a.y1); ctx.stroke();
+    ctx.fillStyle = C.text; ctx.font = '9px IBM Plex Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(Math.round(xMin + (i / xT) * (xMax - xMin)), x, a.y1 + 14);
+  }
+  for (let i = 0; i <= yT; i++) {
+    const y = a.y1 - (i / yT) * a.ph;
+    ctx.beginPath(); ctx.moveTo(a.x0, y); ctx.lineTo(a.x1, y); ctx.stroke();
+    const v = yMin + (i / yT) * (yMax - yMin);
+    const label = Math.abs(v) < 0.01 ? v.toFixed(4) : (Math.abs(v) > 100 ? Math.round(v) : v.toFixed(2));
+    ctx.fillStyle = C.text; ctx.textAlign = 'right';
+    ctx.fillText(label, a.x0 - 4, y + 3);
+  }
+}
+
+function drawLineChart(id, data, series, opts = {}) {
+  const cc = initCanvas(id); if (!cc || !data.length) return;
+  const { ctx, w, h } = cc;
+  const a = plotArea(w, h);
+  const xMin = data[0].g, xMax = data[data.length-1].g;
+  let yMin = Infinity, yMax = -Infinity;
+  series.forEach(s => data.forEach(d => {
+    const v = d[s.key]; if (isFinite(v)) { yMin = Math.min(yMin,v); yMax = Math.max(yMax,v); }
+  }));
+  if (opts.yMin !== undefined) yMin = opts.yMin;
+  if (opts.yMax !== undefined) yMax = opts.yMax;
+  const pad = (yMax - yMin) * 0.08 || 0.05; yMin -= pad; yMax += pad;
+
+  if (opts.showPredator) {
+    data.forEach((d, i) => {
+      if (!d.predator) return;
+      const x0 = toX(a, d.g, xMin, xMax);
+      const x1 = i+1 < data.length ? toX(a, data[i+1].g, xMin, xMax) : x0+2;
+      ctx.fillStyle = 'rgba(139,58,26,0.18)';
+      ctx.fillRect(x0, a.y0, x1 - x0, a.ph);
+    });
+  }
+  drawGrid(ctx, a, xMin, xMax, yMin, yMax);
+
+  series.filter(s => s.fill).forEach(s => {
+    ctx.beginPath();
+    ctx.moveTo(toX(a, data[0].g, xMin, xMax), a.y1);
+    data.forEach(d => ctx.lineTo(toX(a, d.g, xMin, xMax), toY(a, d[s.key], yMin, yMax)));
+    ctx.lineTo(toX(a, data[data.length-1].g, xMin, xMax), a.y1);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, a.y0, 0, a.y1);
+    grad.addColorStop(0, s.fill + '44'); grad.addColorStop(1, s.fill + '06');
+    ctx.fillStyle = grad; ctx.fill();
+  });
+
+  series.forEach(s => {
+    ctx.beginPath(); ctx.strokeStyle = s.color; ctx.lineWidth = s.lw || 1.5;
+    ctx.setLineDash(s.dash || []);
+    data.forEach((d, i) => {
+      const x = toX(a, d.g, xMin, xMax), y = toY(a, d[s.key], yMin, yMax);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+
+  let lx = a.x0 + 4;
+  series.forEach(s => {
+    ctx.fillStyle = s.color; ctx.fillRect(lx, a.y0+2, 14, 2);
+    ctx.font = '9px IBM Plex Mono, monospace';
+    ctx.fillStyle = C.white; ctx.textAlign = 'left';
+    ctx.fillText(s.label||s.key, lx+18, a.y0+8);
+    lx += ctx.measureText(s.label||s.key).width + 36;
+  });
+}
+
+function drawStackedArea(id, data, series) {
+  const cc = initCanvas(id); if (!cc || !data.length) return;
+  const { ctx, w, h } = cc;
+  const a = plotArea(w, h);
+  const xMin = data[0].g, xMax = data[data.length-1].g;
+  drawGrid(ctx, a, xMin, xMax, 0, 1);
+  series.forEach((s, si) => {
+    ctx.beginPath();
+    data.forEach((d, i) => {
+      let top = 0; for (let j=si; j>=0; j--) top += d[series[j].key];
+      const x = toX(a, d.g, xMin, xMax);
+      if (i===0) ctx.moveTo(x, toY(a, top, 0, 1)); else ctx.lineTo(x, toY(a, top, 0, 1));
+    });
+    for (let i=data.length-1; i>=0; i--) {
+      let bot = 0; for (let j=si-1; j>=0; j--) bot += data[i][series[j].key];
+      ctx.lineTo(toX(a, data[i].g, xMin, xMax), toY(a, bot, 0, 1));
+    }
+    ctx.closePath();
+    ctx.fillStyle = s.color + 'bb'; ctx.fill();
+    ctx.strokeStyle = s.color; ctx.lineWidth = 0.5; ctx.stroke();
+  });
+  let lx = a.x0 + 4;
+  series.forEach(s => {
+    ctx.fillStyle = s.color; ctx.fillRect(lx, a.y0+2, 12, 8);
+    ctx.font = '9px IBM Plex Mono, monospace'; ctx.fillStyle = C.white; ctx.textAlign = 'left';
+    ctx.fillText(s.label, lx+16, a.y0+9);
+    lx += ctx.measureText(s.label).width + 32;
+  });
+}
+
+function drawScatter(id, data, xKey, yKey, color) {
+  const cc = initCanvas(id); if (!cc || !data.length) return;
+  const { ctx, w, h } = cc;
+  const a = plotArea(w, h);
+  const xs = data.map(d=>d[xKey]), ys = data.map(d=>d[yKey]);
+  const xMin=Math.min(...xs), xMax=Math.max(...xs);
+  const yMin=Math.min(...ys), yMax=Math.max(...ys);
+  const xp=(xMax-xMin)*.05, yp=(yMax-yMin)*.05;
+  drawGrid(ctx, a, xMin, xMax, yMin-yp, yMax+yp);
+  ctx.fillStyle = color + '88';
+  data.forEach(d => {
+    ctx.beginPath();
+    ctx.arc(toX(a,d[xKey],xMin,xMax), toY(a,d[yKey],yMin-yp,yMax+yp), 2.5, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.font = '9px IBM Plex Mono, monospace';
+  ctx.fillStyle = C.text; ctx.textAlign = 'center';
+  ctx.fillText(xKey, a.x0 + a.pw/2, h - 4);
+}
+
+function drawNormalized(id, data, seriesDef) {
+  const cc = initCanvas(id); if (!cc || !data.length) return;
+  const { ctx, w, h } = cc;
+  const a = plotArea(w, h);
+  drawGrid(ctx, a, data[0].g, data[data.length-1].g, 0, 1);
+  seriesDef.forEach(s => {
+    const vals = data.map(d=>d[s.key]);
+    const mn=Math.min(...vals), mx=Math.max(...vals), range=mx-mn||1e-6;
+    ctx.beginPath(); ctx.strokeStyle=s.color; ctx.lineWidth=1.5; ctx.setLineDash([]);
+    data.forEach((d,i) => {
+      const x=toX(a,d.g,data[0].g,data[data.length-1].g);
+      const y=toY(a,(d[s.key]-mn)/range,0,1);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  });
+  let lx = a.x0 + 4;
+  seriesDef.forEach(s => {
+    ctx.fillStyle=s.color; ctx.fillRect(lx, a.y0+2, 14, 2);
+    ctx.font='9px IBM Plex Mono, monospace'; ctx.fillStyle=C.white; ctx.textAlign='left';
+    ctx.fillText(s.label, lx+18, a.y0+8);
+    lx += ctx.measureText(s.label).width + 36;
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────────────────
+let simData = [];
+
+function renderCharts() {
+  if (!simData.length) return;
+  const d = simData;
+  const last = d[d.length-1];
+
+  document.getElementById('kpi-p').textContent     = last.p.toFixed(3);
+  document.getElementById('kpi-spine').textContent = last.spine.toFixed(1);
+  document.getElementById('kpi-N').textContent     = last.N;
+  document.getElementById('kpi-wbar').textContent  = last.wbar.toFixed(3);
+
+  drawLineChart('chart-p', d, [
+    { key:'p', color:C.ember, lw:2, label:'p(bright)', fill:C.ember },
+    { key:'q', color:C.umber, lw:1, label:'q(dull)', dash:[4,3] },
+  ], { yMin:0, yMax:1, showPredator:true });
+
+  drawLineChart('chart-wbar', d, [{ key:'wbar', color:C.gold, lw:1.5, label:'w̄', fill:C.gold }]);
+  drawLineChart('chart-N',    d, [{ key:'N',    color:C.fog,  lw:1.5, label:'N',  fill:C.fog  }]);
+
+  drawStackedArea('chart-hwe', d, [
+    { key:'AA', color:C.ember, label:'AA(bright)' },
+    { key:'Aa', color:C.teal,  label:'Aa(het)'    },
+    { key:'aa', color:C.rust,  label:'aa(dull)'   },
+  ]);
+  drawLineChart('chart-drift', d, [{ key:'drift_var', color:C.violet, lw:1.5, label:'σ²' }]);
+  drawLineChart('chart-pfix',  d, [{ key:'p_fix',     color:C.ember,  lw:1.5, label:'P(fix)' }]);
+  drawLineChart('chart-spine', d, [
+    { key:'spine',    color:C.straw, lw:2,   label:'Mean Spines' },
+    { key:'spine_va', color:C.fog,   lw:1,   label:'V_A', dash:[3,3] },
+  ]);
+  drawLineChart('chart-body', d, [{ key:'body', color:C.violet, lw:1.5, label:'Body (kg)' }]);
+
+  drawLineChart('chart-litter', d, [
+    { key:'litter', color:C.gold, lw:2,   label:'Litter Size' },
+    { key:'W_lit',  color:C.teal, lw:1,   label:'W(litter)', dash:[3,3] },
+  ]);
+  drawLineChart('chart-euler', d, [{ key:'r_el', color:C.blue, lw:1.5, label:'r (Euler-Lotka)', fill:C.blue }]);
+
+  const envData = d.map(x => ({ ...x, pred_phase: x.predator ? 1 : 0 }));
+  drawLineChart('chart-env', envData, [
+    { key:'food',       color:C.gold, lw:1.5, label:'Food' },
+    { key:'pred_phase', color:C.rust, lw:1.5, label:'Predator Active' },
+  ]);
+
+  drawScatter('chart-scatter', d, 'p', 'wbar', C.ember);
+  drawNormalized('chart-norm', d, [
+    { key:'p',     color:C.ember,  label:'p(crest)' },
+    { key:'spine', color:C.straw,  label:'spines'   },
+    { key:'body',  color:C.violet, label:'body size' },
+    { key:'wbar',  color:C.gold,   label:'w̄'        },
+  ]);
+}
+
+function renderStats(stats) {
+  document.getElementById('stats-table').innerHTML = stats.map(s => `
+    <div class="vx-stat-row">
+      <span class="vx-stat-label">${s.label}</span>
+      <span class="vx-stat-val">${s.value}<span class="vx-stat-unit">${s.unit}</span></span>
+    </div>
+  `).join('');
+}
+
+// ─────────────────────────────────────────────────────────
+//  PYODIDE
+// ─────────────────────────────────────────────────────────
+let pyodide = null, pyReady = false;
+
+async function initPyodide() {
+  const fill   = document.getElementById('loader-fill');
+  const status = document.getElementById('loader-status');
+  status.textContent = 'Loading Python runtime — this takes ~10 s on first visit…';
+  fill.style.width = '20%';
+  pyodide = await loadPyodide();
+  fill.style.width = '70%';
+  status.textContent = 'Compiling simulation…';
+  await pyodide.runPythonAsync(PYTHON_SIM);
+  fill.style.width = '90%';
+  pyReady = true;
+  await runSim();
+  fill.style.width = '100%';
+  document.getElementById('loader').style.display = 'none';
+}
+
+function getConfig() {
+  const g = id => parseFloat(document.getElementById(id).value);
+  return {
+    gens: g('gens'), N0: g('N0'), K: g('K'), r: g('r'),
+    pred_strength: g('pred_strength'), mig_rate: g('mig_rate'),
+    p0: g('p0'), s_bright: g('s_bright'), s_pred: g('s_pred'),
+    w12: g('w12'), mu: 0.001,
+    h2_spine: g('h2_spine'), theta_spine: g('theta_spine'),
+    C_opt: g('C_opt'), food_base: 0.6, p_mig: g('p_mig'),
+    cycle: g('cycle'),
+  };
+}
+
+async function runSim() {
+  if (!pyReady) return;
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true; btn.textContent = 'Running…';
+  try {
+    const cfg = getConfig();
+    const histJson = await pyodide.runPythonAsync(
+      `run_simulation('${JSON.stringify(cfg).replace(/'/g,"\\'")}')` );
+    simData = JSON.parse(histJson);
+    pyodide.globals.set('_hist_json', histJson);
+    const statsJson = await pyodide.runPythonAsync('compute_stats(json.loads(_hist_json))');
+    renderCharts();
+    renderStats(JSON.parse(statsJson));
+  } catch(e) {
+    console.error(e);
+    btn.textContent = 'Error — see console';
+    btn.style.background = 'var(--rust)';
+    setTimeout(() => { btn.style.background=''; btn.disabled=false; btn.textContent='▶ Run Simulation'; }, 3000);
+    return;
+  }
+  btn.disabled = false; btn.textContent = '▶ Run Simulation';
+}
+
+// ─────────────────────────────────────────────────────────
+//  UI WIRING
+// ─────────────────────────────────────────────────────────
+document.querySelectorAll('.vx-slider').forEach(el => {
+  el.addEventListener('input', () => {
+    const v = parseFloat(el.value);
+    document.getElementById('v-' + el.id).textContent =
+      Number.isInteger(v) ? v : v.toFixed(v < 0.1 ? 3 : 2);
+  });
+});
+
+document.getElementById('run-btn').addEventListener('click', runSim);
+
+document.querySelectorAll('.vx-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.vx-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.vx-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    setTimeout(renderCharts, 60);
+  });
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderCharts, 150); });
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
+initPyodide();
+</script>
+</body>
+</html>
