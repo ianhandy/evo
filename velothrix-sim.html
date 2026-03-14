@@ -241,6 +241,99 @@
   /* ── FADE IN ── */
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   .panel.active { animation: fadeIn 0.25s ease; }
+
+  /* ── MODE TOGGLE ── */
+  .mode-toggle {
+    display: flex; gap: 0; margin: 10px 0 6px;
+    border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+  }
+  .mode-toggle button {
+    flex: 1; padding: 7px 0; font-family: var(--mono); font-size: 10px;
+    background: transparent; color: var(--dim); border: none; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-toggle button.active {
+    background: var(--accent); color: #000; font-weight: bold;
+  }
+
+  /* ── GOD PANEL ── */
+  .god-panel { display: none; margin-top: 8px; }
+  .god-panel.visible { display: block; }
+  .god-panel-header {
+    font-family: var(--sans); font-size: 12px; font-weight: 800;
+    color: var(--accent); letter-spacing: 1px; margin-bottom: 8px;
+    padding-bottom: 4px; border-bottom: 1px solid var(--accent);
+  }
+  .god-slider-row { margin-bottom: 10px; }
+  .god-slider-row .slider-label span:first-child {
+    color: var(--accent); font-weight: bold;
+  }
+  .god-slider-row input[type=range] {
+    accent-color: var(--accent);
+  }
+
+  #epoch-btn {
+    width: 100%; padding: 12px; margin-top: 8px;
+    background: linear-gradient(135deg, var(--accent), #c4721a);
+    color: #000; font-family: var(--sans); font-size: 14px; font-weight: 800;
+    border: none; border-radius: 6px; cursor: pointer;
+    letter-spacing: 1px; transition: all 0.2s;
+  }
+  #epoch-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  #epoch-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  #epoch-btn.extinct { background: var(--red); }
+
+  #new-game-btn {
+    width: 100%; padding: 10px; margin-top: 6px;
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 6px;
+    font-family: var(--mono); font-size: 11px; cursor: pointer;
+    display: none;
+  }
+  #new-game-btn:hover { background: var(--accent); color: #000; }
+
+  /* ── EPOCH SUMMARY ── */
+  .epoch-summary {
+    display: none; margin-top: 10px; padding: 10px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+  }
+  .epoch-summary.visible { display: block; }
+  .epoch-summary-title {
+    font-family: var(--sans); font-size: 11px; font-weight: 800;
+    color: var(--teal); margin-bottom: 8px;
+  }
+  .epoch-stat {
+    display: flex; justify-content: space-between; padding: 3px 0;
+    font-size: 10px; border-bottom: 1px solid var(--border);
+  }
+  .epoch-stat:last-child { border-bottom: none; }
+  .epoch-stat-label { color: var(--dim); }
+  .epoch-stat-val { color: var(--text); font-weight: bold; }
+  .epoch-stat-val.danger { color: var(--red); }
+  .epoch-stat-val.good { color: var(--teal); }
+
+  .extinct-overlay {
+    display: none; position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  .extinct-overlay.visible { display: flex; }
+  .extinct-overlay h2 {
+    font-family: var(--sans); font-size: 36px; color: var(--red);
+    letter-spacing: 4px;
+  }
+  .extinct-overlay .final-score {
+    font-family: var(--mono); font-size: 14px; color: var(--text);
+  }
+  .extinct-overlay button {
+    margin-top: 12px; padding: 10px 28px;
+    background: var(--accent); color: #000; border: none; border-radius: 6px;
+    font-family: var(--sans); font-size: 14px; font-weight: 800; cursor: pointer;
+  }
+
+  /* Hide scientist params in strategy mode */
+  .strategy-mode .scientist-params { display: none; }
+  .strategy-mode #run-btn { display: none; }
 </style>
 </head>
 <body>
@@ -272,6 +365,43 @@
 <div class="layout">
   <!-- SIDEBAR -->
   <aside id="sidebar">
+    <div class="mode-toggle">
+      <button id="mode-classic" class="active" onclick="setMode('classic')">CLASSIC</button>
+      <button id="mode-strategy" onclick="setMode('strategy')">STRATEGY</button>
+    </div>
+
+    <!-- GOD PANEL (strategy mode) -->
+    <div class="god-panel" id="god-panel">
+      <div class="god-panel-header">EPOCH CONTROLS</div>
+      <div class="god-slider-row slider-row">
+        <div class="slider-label"><span>Food Scarcity</span><span id="v-god-food">0.4</span></div>
+        <input type="range" id="god-food" min="0" max="0.9" step="0.05" value="0.4">
+      </div>
+      <div class="god-slider-row slider-row">
+        <div class="slider-label"><span>Predator Pressure</span><span id="v-god-pred">0.4</span></div>
+        <input type="range" id="god-pred" min="0.05" max="0.95" step="0.05" value="0.4">
+      </div>
+      <div class="god-slider-row slider-row">
+        <div class="slider-label"><span>Climate Stress</span><span id="v-god-climate">0</span></div>
+        <input type="range" id="god-climate" min="-4" max="4" step="0.5" value="0">
+      </div>
+      <div class="god-slider-row slider-row">
+        <div class="slider-label"><span>Disease Severity</span><span id="v-god-disease">0</span></div>
+        <input type="range" id="god-disease" min="0" max="0.8" step="0.05" value="0">
+      </div>
+      <button id="epoch-btn" onclick="advanceEpoch()">ADVANCE EPOCH</button>
+      <button id="new-game-btn" onclick="newGame()">NEW GAME</button>
+      <div class="epoch-summary" id="epoch-summary">
+        <div class="epoch-summary-title" id="epoch-summary-title">EPOCH 0</div>
+        <div class="epoch-stat"><span class="epoch-stat-label">Population</span><span class="epoch-stat-val" id="es-pop">—</span></div>
+        <div class="epoch-stat"><span class="epoch-stat-label">Dominant Crest</span><span class="epoch-stat-val" id="es-crest">—</span></div>
+        <div class="epoch-stat"><span class="epoch-stat-label">Mean Spines</span><span class="epoch-stat-val" id="es-spine">—</span></div>
+        <div class="epoch-stat"><span class="epoch-stat-label">Mean Fitness</span><span class="epoch-stat-val" id="es-wbar">—</span></div>
+        <div class="epoch-stat"><span class="epoch-stat-label">Score</span><span class="epoch-stat-val good" id="es-score">0</span></div>
+      </div>
+    </div>
+
+    <div class="scientist-params">
     <div class="param-section">Population</div>
     <div class="slider-row">
       <div class="slider-label"><span>Initial N</span><span id="v-N0">200</span></div>
@@ -338,6 +468,7 @@
       <input type="range" id="C_opt" min="2" max="10" step="1" value="5">
     </div>
 
+    </div><!-- end .scientist-params -->
     <button id="run-btn">▶ RUN SIMULATION</button>
   </aside>
 
@@ -497,6 +628,14 @@
   </main>
 </div>
 
+<!-- EXTINCT OVERLAY -->
+<div class="extinct-overlay" id="extinct-overlay">
+  <h2>EXTINCTION</h2>
+  <div class="final-score">Final Score: <span id="extinct-score">0</span></div>
+  <div class="final-score">Epochs Survived: <span id="extinct-epochs">0</span></div>
+  <button onclick="newGame()">TRY AGAIN</button>
+</div>
+
 <script>
 // ─────────────────────────────────────────────────────────
 //  PYTHON SIMULATION (Pyodide)
@@ -558,10 +697,11 @@ def update_body(mean, h2, theta, Va, N, omega):
     drift = math.sqrt(Va / N) * randn() * 0.6
     return clamp(mean + R + drift, 0.15, 0.8)
 
-def update_pop(N, r, K, predator):
+def update_pop(N, r, K, predator, disease_rate=0.0):
     eff_r = r * 0.6 if predator else r
+    eff_r = eff_r * (1.0 - disease_rate)
     dN = eff_r * N * (1 - N / K)
-    return max(20, round(N + dN + math.sqrt(N) * randn() * 2))
+    return max(2, round(N + dN + math.sqrt(max(1,N)) * randn() * 2))
 
 def euler_lotka_r(l1, l2, m1, m2):
     r = 0.1
@@ -585,12 +725,10 @@ def run_simulation(cfg_json):
     else:
         cfg = dict(cfg_json)
     gens      = int(cfg['gens'])
-    N         = int(cfg['N0'])
     K         = float(cfg['K'])
     r         = float(cfg['r'])
     pred_str  = float(cfg['pred_strength'])
     mig_rate  = float(cfg['mig_rate'])
-    p         = float(cfg['p0'])
     s_bright  = float(cfg['s_bright'])
     s_pred    = float(cfg['s_pred'])
     w12       = float(cfg['w12'])
@@ -601,14 +739,21 @@ def run_simulation(cfg_json):
     food_base = float(cfg['food_base'])
     p_mig     = float(cfg['p_mig'])
     cycle     = int(cfg['cycle'])
+    disease_rate = float(cfg.get('disease_rate', 0.0))
 
-    spine_mean = theta_s + 2.0
-    spine_va   = 2.0
-    body_size  = 0.43
+    # Initial state — use provided values if continuing from previous epoch
+    N          = int(cfg.get('init_N', cfg['N0']))
+    p          = float(cfg.get('init_p', cfg['p0']))
+    spine_mean = float(cfg.get('init_spine_mean', theta_s + 2.0))
+    spine_va   = float(cfg.get('init_spine_va', 2.0))
+    body_size  = float(cfg.get('init_body_mean', 0.43))
+    gen_offset = int(cfg.get('gen_offset', 0))
+
     history    = []
+    extinct    = False
 
     for g in range(gens):
-        phase    = (g % cycle) / cycle
+        phase    = ((gen_offset + g) % cycle) / cycle
         predator = phase < pred_str
         food     = food_base + 0.2 * math.sin(2 * math.pi * phase)
 
@@ -619,7 +764,10 @@ def run_simulation(cfg_json):
         litter  = lack_litter(C_opt, predator, food)
         W_lit   = litter_fitness(litter, C_opt - 1 if predator else C_opt)
 
-        N = update_pop(N, r, K, predator)
+        N = update_pop(N, r, K, predator, disease_rate)
+
+        if N <= 5:
+            extinct = True
 
         l1 = 0.45 if predator else 0.70
         l2 = 0.25 if predator else 0.50
@@ -633,7 +781,7 @@ def run_simulation(cfg_json):
         s_net = -s_pred if predator else s_bright
 
         history.append({
-            'g': g,
+            'g': gen_offset + g,
             'p': round(p, 5),
             'q': round(1-p, 5),
             'spine': round(spine_mean, 3),
@@ -645,15 +793,27 @@ def run_simulation(cfg_json):
             'wbar': round(wbar, 5),
             'r_el': round(r_el, 5),
             'predator': predator,
-            'drift_var': round(p*q/(2*N), 6),
-            'p_fix': round(p_fix(s_net, N), 6),
+            'drift_var': round(p*q/(2*max(1,N)), 6),
+            'p_fix': round(p_fix(s_net, max(1,N)), 6),
             'food': round(food, 4),
             'AA': round(p*p, 5),
             'Aa': round(2*p*q, 5),
             'aa': round(q*q, 5),
         })
 
-    return json.dumps(history)
+        if extinct:
+            break
+
+    end_state = {
+        'N': N, 'p': round(p, 5),
+        'spine_mean': round(spine_mean, 3),
+        'spine_va': round(spine_va, 4),
+        'body_mean': round(body_size, 4),
+        'gen_offset': gen_offset + len(history),
+        'extinct': extinct
+    }
+
+    return json.dumps({'history': history, 'end_state': end_state})
 
 def compute_stats(history):
     n = len(history)
@@ -1044,13 +1204,26 @@ async function initPyodide() {
   document.getElementById('loader').style.display = 'none';
 }
 
+// ─────────────────────────────────────────────────────────
+//  GAME STATE (strategy mode)
+// ─────────────────────────────────────────────────────────
+let gameMode = 'classic'; // 'classic' or 'strategy'
+let epochState = null;    // end_state from last epoch
+let epochNum = 0;
+let totalScore = 0;
+let gameOver = false;
+const EPOCH_GENS = 20;
+const MAX_EPOCHS = 15;
+
 function getConfig() {
-  return {
-    gens:         parseFloat(document.getElementById('gens').value),
+  const cfg = {
+    gens:         gameMode === 'strategy' ? EPOCH_GENS : parseFloat(document.getElementById('gens').value),
     N0:           parseFloat(document.getElementById('N0').value),
     K:            parseFloat(document.getElementById('K').value),
     r:            parseFloat(document.getElementById('r').value),
-    pred_strength:parseFloat(document.getElementById('pred_strength').value),
+    pred_strength: gameMode === 'strategy'
+      ? parseFloat(document.getElementById('god-pred').value)
+      : parseFloat(document.getElementById('pred_strength').value),
     mig_rate:     parseFloat(document.getElementById('mig_rate').value),
     p0:           parseFloat(document.getElementById('p0').value),
     s_bright:     parseFloat(document.getElementById('s_bright').value),
@@ -1058,12 +1231,31 @@ function getConfig() {
     w12:          parseFloat(document.getElementById('w12').value),
     mu:           0.001,
     h2_spine:     parseFloat(document.getElementById('h2_spine').value),
-    theta_spine:  parseFloat(document.getElementById('theta_spine').value),
+    theta_spine:  gameMode === 'strategy'
+      ? 9.0 + parseFloat(document.getElementById('god-climate').value)
+      : parseFloat(document.getElementById('theta_spine').value),
     C_opt:        parseFloat(document.getElementById('C_opt').value),
-    food_base:    0.6,
+    food_base:    gameMode === 'strategy'
+      ? 1.0 - parseFloat(document.getElementById('god-food').value)
+      : 0.6,
     p_mig:        parseFloat(document.getElementById('p_mig').value),
     cycle:        parseFloat(document.getElementById('cycle').value),
+    disease_rate: gameMode === 'strategy'
+      ? parseFloat(document.getElementById('god-disease').value)
+      : 0.0,
   };
+
+  // Thread state from previous epoch
+  if (gameMode === 'strategy' && epochState) {
+    cfg.init_N = epochState.N;
+    cfg.init_p = epochState.p;
+    cfg.init_spine_mean = epochState.spine_mean;
+    cfg.init_spine_va = epochState.spine_va;
+    cfg.init_body_mean = epochState.body_mean;
+    cfg.gen_offset = epochState.gen_offset;
+  }
+
+  return cfg;
 }
 
 async function runSim() {
@@ -1075,9 +1267,10 @@ async function runSim() {
   const cfg = getConfig();
 
   try {
-    const cfgJson = JSON.stringify(cfg);
-    const histJson = await pyodide.runPythonAsync(`run_simulation('${JSON.stringify(cfg).replace(/'/g, "\\'")}')`);
-    simData = JSON.parse(histJson);
+    const resultJson = await pyodide.runPythonAsync(`run_simulation('${JSON.stringify(cfg).replace(/'/g, "\\'")}')`);
+    const result = JSON.parse(resultJson);
+    simData = result.history;
+    const histJson = JSON.stringify(result.history);
     pyodide.globals.set('_hist_json', histJson);
     const statsJson = await pyodide.runPythonAsync('compute_stats(json.loads(_hist_json))');
     const stats = JSON.parse(statsJson);
@@ -1101,16 +1294,151 @@ async function runSim() {
 }
 
 // ─────────────────────────────────────────────────────────
+//  STRATEGY MODE — EPOCH RUNNER
+// ─────────────────────────────────────────────────────────
+function setMode(mode) {
+  gameMode = mode;
+  document.getElementById('mode-classic').classList.toggle('active', mode === 'classic');
+  document.getElementById('mode-strategy').classList.toggle('active', mode === 'strategy');
+  document.getElementById('god-panel').classList.toggle('visible', mode === 'strategy');
+  document.querySelector('.layout').classList.toggle('strategy-mode', mode === 'strategy');
+
+  if (mode === 'strategy') {
+    newGame();
+  } else {
+    // Reset to classic
+    epochState = null;
+    epochNum = 0;
+    totalScore = 0;
+    gameOver = false;
+    document.getElementById('epoch-summary').classList.remove('visible');
+    document.getElementById('new-game-btn').style.display = 'none';
+    document.getElementById('extinct-overlay').classList.remove('visible');
+  }
+}
+
+function newGame() {
+  epochState = null;
+  epochNum = 0;
+  totalScore = 0;
+  gameOver = false;
+  simData = [];
+
+  // Reset God Panel to defaults
+  document.getElementById('god-food').value = 0.4;
+  document.getElementById('god-pred').value = 0.4;
+  document.getElementById('god-climate').value = 0;
+  document.getElementById('god-disease').value = 0;
+  updateGodLabels();
+
+  const btn = document.getElementById('epoch-btn');
+  btn.disabled = false;
+  btn.textContent = 'ADVANCE EPOCH';
+  btn.classList.remove('extinct');
+  document.getElementById('new-game-btn').style.display = 'none';
+  document.getElementById('epoch-summary').classList.remove('visible');
+  document.getElementById('extinct-overlay').classList.remove('visible');
+
+  // Clear charts
+  renderCharts();
+}
+
+function updateGodLabels() {
+  document.getElementById('v-god-food').textContent = parseFloat(document.getElementById('god-food').value).toFixed(2);
+  document.getElementById('v-god-pred').textContent = parseFloat(document.getElementById('god-pred').value).toFixed(2);
+  document.getElementById('v-god-climate').textContent = parseFloat(document.getElementById('god-climate').value).toFixed(1);
+  document.getElementById('v-god-disease').textContent = parseFloat(document.getElementById('god-disease').value).toFixed(2);
+}
+
+async function advanceEpoch() {
+  if (!pyReady || gameOver) return;
+
+  const btn = document.getElementById('epoch-btn');
+  btn.disabled = true;
+  btn.textContent = 'SIMULATING...';
+
+  epochNum++;
+  const cfg = getConfig();
+
+  try {
+    const resultJson = await pyodide.runPythonAsync(`run_simulation('${JSON.stringify(cfg).replace(/'/g, "\\'")}')`);
+    const result = JSON.parse(resultJson);
+    epochState = result.end_state;
+
+    // Append epoch history to cumulative simData
+    simData = simData.concat(result.history);
+
+    // Compute epoch stats
+    const epochHistory = result.history;
+    const lastEntry = epochHistory[epochHistory.length - 1];
+    const epochMeanWbar = epochHistory.reduce((s, d) => s + d.wbar, 0) / epochHistory.length;
+    const epochScore = Math.round(epochMeanWbar * lastEntry.N);
+    totalScore += epochScore;
+
+    // Update epoch summary
+    document.getElementById('epoch-summary-title').textContent = `EPOCH ${epochNum} / ${MAX_EPOCHS}`;
+    const popEl = document.getElementById('es-pop');
+    popEl.textContent = `${lastEntry.N} / ${Math.round(cfg.K)}`;
+    popEl.className = 'epoch-stat-val' + (lastEntry.N < 50 ? ' danger' : lastEntry.N > cfg.K * 0.7 ? ' good' : '');
+    document.getElementById('es-crest').textContent = lastEntry.p > 0.5 ? `Bright (${(lastEntry.p*100).toFixed(0)}%)` : `Dull (${((1-lastEntry.p)*100).toFixed(0)}%)`;
+    document.getElementById('es-spine').textContent = lastEntry.spine.toFixed(1);
+    document.getElementById('es-wbar').textContent = epochMeanWbar.toFixed(3);
+    document.getElementById('es-score').textContent = totalScore;
+    document.getElementById('epoch-summary').classList.add('visible');
+
+    // Render
+    renderCharts();
+    const histJson = JSON.stringify(simData);
+    pyodide.globals.set('_hist_json', histJson);
+    const statsJson = await pyodide.runPythonAsync('compute_stats(json.loads(_hist_json))');
+    renderStats(JSON.parse(statsJson));
+
+    // Check extinction
+    if (epochState.extinct) {
+      gameOver = true;
+      btn.textContent = 'EXTINCT';
+      btn.classList.add('extinct');
+      document.getElementById('new-game-btn').style.display = 'block';
+      document.getElementById('extinct-score').textContent = totalScore;
+      document.getElementById('extinct-epochs').textContent = epochNum;
+      document.getElementById('extinct-overlay').classList.add('visible');
+      return;
+    }
+
+    // Check max epochs
+    if (epochNum >= MAX_EPOCHS) {
+      gameOver = true;
+      btn.textContent = `COMPLETE — SCORE: ${totalScore}`;
+      btn.disabled = true;
+      document.getElementById('new-game-btn').style.display = 'block';
+      return;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'ADVANCE EPOCH';
+  } catch(e) {
+    console.error('Epoch error:', e);
+    btn.textContent = 'ERROR — check console';
+    btn.disabled = false;
+  }
+}
+
+// ─────────────────────────────────────────────────────────
 //  UI WIRING
 // ─────────────────────────────────────────────────────────
 
-// Slider live labels
-document.querySelectorAll('input[type=range]').forEach(el => {
+// Slider live labels (scientist params)
+document.querySelectorAll('.scientist-params input[type=range]').forEach(el => {
   el.addEventListener('input', () => {
     const val = parseFloat(el.value);
     document.getElementById('v-' + el.id).textContent =
       Number.isInteger(val) ? val : val.toFixed(val < 0.1 ? 3 : 2);
   });
+});
+
+// God Panel slider labels
+document.querySelectorAll('.god-panel input[type=range]').forEach(el => {
+  el.addEventListener('input', updateGodLabels);
 });
 
 // Run button
