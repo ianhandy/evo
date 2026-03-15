@@ -331,6 +331,74 @@
     font-family: var(--sans); font-size: 14px; font-weight: 800; cursor: pointer;
   }
 
+  /* ── SCENARIO PRESETS ── */
+  .preset-row {
+    display: flex; gap: 4px; margin-bottom: 10px;
+  }
+  .preset-btn {
+    flex: 1; padding: 6px 0; font-family: var(--mono); font-size: 9px;
+    background: transparent; color: var(--dim); border: 1px solid var(--border);
+    border-radius: 4px; cursor: pointer; transition: all 0.2s;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .preset-btn:hover { color: var(--text); border-color: var(--dim); }
+  .preset-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: bold; }
+  .preset-btn[data-preset="easy"] { }
+  .preset-btn[data-preset="hard"].active { background: var(--red); border-color: var(--red); }
+
+  /* ── SLIDER DANGER ZONES ── */
+  .god-slider-row.danger-low input[type=range] { accent-color: var(--teal); }
+  .god-slider-row.danger-mid input[type=range] { accent-color: var(--gold); }
+  .god-slider-row.danger-high input[type=range] { accent-color: var(--red); }
+  .god-slider-row.danger-low .slider-label span:first-child { color: var(--teal); }
+  .god-slider-row.danger-mid .slider-label span:first-child { color: var(--gold); }
+  .god-slider-row.danger-high .slider-label span:first-child { color: var(--red); }
+
+  /* ── EPOCH TRANSITION ANIMATION ── */
+  @keyframes epochFlash {
+    0% { box-shadow: 0 0 0 0 rgba(232,146,58,0.6); }
+    50% { box-shadow: 0 0 20px 4px rgba(232,146,58,0.3); }
+    100% { box-shadow: 0 0 0 0 rgba(232,146,58,0); }
+  }
+  @keyframes epochPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+  .epoch-flash {
+    animation: epochFlash 0.6s ease-out;
+  }
+  .epoch-summary.epoch-enter {
+    animation: epochPulse 0.4s ease-out;
+  }
+  @keyframes dangerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  .epoch-stat-val.danger {
+    animation: dangerPulse 1.2s ease-in-out infinite;
+  }
+
+  /* ── VICTORY OVERLAY ── */
+  .victory-overlay {
+    display: none; position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  .victory-overlay.visible { display: flex; }
+  .victory-overlay h2 {
+    font-family: var(--sans); font-size: 36px; color: var(--teal);
+    letter-spacing: 4px;
+  }
+  .victory-overlay .final-score {
+    font-family: var(--mono); font-size: 14px; color: var(--text);
+  }
+  .victory-overlay button {
+    margin-top: 12px; padding: 10px 28px;
+    background: var(--accent); color: #000; border: none; border-radius: 6px;
+    font-family: var(--sans); font-size: 14px; font-weight: 800; cursor: pointer;
+  }
+
   /* Hide scientist params in strategy mode */
   .strategy-mode .scientist-params { display: none; }
   .strategy-mode #run-btn { display: none; }
@@ -373,6 +441,11 @@
     <!-- GOD PANEL (strategy mode) -->
     <div class="god-panel" id="god-panel">
       <div class="god-panel-header">EPOCH CONTROLS</div>
+      <div class="preset-row">
+        <button class="preset-btn" data-preset="easy" onclick="loadPreset('easy')">Easy</button>
+        <button class="preset-btn" data-preset="normal" onclick="loadPreset('normal')">Normal</button>
+        <button class="preset-btn" data-preset="hard" onclick="loadPreset('hard')">Hard</button>
+      </div>
       <div class="god-slider-row slider-row">
         <div class="slider-label"><span>Food Scarcity</span><span id="v-god-food">0.4</span></div>
         <input type="range" id="god-food" min="0" max="0.9" step="0.05" value="0.4">
@@ -636,6 +709,15 @@
   <button onclick="newGame()">TRY AGAIN</button>
 </div>
 
+<!-- VICTORY OVERLAY -->
+<div class="victory-overlay" id="victory-overlay">
+  <h2>SURVIVED</h2>
+  <div class="final-score">Final Score: <span id="victory-score">0</span></div>
+  <div class="final-score">All <span id="victory-epochs">15</span> Epochs Survived</div>
+  <div class="final-score">Final Population: <span id="victory-pop">0</span></div>
+  <button onclick="newGame()">PLAY AGAIN</button>
+</div>
+
 <script>
 // ─────────────────────────────────────────────────────────
 //  PYTHON SIMULATION (Pyodide)
@@ -697,11 +779,14 @@ def update_body(mean, h2, theta, Va, N, omega):
     drift = math.sqrt(Va / N) * randn() * 0.6
     return clamp(mean + R + drift, 0.15, 0.8)
 
-def update_pop(N, r, K, predator, disease_rate=0.0):
+def update_pop(N, r, K, predator, disease_rate=0.0, food_base=0.6, pred_strength=0.4, climate_stress=0.0):
     eff_r = r * 0.6 if predator else r
     eff_r = eff_r * (1.0 - disease_rate)
-    dN = eff_r * N * (1 - N / K)
-    return max(2, round(N + dN + math.sqrt(max(1,N)) * randn() * 2))
+    eff_K = K * clamp(food_base + 0.1, 0.2, 1.0)
+    pred_kill = pred_strength * 0.06 * N if predator else 0
+    dN = eff_r * N * (1 - N / eff_K) - pred_kill
+    noise_scale = 2.0 * (1.0 + abs(climate_stress) * 0.25)
+    return max(2, round(N + dN + math.sqrt(max(1,N)) * randn() * noise_scale))
 
 def euler_lotka_r(l1, l2, m1, m2):
     r = 0.1
@@ -740,6 +825,7 @@ def run_simulation(cfg_json):
     p_mig     = float(cfg['p_mig'])
     cycle     = int(cfg['cycle'])
     disease_rate = float(cfg.get('disease_rate', 0.0))
+    climate_stress = float(cfg.get('climate_stress', 0.0))
 
     # Initial state — use provided values if continuing from previous epoch
     N          = int(cfg.get('init_N', cfg['N0']))
@@ -764,7 +850,7 @@ def run_simulation(cfg_json):
         litter  = lack_litter(C_opt, predator, food)
         W_lit   = litter_fitness(litter, C_opt - 1 if predator else C_opt)
 
-        N = update_pop(N, r, K, predator, disease_rate)
+        N = update_pop(N, r, K, predator, disease_rate, food_base, pred_str, climate_stress)
 
         if N <= 5:
             extinct = True
@@ -1243,6 +1329,9 @@ function getConfig() {
     disease_rate: gameMode === 'strategy'
       ? parseFloat(document.getElementById('god-disease').value)
       : 0.0,
+    climate_stress: gameMode === 'strategy'
+      ? parseFloat(document.getElementById('god-climate').value)
+      : 0.0,
   };
 
   // Thread state from previous epoch
@@ -1314,6 +1403,7 @@ function setMode(mode) {
     document.getElementById('epoch-summary').classList.remove('visible');
     document.getElementById('new-game-btn').style.display = 'none';
     document.getElementById('extinct-overlay').classList.remove('visible');
+    document.getElementById('victory-overlay').classList.remove('visible');
   }
 }
 
@@ -1338,6 +1428,13 @@ function newGame() {
   document.getElementById('new-game-btn').style.display = 'none';
   document.getElementById('epoch-summary').classList.remove('visible');
   document.getElementById('extinct-overlay').classList.remove('visible');
+  document.getElementById('victory-overlay').classList.remove('visible');
+
+  // Clear preset highlight
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+
+  // Initialize danger zones
+  updateDangerZones();
 
   // Clear charts
   renderCharts();
@@ -1348,6 +1445,47 @@ function updateGodLabels() {
   document.getElementById('v-god-pred').textContent = parseFloat(document.getElementById('god-pred').value).toFixed(2);
   document.getElementById('v-god-climate').textContent = parseFloat(document.getElementById('god-climate').value).toFixed(1);
   document.getElementById('v-god-disease').textContent = parseFloat(document.getElementById('god-disease').value).toFixed(2);
+  updateDangerZones();
+}
+
+// ── DANGER ZONE COLORS ──
+function updateDangerZones() {
+  const thresholds = [
+    { id: 'god-food', lo: 0.3, hi: 0.65 },
+    { id: 'god-pred', lo: 0.5, hi: 0.75 },
+    { id: 'god-climate', lo: 1.5, hi: 3.0, abs: true },
+    { id: 'god-disease', lo: 0.3, hi: 0.55 },
+  ];
+  thresholds.forEach(t => {
+    const el = document.getElementById(t.id);
+    const row = el.closest('.god-slider-row');
+    const val = t.abs ? Math.abs(parseFloat(el.value)) : parseFloat(el.value);
+    row.classList.remove('danger-low', 'danger-mid', 'danger-high');
+    if (val >= t.hi) row.classList.add('danger-high');
+    else if (val >= t.lo) row.classList.add('danger-mid');
+    else row.classList.add('danger-low');
+  });
+}
+
+// ── SCENARIO PRESETS ──
+const PRESETS = {
+  easy:   { food: 0.2,  pred: 0.2,  climate: 0,   disease: 0 },
+  normal: { food: 0.4,  pred: 0.4,  climate: 0,   disease: 0.1 },
+  hard:   { food: 0.55, pred: 0.6,  climate: 1.5, disease: 0.2 },
+};
+
+function loadPreset(name) {
+  const p = PRESETS[name];
+  if (!p) return;
+  document.getElementById('god-food').value = p.food;
+  document.getElementById('god-pred').value = p.pred;
+  document.getElementById('god-climate').value = p.climate;
+  document.getElementById('god-disease').value = p.disease;
+  updateGodLabels();
+
+  // Highlight active preset button
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.preset-btn[data-preset="${name}"]`).classList.add('active');
 }
 
 async function advanceEpoch() {
@@ -1405,12 +1543,27 @@ async function advanceEpoch() {
       return;
     }
 
+    // Epoch transition animation
+    const summary = document.getElementById('epoch-summary');
+    summary.classList.remove('epoch-enter');
+    void summary.offsetWidth; // force reflow
+    summary.classList.add('epoch-enter');
+    // Flash the main content area
+    const mainEl = document.querySelector('main');
+    mainEl.classList.remove('epoch-flash');
+    void mainEl.offsetWidth;
+    mainEl.classList.add('epoch-flash');
+
     // Check max epochs
     if (epochNum >= MAX_EPOCHS) {
       gameOver = true;
-      btn.textContent = `COMPLETE — SCORE: ${totalScore}`;
+      btn.textContent = `SURVIVED — SCORE: ${totalScore}`;
       btn.disabled = true;
       document.getElementById('new-game-btn').style.display = 'block';
+      document.getElementById('victory-score').textContent = totalScore;
+      document.getElementById('victory-epochs').textContent = epochNum;
+      document.getElementById('victory-pop').textContent = lastEntry.N;
+      document.getElementById('victory-overlay').classList.add('visible');
       return;
     }
 
