@@ -602,6 +602,15 @@ let scatterMode = 'spatial'; // 'spatial' or 'temporal'
 let animFrame = null;
 let stepsPerFrame = 1;
 
+// ── ISOMETRIC CAMERA ──
+let camTilt = 0.5;    // 0.25 = nearly flat, 0.75 = steep
+let camZoom = 1.0;
+let camPanX = 0;
+let camPanY = 0;
+let isDragging = false;
+let dragLastX = 0;
+let dragLastY = 0;
+
 const SPECIES = [
   { name: 'Velothrix', fullName: 'Velothrix aurantis', color: '#DDC165', trait: 'Crest Brightness', variantColor: '#CC8833' },
   { name: 'Leviathan', fullName: 'Kelp Leviathan', color: '#C0392B', trait: 'Hunting Range', variantColor: '#E06040' },
@@ -671,7 +680,101 @@ function setupUI() {
   // Populate scatter dropdowns
   populateScatterDropdowns();
 
-  mapCanvas.addEventListener('click', onMapClick);
+  // ── Map camera controls ──
+  // Click to select tile (only if not dragging)
+  let clickStartX = 0, clickStartY = 0;
+  mapCanvas.addEventListener('pointerdown', (e) => {
+    clickStartX = e.clientX;
+    clickStartY = e.clientY;
+    isDragging = true;
+    dragLastX = e.clientX;
+    dragLastY = e.clientY;
+    mapCanvas.style.cursor = 'grabbing';
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragLastX;
+    const dy = e.clientY - dragLastY;
+    dragLastX = e.clientX;
+    dragLastY = e.clientY;
+    if (e.shiftKey) {
+      camTilt = Math.max(0.2, Math.min(0.8, camTilt + dy * 0.004));
+    } else {
+      camPanX += dx;
+      camPanY += dy;
+    }
+    renderMap();
+  });
+  window.addEventListener('pointerup', (e) => {
+    if (isDragging) {
+      const dist = Math.hypot(e.clientX - clickStartX, e.clientY - clickStartY);
+      if (dist < 6) onMapClick(e); // click, not drag
+    }
+    isDragging = false;
+    mapCanvas.style.cursor = 'grab';
+  });
+  // Scroll to zoom
+  mapCanvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    camZoom = Math.max(0.4, Math.min(3.0, camZoom + (e.deltaY > 0 ? -0.1 : 0.1)));
+    renderMap();
+  }, { passive: false });
+  // Touch: one-finger pan, two-finger zoom
+  let lastTouchDist = 0;
+  mapCanvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      isDragging = true;
+      clickStartX = dragLastX = e.touches[0].clientX;
+      clickStartY = dragLastY = e.touches[0].clientY;
+    } else if (e.touches.length === 2) {
+      isDragging = false;
+      lastTouchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: true });
+  mapCanvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && isDragging) {
+      const dx = e.touches[0].clientX - dragLastX;
+      const dy = e.touches[0].clientY - dragLastY;
+      dragLastX = e.touches[0].clientX;
+      dragLastY = e.touches[0].clientY;
+      camPanX += dx;
+      camPanY += dy;
+      renderMap();
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (lastTouchDist > 0) {
+        const scale = dist / lastTouchDist;
+        camZoom = Math.max(0.4, Math.min(3.0, camZoom * scale));
+        renderMap();
+      }
+      lastTouchDist = dist;
+    }
+  }, { passive: false });
+  mapCanvas.addEventListener('touchend', (e) => {
+    if (e.touches.length === 0 && isDragging) {
+      const dist = Math.hypot(
+        e.changedTouches[0].clientX - clickStartX,
+        e.changedTouches[0].clientY - clickStartY
+      );
+      if (dist < 10) onMapClick(e.changedTouches[0]);
+      isDragging = false;
+    }
+    lastTouchDist = 0;
+  });
+  // Double-click/tap to reset camera
+  mapCanvas.addEventListener('dblclick', () => {
+    camTilt = 0.5; camZoom = 1.0; camPanX = 0; camPanY = 0;
+    renderMap();
+  });
+  mapCanvas.style.cursor = 'grab';
+
   window.addEventListener('resize', () => { resizeCanvases(); renderAll(); });
 }
 
@@ -714,26 +817,53 @@ function setPanelMode(mode) {
   renderAll();
 }
 
-// ── MAP CLICK ──
+// ── MAP CLICK (isometric reverse projection) ──
 function onMapClick(e) {
   const rect = mapCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
 
-  const gridSize = pyodide.runPython('GRID_SIZE');
-  const tileW = mapCanvas.width / gridSize;
-  const tileH = mapCanvas.height / gridSize;
+  const gs = pyodide.runPython('GRID_SIZE');
+  const w = mapCanvas.width;
+  const h = mapCanvas.height;
+  const baseTileW = (w / gs) * 0.9 * camZoom;
+  const tileW = baseTileW;
+  const tileH = tileW * camTilt;
+  const heightScale = 80 * camZoom;
+  const totalIsoH = gs * tileH * 0.5;
+  const offsetX = w / 2 + camPanX;
+  const offsetY = (h - totalIsoH + heightScale) / 2 + camPanY;
 
-  const c = Math.floor(x / tileW);
-  const r = Math.floor(y / tileH);
+  // Brute force: find which tile's diamond contains the click point
+  // Check front-to-back so topmost tile wins
+  let bestR = -1, bestC = -1, bestSy = -Infinity;
+  for (let r = 0; r < gs; r++) {
+    for (let c = 0; c < gs; c++) {
+      const ix = (c - r) * (tileW * 0.5);
+      const iy = (c + r) * (tileH * 0.5);
+      const cx = offsetX + ix;
+      const cy = offsetY + iy;
+      // Diamond hit test
+      const dx = Math.abs(sx - cx) / (tileW * 0.5);
+      const dy = Math.abs(sy - cy) / (tileH * 0.5);
+      if (dx + dy <= 1.0) {
+        // Frontmost tile (highest iy) wins
+        if (iy > bestSy) {
+          bestSy = iy;
+          bestR = r;
+          bestC = c;
+        }
+      }
+    }
+  }
 
-  if (r >= 0 && r < gridSize && c >= 0 && c < gridSize) {
-    selectedTile = { r, c };
+  if (bestR >= 0 && bestC >= 0) {
+    selectedTile = { r: bestR, c: bestC };
     panelMode = 'tile';
     document.querySelectorAll('.panel-toggle button').forEach((btn, idx) => {
       btn.classList.toggle('active', idx === 1);
     });
-    document.getElementById('panel-title').textContent = `Tile (${r}, ${c})`;
+    document.getElementById('panel-title').textContent = `Tile (${bestR}, ${bestC})`;
     renderAll();
   }
 }
@@ -823,16 +953,15 @@ function renderAll() {
   renderScatterPlot();
 }
 
-// ── RENDER MAP ──
+// ── RENDER MAP (Isometric 3D) ──
 function renderMap() {
   const gs = pyodide.runPython('GRID_SIZE');
   const w = mapCanvas.width;
   const h = mapCanvas.height;
-  const tw = w / gs;
-  const th = h / gs;
+  const ctx = mapCtx;
 
-  mapCtx.fillStyle = '#1A0D00';
-  mapCtx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#1A0D00';
+  ctx.fillRect(0, 0, w, h);
 
   const si = selectedSpecies;
   const color = SPECIES[si].color;
@@ -844,12 +973,23 @@ function renderMap() {
   // Biome base colors: [r, g, b]
   const BIOME_COLORS = {
     deep_water:    [15, 30, 60],
-    shallow_marsh: [25, 50, 35],
-    reed_beds:     [40, 55, 25],
-    tidal_flats:   [55, 45, 30],
-    rocky_shore:   [65, 50, 40],
+    shallow_marsh: [30, 55, 40],
+    reed_beds:     [45, 60, 30],
+    tidal_flats:   [60, 50, 35],
+    rocky_shore:   [75, 58, 45],
   };
 
+  // Isometric projection params
+  const baseTileW = (w / gs) * 0.9 * camZoom;
+  const tileW = baseTileW;
+  const tileH = tileW * camTilt;
+  const heightScale = 80 * camZoom;
+
+  const totalIsoH = gs * tileH * 0.5;
+  const offsetX = w / 2 + camPanX;
+  const offsetY = (h - totalIsoH + heightScale) / 2 + camPanY;
+
+  // Draw back-to-front for proper occlusion
   for (let r = 0; r < gs; r++) {
     for (let c = 0; c < gs; c++) {
       const pop = data.pops[r][c];
@@ -857,53 +997,118 @@ function renderMap() {
       const biome = data.biomes[r][c];
       const maxPop = data.max_pop || 1;
 
-      // Base tile color from biome with elevation-based variation
+      // Base color from biome
       const bc = BIOME_COLORS[biome] || [30, 20, 10];
-      const ev = elev * 0.3; // subtle elevation shading
-      const baseR = bc[0] + ev * 30;
-      const baseG = bc[1] + ev * 20;
-      const baseB = bc[2] + ev * 15;
+      let tr = bc[0] + elev * 25;
+      let tg = bc[1] + elev * 18;
+      let tb = bc[2] + elev * 12;
 
-      const x = c * tw;
-      const y = r * th;
-
-      // Draw base biome
-      mapCtx.fillStyle = `rgb(${baseR|0},${baseG|0},${baseB|0})`;
-      mapCtx.fillRect(x, y, tw - 1, th - 1);
-
-      // Draw species density overlay
+      // Species density overlay — blend into tile color
       if (pop > 0) {
         const intensity = Math.min(1, pop / (maxPop * 0.7));
-        // Use variant color if speciated
         const tileColor = (data.speciated && data.variants[r][c] === 1)
           ? SPECIES[si].variantColor : color;
         const rgb = hexToRgb(tileColor);
-        mapCtx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${intensity * 0.8})`;
-        mapCtx.fillRect(x, y, tw - 1, th - 1);
+        const a = intensity * 0.7;
+        tr = tr * (1 - a) + rgb.r * a;
+        tg = tg * (1 - a) + rgb.g * a;
+        tb = tb * (1 - a) + rgb.b * a;
       }
 
-      // Selected tile highlight
+      // Shading: basic directional light
+      let shade = 0.7;
+      if (r > 0 && c > 0) {
+        const hLeft = data.elevations[r][c - 1] || elev;
+        const hUp = data.elevations[r - 1][c] || elev;
+        shade = 0.55 + 0.45 * Math.max(0, Math.min(1, 0.5 + (elev - hLeft) * 2 + (elev - hUp) * 1.5));
+      }
+
+      // Isometric transform
+      const ix = (c - r) * (tileW * 0.5);
+      const iy = (c + r) * (tileH * 0.5);
+      const iz = elev * heightScale;
+      const sx = offsetX + ix;
+      const sy = offsetY + iy - iz;
+
+      // Pillar height — taller columns for higher elevation
+      const pillarH = Math.max(3, iz * 0.2 * (camTilt / 0.5) + 3);
+
+      // Right side face (darker)
+      ctx.fillStyle = `rgb(${tr * shade * 0.45 | 0},${tg * shade * 0.45 | 0},${tb * shade * 0.45 | 0})`;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + tileW * 0.5, sy + tileH * 0.5);
+      ctx.lineTo(sx + tileW * 0.5, sy + tileH * 0.5 + pillarH);
+      ctx.lineTo(sx, sy + pillarH);
+      ctx.fill();
+
+      // Left side face (darkest)
+      ctx.fillStyle = `rgb(${tr * shade * 0.3 | 0},${tg * shade * 0.3 | 0},${tb * shade * 0.3 | 0})`;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx - tileW * 0.5, sy + tileH * 0.5);
+      ctx.lineTo(sx - tileW * 0.5, sy + tileH * 0.5 + pillarH);
+      ctx.lineTo(sx, sy + pillarH);
+      ctx.fill();
+
+      // Top face
+      ctx.fillStyle = `rgb(${tr * shade | 0},${tg * shade | 0},${tb * shade | 0})`;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - tileH * 0.5);
+      ctx.lineTo(sx + tileW * 0.5, sy);
+      ctx.lineTo(sx, sy + tileH * 0.5);
+      ctx.lineTo(sx - tileW * 0.5, sy);
+      ctx.closePath();
+      ctx.fill();
+
+      // Water shimmer for deep/shallow tiles
+      if (biome === 'deep_water' || biome === 'shallow_marsh') {
+        const shimmer = biome === 'deep_water' ? 0.2 : 0.1;
+        ctx.fillStyle = `rgba(20, 50, 80, ${shimmer})`;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - tileH * 0.5);
+        ctx.lineTo(sx + tileW * 0.5, sy);
+        ctx.lineTo(sx, sy + tileH * 0.5);
+        ctx.lineTo(sx - tileW * 0.5, sy);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Grid lines on top face
+      ctx.strokeStyle = 'rgba(221,193,101,0.08)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - tileH * 0.5);
+      ctx.lineTo(sx + tileW * 0.5, sy);
+      ctx.lineTo(sx, sy + tileH * 0.5);
+      ctx.lineTo(sx - tileW * 0.5, sy);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Selected tile glow
       if (selectedTile && selectedTile.r === r && selectedTile.c === c) {
-        mapCtx.strokeStyle = '#FFE9A3';
-        mapCtx.lineWidth = 2;
-        mapCtx.strokeRect(x + 1, y + 1, tw - 3, th - 3);
+        ctx.strokeStyle = '#FFE9A3';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - tileH * 0.5);
+        ctx.lineTo(sx + tileW * 0.5, sy);
+        ctx.lineTo(sx, sy + tileH * 0.5);
+        ctx.lineTo(sx - tileW * 0.5, sy);
+        ctx.closePath();
+        ctx.stroke();
+        // Glow overlay
+        ctx.fillStyle = 'rgba(255,233,163,0.15)';
+        ctx.fill();
       }
     }
   }
 
-  // Draw grid lines (very subtle)
-  mapCtx.strokeStyle = 'rgba(61,42,16,0.3)';
-  mapCtx.lineWidth = 0.5;
-  for (let i = 0; i <= gs; i++) {
-    mapCtx.beginPath();
-    mapCtx.moveTo(i * tw, 0);
-    mapCtx.lineTo(i * tw, h);
-    mapCtx.stroke();
-    mapCtx.beginPath();
-    mapCtx.moveTo(0, i * th);
-    mapCtx.lineTo(w, i * th);
-    mapCtx.stroke();
-  }
+  // Vignette
+  const grad = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.min(w, h) * 0.7);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(1, 'rgba(26,13,0,0.5)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
 }
 
 // ── RENDER SPECIES LIST ──
