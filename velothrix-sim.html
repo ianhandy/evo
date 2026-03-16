@@ -827,21 +827,33 @@ function renderMap() {
   const dataJson = pyodide.runPython(`get_map_data(${si})`);
   const data = JSON.parse(dataJson);
 
+  // Biome base colors: [r, g, b]
+  const BIOME_COLORS = {
+    deep_water:    [15, 30, 60],
+    shallow_marsh: [25, 50, 35],
+    reed_beds:     [40, 55, 25],
+    tidal_flats:   [55, 45, 30],
+    rocky_shore:   [65, 50, 40],
+  };
+
   for (let r = 0; r < gs; r++) {
     for (let c = 0; c < gs; c++) {
       const pop = data.pops[r][c];
       const elev = data.elevations[r][c];
+      const biome = data.biomes[r][c];
       const maxPop = data.max_pop || 1;
 
-      // Base tile color from elevation
-      const baseR = 26 + elev * 20;
-      const baseG = 13 + elev * 15;
-      const baseB = 0 + elev * 8;
+      // Base tile color from biome with elevation-based variation
+      const bc = BIOME_COLORS[biome] || [30, 20, 10];
+      const ev = elev * 0.3; // subtle elevation shading
+      const baseR = bc[0] + ev * 30;
+      const baseG = bc[1] + ev * 20;
+      const baseB = bc[2] + ev * 15;
 
       const x = c * tw;
       const y = r * th;
 
-      // Draw base
+      // Draw base biome
       mapCtx.fillStyle = `rgb(${baseR|0},${baseG|0},${baseB|0})`;
       mapCtx.fillRect(x, y, tw - 1, th - 1);
 
@@ -1363,22 +1375,116 @@ speciation_events = {}
 
 grid = []
 
+TERRAIN_SEED = None  # Set to an int for reproducible maps, None for random
+
+# Biome thresholds
+BIOME_DEEP_WATER = 0.2
+BIOME_SHALLOW_MARSH = 0.4
+BIOME_REED_BEDS = 0.5
+BIOME_TIDAL_FLATS = 0.7
+
+def _hash_noise(ix, iy, seed):
+    """Integer hash-based pseudo-random for value noise."""
+    n = ix * 374761393 + iy * 668265263 + seed * 1274126177
+    n = (n ^ (n >> 13)) * 1274126177
+    n = n ^ (n >> 16)
+    return (n & 0x7fffffff) / 0x7fffffff
+
+def _value_noise(x, y, seed):
+    """Smoothed value noise with bicubic-ish interpolation."""
+    ix = int(math.floor(x))
+    iy = int(math.floor(y))
+    fx = x - ix
+    fy = y - iy
+    # Smoothstep
+    fx = fx * fx * (3 - 2 * fx)
+    fy = fy * fy * (3 - 2 * fy)
+    n00 = _hash_noise(ix, iy, seed)
+    n10 = _hash_noise(ix + 1, iy, seed)
+    n01 = _hash_noise(ix, iy + 1, seed)
+    n11 = _hash_noise(ix + 1, iy + 1, seed)
+    nx0 = n00 * (1 - fx) + n10 * fx
+    nx1 = n01 * (1 - fx) + n11 * fx
+    return nx0 * (1 - fy) + nx1 * fy
+
+def _octave_noise(x, y, seed, octaves=4, lacunarity=2.0, persistence=0.5):
+    """Multi-octave value noise returning 0-1."""
+    total = 0.0
+    amplitude = 1.0
+    frequency = 1.0
+    max_val = 0.0
+    for i in range(octaves):
+        total += _value_noise(x * frequency, y * frequency, seed + i * 31) * amplitude
+        max_val += amplitude
+        amplitude *= persistence
+        frequency *= lacunarity
+    return total / max_val
+
 def generate_elevation():
-    """Simple value noise for terrain."""
+    """Multi-octave value noise terrain with water bodies and ridges."""
+    seed = TERRAIN_SEED if TERRAIN_SEED is not None else random.randint(0, 999999)
     elev = [[0.0]*GRID_SIZE for _ in range(GRID_SIZE)]
-    # Use midpoint displacement-like approach
-    random.seed(42)  # Reproducible
-    # Place some random control points
+    scale = 0.35  # Controls feature size relative to grid
+
+    # Generate raw noise
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
-            # Distance from center creates a basin (marsh in center, shores at edges)
-            cx, cy = GRID_SIZE/2, GRID_SIZE/2
-            dist = math.sqrt((r-cx)**2 + (c-cy)**2) / (GRID_SIZE * 0.7)
-            base = 0.3 + dist * 0.5
-            noise = random.uniform(-0.15, 0.15)
-            elev[r][c] = max(0.0, min(1.0, base + noise))
-    random.seed()  # Unseed
+            nx = c * scale
+            ny = r * scale
+            # Base terrain: multi-octave noise
+            base = _octave_noise(nx, ny, seed, octaves=4, persistence=0.45)
+            # Ridge layer: fold noise to create ridge lines
+            ridge = _octave_noise(nx + 50, ny + 50, seed + 100, octaves=3, persistence=0.5)
+            ridge = 1.0 - abs(ridge * 2 - 1)  # Fold into ridges
+            ridge = ridge * ridge  # Sharpen ridges
+            # Combine: base terrain + subtle ridge influence
+            combined = base * 0.7 + ridge * 0.3
+            # Basin effect: lower center to create water body
+            cx, cy = GRID_SIZE / 2.0, GRID_SIZE / 2.0
+            dist = math.sqrt((r - cy)**2 + (c - cx)**2) / (GRID_SIZE * 0.6)
+            basin = max(0, 1.0 - dist * dist) * 0.25
+            combined = combined - basin
+            elev[r][c] = combined
+
+    # Normalize to 0-1
+    flat = [elev[r][c] for r in range(GRID_SIZE) for c in range(GRID_SIZE)]
+    lo, hi = min(flat), max(flat)
+    span = hi - lo if hi > lo else 1.0
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            elev[r][c] = (elev[r][c] - lo) / span
+
+    # Flood-fill to connect low regions into water bodies
+    # Push lowest 20% of tiles further down to form coherent water
+    threshold = sorted(flat)[max(1, len(flat) // 5)]
+    threshold_norm = (threshold - lo) / span
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            if elev[r][c] < threshold_norm:
+                elev[r][c] = elev[r][c] * 0.7  # Deepen low areas
+
+    # Re-normalize after deepening
+    flat2 = [elev[r][c] for r in range(GRID_SIZE) for c in range(GRID_SIZE)]
+    lo2, hi2 = min(flat2), max(flat2)
+    span2 = hi2 - lo2 if hi2 > lo2 else 1.0
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            elev[r][c] = (elev[r][c] - lo2) / span2
+
     return elev
+
+def get_biome(elev):
+    """Classify elevation into biome type."""
+    if elev < BIOME_DEEP_WATER:
+        return 'deep_water'
+    elif elev < BIOME_SHALLOW_MARSH:
+        return 'shallow_marsh'
+    elif elev < BIOME_REED_BEDS:
+        return 'reed_beds'
+    elif elev < BIOME_TIDAL_FLATS:
+        return 'tidal_flats'
+    else:
+        return 'rocky_shore'
 
 def init_grid():
     global grid
@@ -1400,34 +1506,15 @@ def init_grid():
                 'trait_var': [0.01]*NUM_SPECIES,
             }
 
-            # Set initial populations based on habitat
-            # Velothrix: prefer mid elevation (0.3-0.7)
-            if 0.2 < elev < 0.8:
-                tile['pops'][VELOTHRIX] = int(BASE_K[VELOTHRIX] * random.uniform(0.4, 0.7))
-            else:
-                tile['pops'][VELOTHRIX] = int(BASE_K[VELOTHRIX] * random.uniform(0.05, 0.2))
-
-            # Leviathan: prefer low elevation (deep water)
-            if elev < 0.5:
-                tile['pops'][LEVIATHAN] = int(BASE_K[LEVIATHAN] * random.uniform(0.3, 0.6))
-            else:
-                tile['pops'][LEVIATHAN] = int(BASE_K[LEVIATHAN] * random.uniform(0.0, 0.1))
-
-            # Crawler: prefer mid-low (reeds)
-            if 0.25 < elev < 0.65:
-                tile['pops'][CRAWLER] = int(BASE_K[CRAWLER] * random.uniform(0.3, 0.6))
-            else:
-                tile['pops'][CRAWLER] = int(BASE_K[CRAWLER] * random.uniform(0.05, 0.15))
-
-            # Crab: prefer high elevation (shores)
-            if elev > 0.5:
-                tile['pops'][CRAB] = int(BASE_K[CRAB] * random.uniform(0.3, 0.6))
-            else:
-                tile['pops'][CRAB] = int(BASE_K[CRAB] * random.uniform(0.0, 0.1))
-
-            # Worm: everywhere, prefer wet
-            water_factor = tile['water']
-            tile['pops'][WORM] = int(BASE_K[WORM] * water_factor * random.uniform(0.3, 0.7))
+            # Set initial populations based on biome suitability
+            for s in range(NUM_SPECIES):
+                suit = habitat_suitability(elev, s)
+                if suit > 0.5:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.4, 0.7))
+                elif suit > 0.1:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.1, 0.3))
+                else:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.0, 0.1))
 
             # Initial trait values with slight spatial variation
             for s in range(NUM_SPECIES):
@@ -1440,22 +1527,64 @@ def init_grid():
 init_grid()
 
 def habitat_suitability(elev, species_idx):
-    """Returns 0-1 suitability for species at given elevation."""
+    """Returns 0-1 suitability for species at given elevation/biome."""
+    biome = get_biome(elev)
     if species_idx == VELOTHRIX:
-        # Peak at 0.5
-        return max(0, 1.0 - abs(elev - 0.5) * 2.5)
+        # Prime habitat: shallow marsh (0.2-0.4)
+        if biome == 'shallow_marsh':
+            return 1.0
+        elif biome == 'reed_beds':
+            return 0.6
+        elif biome == 'tidal_flats':
+            return 0.3
+        elif biome == 'deep_water':
+            return 0.15
+        else:
+            return 0.1
     elif species_idx == LEVIATHAN:
-        # Prefer low (deep water)
-        return max(0, 1.0 - elev * 1.8)
+        # Deep water territory (< 0.2)
+        if biome == 'deep_water':
+            return 1.0
+        elif biome == 'shallow_marsh':
+            return 0.4
+        elif biome == 'reed_beds':
+            return 0.1
+        else:
+            return 0.0
     elif species_idx == CRAWLER:
-        # Peak at 0.4
-        return max(0, 1.0 - abs(elev - 0.4) * 2.5)
+        # Reed beds territory (0.3-0.5)
+        if biome == 'reed_beds':
+            return 1.0
+        elif biome == 'shallow_marsh':
+            return 0.5
+        elif biome == 'tidal_flats':
+            return 0.4
+        elif biome == 'deep_water':
+            return 0.05
+        else:
+            return 0.2
     elif species_idx == CRAB:
-        # Prefer high (shores)
-        return max(0, elev * 1.5 - 0.2)
+        # Rocky shore territory (0.7+)
+        if biome == 'rocky_shore':
+            return 1.0
+        elif biome == 'tidal_flats':
+            return 0.6
+        elif biome == 'reed_beds':
+            return 0.2
+        else:
+            return 0.05
     elif species_idx == WORM:
-        # Everywhere but slightly prefer wet
-        return max(0.2, 1.0 - elev * 0.5)
+        # Everywhere, prefer wet areas
+        if biome == 'deep_water':
+            return 0.9
+        elif biome == 'shallow_marsh':
+            return 1.0
+        elif biome == 'reed_beds':
+            return 0.7
+        elif biome == 'tidal_flats':
+            return 0.4
+        else:
+            return 0.25
     return 0.5
 
 def get_season():
@@ -1854,6 +1983,7 @@ def get_tile_trait(r, c, species_idx):
 def get_map_data(species_idx):
     pops = []
     elevations = []
+    biomes = []
     variants = []  # 0 = no speciation or parent, 1 = variant
     max_pop = 1
     has_speciation = species_idx in speciation_events
@@ -1862,11 +1992,14 @@ def get_map_data(species_idx):
     for r in range(GRID_SIZE):
         pop_row = []
         elev_row = []
+        biome_row = []
         var_row = []
         for c in range(GRID_SIZE):
             p = grid[r][c]['pops'][species_idx]
+            e = grid[r][c]['elevation']
             pop_row.append(p)
-            elev_row.append(grid[r][c]['elevation'])
+            elev_row.append(e)
+            biome_row.append(get_biome(e))
             if has_speciation and p > 0:
                 var_row.append(1 if grid[r][c]['traits'][species_idx] > split_trait else 0)
             else:
@@ -1875,8 +2008,9 @@ def get_map_data(species_idx):
                 max_pop = p
         pops.append(pop_row)
         elevations.append(elev_row)
+        biomes.append(biome_row)
         variants.append(var_row)
-    return json.dumps({'pops': pops, 'elevations': elevations, 'max_pop': max_pop, 'variants': variants, 'speciated': has_speciation})
+    return json.dumps({'pops': pops, 'elevations': elevations, 'biomes': biomes, 'max_pop': max_pop, 'variants': variants, 'speciated': has_speciation})
 
 def get_speciation_info():
     """Return all speciation events for JS."""
