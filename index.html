@@ -74,7 +74,7 @@ body {
   display: none;
   height: 100vh;
   grid-template-columns: 1fr 340px;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr auto auto;
 }
 
 /* ── HEADER ── */
@@ -359,6 +359,65 @@ body {
   height: 160px;
 }
 
+/* ── TIMELINE SCRUBBER ── */
+#timeline-bar {
+  grid-column: 1 / -1;
+  position: relative;
+  background: var(--bg-dark);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 10px;
+}
+#timeline-canvas {
+  flex: 1;
+  height: 28px;
+  cursor: pointer;
+  display: block;
+}
+#btn-live {
+  display: none;
+  background: var(--orange);
+  border: none;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#btn-live:hover { opacity: 0.85; }
+#timeline-gen-label {
+  color: var(--dim);
+  font-size: 10px;
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.timeline-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 10px;
+  font-family: var(--mono);
+  padding: 4px 8px;
+  border-radius: 3px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+  max-width: 300px;
+}
+
 /* ── EVENT LOG ── */
 #event-log {
   grid-column: 1 / -1;
@@ -389,7 +448,7 @@ body {
 @media (max-width: 768px) {
   #app {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto 1fr auto auto;
     height: 100vh;
   }
 
@@ -586,6 +645,14 @@ body {
     </div>
   </div>
 
+  <!-- TIMELINE SCRUBBER -->
+  <div id="timeline-bar">
+    <canvas id="timeline-canvas"></canvas>
+    <div id="timeline-tooltip" class="timeline-tooltip"></div>
+    <button id="btn-live" onclick="returnToLive()">&#9654; Return to Live</button>
+    <span id="timeline-gen-label"></span>
+  </div>
+
   <!-- EVENT LOG -->
   <div id="event-log">
     <div class="log-entry"><span class="ev-gen">[System]</span> <span class="ev-text">Ecosystem initializing...</span></div>
@@ -607,6 +674,13 @@ let popCanvas, popCtx;
 let traitCanvas, traitCtx;
 let animFrame = null;
 let stepsPerFrame = 1;
+
+// Timeline scrubber state
+let timelineLive = true; // true = showing live state
+let timelineSnapshotIdx = -1; // index into Python snapshots array when scrubbing
+let timelineCanvas, timelineCtx;
+let timelineDragging = false;
+let cachedSnapGens = []; // [{gen, hasEvents}] — refreshed each tick
 
 const SPECIES = [
   { name: 'Velothrix', fullName: 'Velothrix aurantis', color: '#DDC165', trait: 'Crest Brightness' },
@@ -660,14 +734,23 @@ function setupUI() {
   traitCanvas = document.getElementById('trait-chart');
   traitCtx = traitCanvas.getContext('2d');
 
+  // Timeline scrubber
+  timelineCanvas = document.getElementById('timeline-canvas');
+  timelineCtx = timelineCanvas.getContext('2d');
+  setupTimelineInteraction();
+
   mapCanvas.addEventListener('click', onMapClick);
-  window.addEventListener('resize', () => { resizeCanvases(); renderAll(); });
+  window.addEventListener('resize', () => { resizeCanvases(); renderAll(); renderTimeline(); });
 }
 
 function resizeCanvases() {
   const mapArea = document.getElementById('map-area');
   mapCanvas.width = mapArea.clientWidth;
   mapCanvas.height = mapArea.clientHeight;
+
+  // Timeline canvas
+  timelineCanvas.width = timelineCanvas.clientWidth;
+  timelineCanvas.height = timelineCanvas.clientHeight;
 
   const dpr = window.devicePixelRatio || 1;
   for (const c of [popCanvas, traitCanvas]) {
@@ -758,7 +841,10 @@ function togglePlay() {
   playing = !playing;
   const btn = document.getElementById('btn-play');
   btn.textContent = playing ? '⏸ Pause' : '▶ Play';
-  if (playing) tick();
+  if (playing) {
+    if (!timelineLive) returnToLive();
+    tick();
+  }
 }
 
 function setSpeed(s) {
@@ -771,7 +857,7 @@ function setSpeed(s) {
 
 // ── SIM TICK ──
 function tick() {
-  if (!playing) return;
+  if (!playing || !timelineLive) return;
 
   const steps = Math.max(1, Math.floor(stepsPerFrame));
   for (let i = 0; i < steps; i++) {
@@ -813,6 +899,8 @@ function tick() {
   }
 
   renderAll();
+  refreshTimelineData();
+  renderTimeline();
 
   if (speed <= 5) {
     animFrame = requestAnimationFrame(tick);
@@ -843,8 +931,13 @@ function renderMap() {
   const si = selectedSpecies;
   const color = SPECIES[si].color;
 
-  // Get density data
-  const dataJson = pyodide.runPython(`get_map_data(${si})`);
+  // Get density data — historical or live
+  let dataJson;
+  if (!timelineLive && timelineSnapshotIdx >= 0) {
+    dataJson = pyodide.runPython(`get_historical_map_data(${timelineSnapshotIdx}, ${si})`);
+  } else {
+    dataJson = pyodide.runPython(`get_map_data(${si})`);
+  }
   const data = JSON.parse(dataJson);
 
   for (let r = 0; r < gs; r++) {
@@ -1187,6 +1280,201 @@ function renderTraitChart() {
   ctx.fillText('1.0', padL + plotW, h - 2);
 }
 
+// ── TIMELINE SCRUBBER ──
+function refreshTimelineData() {
+  const json = pyodide.runPython('get_snapshot_generations()');
+  cachedSnapGens = JSON.parse(json);
+}
+
+function renderTimeline() {
+  if (!timelineCanvas || cachedSnapGens.length === 0) return;
+  const ctx = timelineCtx;
+  const w = timelineCanvas.width;
+  const h = timelineCanvas.height;
+  if (w === 0) return;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const n = cachedSnapGens.length;
+  const padL = 2, padR = 2;
+  const trackW = w - padL - padR;
+  const trackY = h / 2;
+  const trackH = 4;
+
+  // Track background
+  ctx.fillStyle = '#3d2a10';
+  ctx.fillRect(padL, trackY - trackH / 2, trackW, trackH);
+  ctx.roundRect && ctx.beginPath();
+
+  // Filled portion (up to current position)
+  let fillFrac = 1;
+  if (!timelineLive && timelineSnapshotIdx >= 0 && n > 1) {
+    fillFrac = timelineSnapshotIdx / (n - 1);
+  }
+  ctx.fillStyle = 'rgba(221,193,101,0.4)';
+  ctx.fillRect(padL, trackY - trackH / 2, trackW * fillFrac, trackH);
+
+  // Event markers
+  for (let i = 0; i < n; i++) {
+    if (cachedSnapGens[i].hasEvents) {
+      const x = padL + (i / (n - 1)) * trackW;
+      ctx.fillStyle = '#E5591C';
+      ctx.beginPath();
+      ctx.arc(x, trackY - 6, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Playhead
+  const headX = padL + fillFrac * trackW;
+  ctx.fillStyle = timelineLive ? 'var(--gold)' : '#FFE9A3';
+  ctx.fillStyle = timelineLive ? '#DDC165' : '#FFE9A3';
+  ctx.beginPath();
+  ctx.arc(headX, trackY, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#1A0D00';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Generation labels
+  ctx.fillStyle = '#8a7560';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('Gen ' + cachedSnapGens[0].gen, padL, h - 1);
+  ctx.textAlign = 'right';
+  ctx.fillText('Gen ' + cachedSnapGens[n - 1].gen, w - padR, h - 1);
+
+  // Update gen label
+  const label = document.getElementById('timeline-gen-label');
+  if (timelineLive) {
+    label.textContent = 'LIVE';
+    label.style.color = '#2ECC71';
+  } else if (timelineSnapshotIdx >= 0 && timelineSnapshotIdx < n) {
+    label.textContent = 'Gen ' + cachedSnapGens[timelineSnapshotIdx].gen;
+    label.style.color = 'var(--gold-light)';
+  }
+
+  // Show/hide live button
+  document.getElementById('btn-live').style.display = timelineLive ? 'none' : 'block';
+}
+
+function setupTimelineInteraction() {
+  const canvas = timelineCanvas;
+
+  function snapIdxFromX(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const frac = Math.max(0, Math.min(1, x / rect.width));
+    const n = cachedSnapGens.length;
+    if (n === 0) return -1;
+    return Math.round(frac * (n - 1));
+  }
+
+  canvas.addEventListener('mousedown', (e) => {
+    if (cachedSnapGens.length < 2) return;
+    timelineDragging = true;
+    const idx = snapIdxFromX(e.clientX);
+    scrubTo(idx);
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!timelineDragging) {
+      // Hover tooltip for event markers
+      handleTimelineHover(e);
+      return;
+    }
+    const idx = snapIdxFromX(e.clientX);
+    scrubTo(idx);
+  });
+
+  window.addEventListener('mouseup', () => {
+    timelineDragging = false;
+  });
+
+  // Touch support
+  canvas.addEventListener('touchstart', (e) => {
+    if (cachedSnapGens.length < 2) return;
+    e.preventDefault();
+    timelineDragging = true;
+    const idx = snapIdxFromX(e.touches[0].clientX);
+    scrubTo(idx);
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (!timelineDragging) return;
+    e.preventDefault();
+    const idx = snapIdxFromX(e.touches[0].clientX);
+    scrubTo(idx);
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', () => {
+    timelineDragging = false;
+  });
+}
+
+function handleTimelineHover(e) {
+  const tooltip = document.getElementById('timeline-tooltip');
+  const rect = timelineCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const n = cachedSnapGens.length;
+  if (n < 2 || x < 0 || x > rect.width) {
+    tooltip.style.display = 'none';
+    return;
+  }
+
+  const frac = x / rect.width;
+  const idx = Math.round(frac * (n - 1));
+  if (idx >= 0 && idx < n && cachedSnapGens[idx].hasEvents) {
+    const evJson = pyodide.runPython(`get_snapshot_events(${idx})`);
+    const evs = JSON.parse(evJson);
+    if (evs.length > 0) {
+      const text = evs.map(ev => `[Gen ${ev.gen}] ${ev.text}`).join('<br>');
+      tooltip.innerHTML = text;
+      tooltip.style.display = 'block';
+      tooltip.style.left = Math.min(rect.width - 150, Math.max(0, x - 50)) + 'px';
+      return;
+    }
+  }
+  tooltip.style.display = 'none';
+}
+
+function scrubTo(idx) {
+  if (idx < 0 || cachedSnapGens.length === 0) return;
+  const n = cachedSnapGens.length;
+  idx = Math.max(0, Math.min(n - 1, idx));
+
+  // If scrubbing to the last snapshot (present), return to live
+  if (idx === n - 1) {
+    returnToLive();
+    return;
+  }
+
+  timelineLive = false;
+  timelineSnapshotIdx = idx;
+
+  // Update gen counter to show historical gen
+  document.getElementById('gen-num').textContent = cachedSnapGens[idx].gen.toLocaleString();
+
+  renderMap();
+  renderTimeline();
+}
+
+function returnToLive() {
+  timelineLive = true;
+  timelineSnapshotIdx = -1;
+  document.getElementById('timeline-tooltip').style.display = 'none';
+
+  // Restore live gen counter
+  const gen = pyodide.runPython('generation');
+  document.getElementById('gen-num').textContent = gen.toLocaleString();
+
+  renderAll();
+  renderTimeline();
+
+  // Resume ticking if was playing
+  if (playing && !animFrame) tick();
+}
+
 // ── UTIL ──
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -1252,9 +1540,22 @@ SEASON_LENGTH = 100
 SPECIATION_THRESHOLD = 0.3
 SPECIATION_GENS = 100
 
+# ── SNAPSHOT CONFIG ──
+SNAPSHOT_INTERVAL = 10
+MAX_SNAPSHOTS = 500
+
 # ── STATE ──
 generation = 0
 events_buffer = []
+
+# Timeline snapshot ring buffer: list of {gen, pops, traits, events}
+# pops/traits are flat lists: [row0col0_sp0..sp4, row0col1_sp0..sp4, ...]
+snapshots = []
+snapshot_events = []  # events accumulated since last snapshot
+
+def _emit_event(ev):
+    events_buffer.append(ev)
+    snapshot_events.append(ev)
 
 # Per-tile population history ring buffer
 TILE_HISTORY_LEN = 200
@@ -1410,6 +1711,26 @@ def step():
         if len(tile_history[key]) > TILE_HISTORY_LEN:
             tile_history[key] = tile_history[key][-TILE_HISTORY_LEN:]
 
+    # 7. Snapshot for timeline scrubber
+    if generation % SNAPSHOT_INTERVAL == 0:
+        flat_pops = []
+        flat_traits = []
+        for r3 in range(GRID_SIZE):
+            for c3 in range(GRID_SIZE):
+                t = grid[r3][c3]
+                flat_pops.extend(t['pops'])
+                flat_traits.extend(t['traits'])
+        snap = {
+            'gen': generation,
+            'pops': list(flat_pops),
+            'traits': list(flat_traits),
+            'events': list(snapshot_events)
+        }
+        snapshots.append(snap)
+        if len(snapshots) > MAX_SNAPSHOTS:
+            snapshots.pop(0)
+        snapshot_events.clear()
+
 def _check_events(season):
     """Check for random environmental events."""
     if random.random() < DROUGHT_PROB:
@@ -1422,7 +1743,7 @@ def _check_events(season):
                 grid[r][c]['food'] *= 0.4
                 grid[r][c]['water'] *= 0.5
         region = "eastern" if cc > GRID_SIZE//2 else "western"
-        events_buffer.append({
+        _emit_event({
             'gen': generation,
             'text': f'Drought in {region} marsh — food and water levels dropping'
         })
@@ -1438,7 +1759,7 @@ def _check_events(season):
                 grid[r][c]['pops'][CRAB] = int(grid[r][c]['pops'][CRAB] * 0.7)
                 grid[r][c]['pops'][CRAWLER] = int(grid[r][c]['pops'][CRAWLER] * 0.8)
         region = "northern" if cr < GRID_SIZE//2 else "southern"
-        events_buffer.append({
+        _emit_event({
             'gen': generation,
             'text': f'Flooding in {region} tidal flats — water levels surging'
         })
@@ -1450,7 +1771,7 @@ def _check_events(season):
         for r in range(GRID_SIZE):
             for c in range(GRID_SIZE):
                 grid[r][c]['pops'][target] = int(grid[r][c]['pops'][target] * 0.85)
-        events_buffer.append({
+        _emit_event({
             'gen': generation,
             'text': f'Disease outbreak affecting {names[target]} population'
         })
@@ -1679,7 +2000,7 @@ def _check_speciation():
                 sorted_traits = sorted(traits_by_tile, key=lambda x: x[2])
                 low_region = sorted_traits[0]
                 high_region = sorted_traits[-1]
-                events_buffer.append({
+                _emit_event({
                     'gen': generation,
                     'text': f'{names[s]} population split detected — variant near ({low_region[0]},{low_region[1]}) has {trait_names[s]} {low_region[2]:.2f} vs ({high_region[0]},{high_region[1]}) at {high_region[2]:.2f}'
                 })
@@ -1696,12 +2017,12 @@ def _check_speciation():
         if expected > 0:
             ratio = total / expected
             if ratio > 2.0:
-                events_buffer.append({
+                _emit_event({
                     'gen': generation,
                     'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)'
                 })
             elif ratio < 0.2 and total > 0:
-                events_buffer.append({
+                _emit_event({
                     'gen': generation,
                     'text': f'{names[s]} population critically low — only {total} individuals remain'
                 })
@@ -1789,6 +2110,45 @@ def untrack_tile(r, c):
 def get_tile_history(r, c):
     key = (r, c)
     return json.dumps(tile_history.get(key, []))
+
+def get_snapshot_count():
+    return len(snapshots)
+
+def get_snapshot_generations():
+    """Return list of {gen, hasEvents} for all snapshots."""
+    result = []
+    for s in snapshots:
+        result.append({'gen': s['gen'], 'hasEvents': len(s['events']) > 0})
+    return json.dumps(result)
+
+def get_snapshot_events(idx):
+    """Return events for a specific snapshot."""
+    if 0 <= idx < len(snapshots):
+        return json.dumps(snapshots[idx]['events'])
+    return '[]'
+
+def get_historical_map_data(snapshot_idx, species_idx):
+    """Return map data from a historical snapshot."""
+    if snapshot_idx < 0 or snapshot_idx >= len(snapshots):
+        return json.dumps({'pops': [], 'elevations': [], 'max_pop': 1, 'gen': 0})
+    snap = snapshots[snapshot_idx]
+    pops = []
+    elevations = []
+    max_pop = 1
+    stride = NUM_SPECIES
+    for r in range(GRID_SIZE):
+        pop_row = []
+        elev_row = []
+        for c in range(GRID_SIZE):
+            offset = (r * GRID_SIZE + c) * stride
+            p = snap['pops'][offset + species_idx]
+            pop_row.append(p)
+            elev_row.append(grid[r][c]['elevation'])
+            if p > max_pop:
+                max_pop = p
+        pops.append(pop_row)
+        elevations.append(elev_row)
+    return json.dumps({'pops': pops, 'elevations': elevations, 'max_pop': max_pop, 'gen': snap['gen']})
 
 def get_and_clear_events():
     global events_buffer
