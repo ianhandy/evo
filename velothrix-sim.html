@@ -233,6 +233,12 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .species-row:last-child { border-bottom: none; }
+.species-variant {
+  padding-left: 16px;
+  border-bottom: none;
+}
+.species-variant + .species-variant { padding-top: 0; }
+.sp-variant-name { font-style: italic; font-size: 9px; }
 .sp-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
@@ -285,6 +291,15 @@ body {
 }
 #event-log .log-entry .ev-gen { color: var(--gold); }
 #event-log .log-entry .ev-text { color: var(--text); }
+#event-log .log-entry.speciation-event {
+  background: rgba(221,193,101,0.1);
+  border-left: 3px solid var(--gold);
+  padding: 4px 8px;
+  margin: 4px 0;
+  font-size: 11px;
+}
+#event-log .log-entry.speciation-event .ev-gen { color: #FFE9A3; font-weight: 700; }
+#event-log .log-entry.speciation-event .ev-text { color: var(--gold-light); }
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 6px; }
@@ -518,11 +533,11 @@ let animFrame = null;
 let stepsPerFrame = 1;
 
 const SPECIES = [
-  { name: 'Velothrix', fullName: 'Velothrix aurantis', color: '#DDC165', trait: 'Crest Brightness' },
-  { name: 'Leviathan', fullName: 'Kelp Leviathan', color: '#C0392B', trait: 'Hunting Range' },
-  { name: 'Crawler', fullName: 'Reed Crawler', color: '#2ECC71', trait: 'Burrowing Depth' },
-  { name: 'Crab', fullName: 'Tidal Crab', color: '#E5591C', trait: 'Shell Thickness' },
-  { name: 'Worm', fullName: 'Bioluminescent Worm', color: '#9B59B6', trait: 'Glow Intensity' }
+  { name: 'Velothrix', fullName: 'Velothrix aurantis', color: '#DDC165', trait: 'Crest Brightness', variantColor: '#CC8833' },
+  { name: 'Leviathan', fullName: 'Kelp Leviathan', color: '#C0392B', trait: 'Hunting Range', variantColor: '#E06040' },
+  { name: 'Crawler', fullName: 'Reed Crawler', color: '#2ECC71', trait: 'Burrowing Depth', variantColor: '#1A9050' },
+  { name: 'Crab', fullName: 'Tidal Crab', color: '#E5591C', trait: 'Shell Thickness', variantColor: '#CC9944' },
+  { name: 'Worm', fullName: 'Bioluminescent Worm', color: '#9B59B6', trait: 'Glow Intensity', variantColor: '#6E3FA0' }
 ];
 
 const MAX_HISTORY = 200;
@@ -680,12 +695,14 @@ function tick() {
     const feed = document.getElementById('event-feed');
     const log = document.getElementById('event-log');
     events.forEach(ev => {
+      const isSpeciation = ev.speciation === true;
       const feedDiv = document.createElement('div');
       feedDiv.innerHTML = `<span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text">${ev.text}</span>`;
+      if (isSpeciation) feedDiv.style.color = 'var(--gold-light)';
       feed.appendChild(feedDiv);
 
       const logDiv = document.createElement('div');
-      logDiv.className = 'log-entry';
+      logDiv.className = 'log-entry' + (isSpeciation ? ' speciation-event' : '');
       logDiv.innerHTML = feedDiv.innerHTML;
       log.appendChild(logDiv);
     });
@@ -751,7 +768,10 @@ function renderMap() {
       // Draw species density overlay
       if (pop > 0) {
         const intensity = Math.min(1, pop / (maxPop * 0.7));
-        const rgb = hexToRgb(color);
+        // Use variant color if speciated
+        const tileColor = (data.speciated && data.variants[r][c] === 1)
+          ? SPECIES[si].variantColor : color;
+        const rgb = hexToRgb(tileColor);
         mapCtx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${intensity * 0.8})`;
         mapCtx.fillRect(x, y, tw - 1, th - 1);
       }
@@ -785,24 +805,67 @@ function renderSpeciesList() {
   const listEl = document.getElementById('species-list');
   let html = '';
 
+  // Fetch speciation info once
+  const specInfoJson = pyodide.runPython('get_speciation_info()');
+  const specInfo = JSON.parse(specInfoJson);
+
   if (panelMode === 'global') {
     for (let s = 0; s < 5; s++) {
       const pop = pyodide.runPython(`get_global_pop(${s})`);
       const trait = pyodide.runPython(`get_global_trait(${s})`);
-      html += `<div class="species-row">
-        <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
-        <div class="sp-name">${SPECIES[s].fullName}</div>
-        <div class="sp-pop">${pop}</div>
-        <div class="sp-trait">${trait.toFixed(3)}</div>
-      </div>`;
+      const info = specInfo[String(s)];
+
+      if (info) {
+        // Show parent species row
+        html += `<div class="species-row">
+          <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
+          <div class="sp-name">${SPECIES[s].fullName}</div>
+          <div class="sp-pop">${pop}</div>
+          <div class="sp-trait">${trait.toFixed(3)}</div>
+        </div>`;
+        // Variant sub-entries
+        html += `<div class="species-row species-variant">
+          <div class="sp-dot" style="background:${SPECIES[s].color}; width:6px; height:6px;"></div>
+          <div class="sp-name sp-variant-name">${info.parent_name}</div>
+          <div class="sp-pop">${info.parent_pop}</div>
+          <div class="sp-trait">${info.parent_trait.toFixed(3)}</div>
+        </div>`;
+        html += `<div class="species-row species-variant">
+          <div class="sp-dot" style="background:${SPECIES[s].variantColor}; width:6px; height:6px;"></div>
+          <div class="sp-name sp-variant-name">${info.variant_name}</div>
+          <div class="sp-pop">${info.variant_pop}</div>
+          <div class="sp-trait">${info.variant_trait.toFixed(3)}</div>
+        </div>`;
+      } else {
+        html += `<div class="species-row">
+          <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
+          <div class="sp-name">${SPECIES[s].fullName}</div>
+          <div class="sp-pop">${pop}</div>
+          <div class="sp-trait">${trait.toFixed(3)}</div>
+        </div>`;
+      }
     }
   } else if (selectedTile) {
     for (let s = 0; s < 5; s++) {
       const pop = pyodide.runPython(`get_tile_pop(${selectedTile.r},${selectedTile.c},${s})`);
       const trait = pyodide.runPython(`get_tile_trait(${selectedTile.r},${selectedTile.c},${s})`);
+      const info = specInfo[String(s)];
+
+      // Determine variant color for this tile
+      let dotColor = SPECIES[s].color;
+      let tileName = SPECIES[s].name;
+      if (info && pop > 0) {
+        if (trait > info.split_trait) {
+          dotColor = SPECIES[s].variantColor;
+          tileName = info.variant_name;
+        } else {
+          tileName = info.parent_name;
+        }
+      }
+
       html += `<div class="species-row">
-        <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
-        <div class="sp-name">${SPECIES[s].name}</div>
+        <div class="sp-dot" style="background:${dotColor}"></div>
+        <div class="sp-name">${tileName}</div>
         <div class="sp-pop">${pop}</div>
         <div class="sp-trait">${trait.toFixed(3)}</div>
       </div>`;
@@ -987,6 +1050,16 @@ SPECIATION_GENS = 100
 # ── STATE ──
 generation = 0
 events_buffer = []
+
+# Persistent speciation state: species_idx -> {
+#   'split_trait': float,       # trait value where the split occurred
+#   'gen': int,                 # generation when speciation was detected
+#   'variant_name': str,        # name for the new variant
+#   'parent_name': str,         # name for the original variant
+#   'variant_color': str,       # hex color for the new variant
+#   'parent_color': str,        # hex color for the parent
+# }
+speciation_events = {}
 
 # Grid state: [row][col] -> tile
 # Each tile: {
@@ -1374,7 +1447,22 @@ trait_divergence_counter = {}
 
 def _check_speciation():
     """Check if any species has diverged enough to speciate."""
+    global speciation_events
+    names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
+    trait_names = ['crest brightness', 'hunting range', 'burrowing depth', 'shell thickness', 'glow intensity']
+    variant_suffixes = [
+        ('aurantis', 'amberi'),
+        ('major', 'minor'),
+        ('viridis', 'pallida'),
+        ('robusta', 'gracilis'),
+        ('lucens', 'obscura'),
+    ]
+
     for s in range(NUM_SPECIES):
+        # Skip species that have already speciated
+        if s in speciation_events:
+            continue
+
         # Collect traits across all tiles with population
         traits_by_tile = []
         for r in range(GRID_SIZE):
@@ -1393,17 +1481,37 @@ def _check_speciation():
         if max_diff > SPECIATION_THRESHOLD:
             trait_divergence_counter[key] = trait_divergence_counter.get(key, 0) + 50  # we check every 50 gens
             if trait_divergence_counter[key] >= SPECIATION_GENS:
-                names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
-                trait_names = ['crest brightness', 'hunting range', 'burrowing depth', 'shell thickness', 'glow intensity']
-                # Find where the split is
+                # Find the median trait to determine the split point
                 sorted_traits = sorted(traits_by_tile, key=lambda x: x[2])
+                mid = len(sorted_traits) // 2
+                split_trait = (sorted_traits[mid-1][2] + sorted_traits[mid][2]) / 2.0
+
                 low_region = sorted_traits[0]
                 high_region = sorted_traits[-1]
+
+                # Compute geographic centers for each variant
+                low_tiles = [(r, c) for r, c, t in sorted_traits if t <= split_trait]
+                high_tiles = [(r, c) for r, c, t in sorted_traits if t > split_trait]
+                low_center = f"({sum(r for r,c in low_tiles)//max(1,len(low_tiles))},{sum(c for r,c in low_tiles)//max(1,len(low_tiles))})"
+                high_center = f"({sum(r for r,c in high_tiles)//max(1,len(high_tiles))},{sum(c for r,c in high_tiles)//max(1,len(high_tiles))})"
+
+                parent_suffix, variant_suffix = variant_suffixes[s]
+
+                # Store permanent speciation state
+                speciation_events[s] = {
+                    'split_trait': split_trait,
+                    'gen': generation,
+                    'parent_name': f'{names[s]} {parent_suffix}',
+                    'variant_name': f'{names[s]} {variant_suffix}',
+                }
+
+                # Fire prominent speciation event
                 events_buffer.append({
                     'gen': generation,
-                    'text': f'{names[s]} population split detected — variant near ({low_region[0]},{low_region[1]}) has {trait_names[s]} {low_region[2]:.2f} vs ({high_region[0]},{high_region[1]}) at {high_region[2]:.2f}'
+                    'text': f'⚡ SPECIATION: {names[s]} has split into two species! {names[s]} {parent_suffix} ({trait_names[s]} ≤{split_trait:.2f}, centered {low_center}, {len(low_tiles)} tiles) vs {names[s]} {variant_suffix} ({trait_names[s]} >{split_trait:.2f}, centered {high_center}, {len(high_tiles)} tiles). Divergence sustained for {SPECIATION_GENS}+ generations.',
+                    'speciation': True
                 })
-                trait_divergence_counter[key] = 0  # Reset to avoid spam
+                trait_divergence_counter[key] = 0
         else:
             trait_divergence_counter[key] = 0
 
@@ -1457,19 +1565,68 @@ def get_tile_trait(r, c, species_idx):
 def get_map_data(species_idx):
     pops = []
     elevations = []
+    variants = []  # 0 = no speciation or parent, 1 = variant
     max_pop = 1
+    has_speciation = species_idx in speciation_events
+    split_trait = speciation_events[species_idx]['split_trait'] if has_speciation else 0
+
     for r in range(GRID_SIZE):
         pop_row = []
         elev_row = []
+        var_row = []
         for c in range(GRID_SIZE):
             p = grid[r][c]['pops'][species_idx]
             pop_row.append(p)
             elev_row.append(grid[r][c]['elevation'])
+            if has_speciation and p > 0:
+                var_row.append(1 if grid[r][c]['traits'][species_idx] > split_trait else 0)
+            else:
+                var_row.append(0)
             if p > max_pop:
                 max_pop = p
         pops.append(pop_row)
         elevations.append(elev_row)
-    return json.dumps({'pops': pops, 'elevations': elevations, 'max_pop': max_pop})
+        variants.append(var_row)
+    return json.dumps({'pops': pops, 'elevations': elevations, 'max_pop': max_pop, 'variants': variants, 'speciated': has_speciation})
+
+def get_speciation_info():
+    """Return all speciation events for JS."""
+    result = {}
+    names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
+    for s, info in speciation_events.items():
+        # Compute per-variant stats
+        parent_pop = 0
+        parent_trait_sum = 0.0
+        parent_tiles = []
+        variant_pop = 0
+        variant_trait_sum = 0.0
+        variant_tiles = []
+        for r in range(GRID_SIZE):
+            for c in range(GRID_SIZE):
+                p = grid[r][c]['pops'][s]
+                if p > 0:
+                    t = grid[r][c]['traits'][s]
+                    if t > info['split_trait']:
+                        variant_pop += p
+                        variant_trait_sum += t * p
+                        variant_tiles.append(f'{r},{c}')
+                    else:
+                        parent_pop += p
+                        parent_trait_sum += t * p
+                        parent_tiles.append(f'{r},{c}')
+        result[str(s)] = {
+            'parent_name': info['parent_name'],
+            'variant_name': info['variant_name'],
+            'split_trait': info['split_trait'],
+            'gen': info['gen'],
+            'parent_pop': parent_pop,
+            'parent_trait': parent_trait_sum / max(1, parent_pop),
+            'parent_tiles': len(parent_tiles),
+            'variant_pop': variant_pop,
+            'variant_trait': variant_trait_sum / max(1, variant_pop),
+            'variant_tiles': len(variant_tiles),
+        }
+    return json.dumps(result)
 
 def get_trait_histogram(species_idx):
     """Return histogram of trait values across all tiles (weighted by pop)."""
