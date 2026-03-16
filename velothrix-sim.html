@@ -447,12 +447,12 @@
         <button class="preset-btn" data-preset="hard" onclick="loadPreset('hard')">Hard</button>
       </div>
       <div class="god-slider-row slider-row">
-        <div class="slider-label"><span>Food Scarcity</span><span id="v-god-food">0.4</span></div>
-        <input type="range" id="god-food" min="0" max="0.9" step="0.05" value="0.4">
+        <div class="slider-label"><span>Food Scarcity</span><span id="v-god-food">0.3</span></div>
+        <input type="range" id="god-food" min="0" max="0.9" step="0.05" value="0.3">
       </div>
       <div class="god-slider-row slider-row">
         <div class="slider-label"><span>Predator Pressure</span><span id="v-god-pred">0.4</span></div>
-        <input type="range" id="god-pred" min="0.05" max="0.95" step="0.05" value="0.4">
+        <input type="range" id="god-pred" min="0.05" max="0.95" step="0.05" value="0.3">
       </div>
       <div class="god-slider-row slider-row">
         <div class="slider-label"><span>Climate Stress</span><span id="v-god-climate">0</span></div>
@@ -478,11 +478,11 @@
     <div class="param-section">Population</div>
     <div class="slider-row">
       <div class="slider-label"><span>Initial N</span><span id="v-N0">200</span></div>
-      <input type="range" id="N0" min="50" max="800" step="10" value="200">
+      <input type="range" id="N0" min="50" max="800" step="10" value="350">
     </div>
     <div class="slider-row">
       <div class="slider-label"><span>Carrying Capacity K</span><span id="v-K">500</span></div>
-      <input type="range" id="K" min="100" max="2000" step="50" value="500">
+      <input type="range" id="K" min="100" max="2000" step="50" value="800">
     </div>
     <div class="slider-row">
       <div class="slider-label"><span>Growth Rate r</span><span id="v-r">0.22</span></div>
@@ -508,7 +508,7 @@
     </div>
     <div class="slider-row">
       <div class="slider-label"><span>Predator Pressure</span><span id="v-pred_strength">0.4</span></div>
-      <input type="range" id="pred_strength" min="0.1" max="0.9" step="0.05" value="0.4">
+      <input type="range" id="pred_strength" min="0.1" max="0.9" step="0.05" value="0.3">
     </div>
     <div class="slider-row">
       <div class="slider-label"><span>Cycle Length (gens)</span><span id="v-cycle">20</span></div>
@@ -744,48 +744,52 @@ def binomial_sample(n, p):
     return int(clamp(sample, 0, n))
 
 def update_allele_freq(p, s_bright, s_pred, predator, N, mu, mig_rate, p_mig, w12_het):
-    w11 = 1.0 - s_pred if predator else 1.0 + s_bright
+    # Weaker selection coefficients — evolution should be glacially slow
+    sel_scale = 0.3  # dampen all selection by 70%
+    w11 = 1.0 - s_pred * sel_scale if predator else 1.0 + s_bright * sel_scale
     w12 = w12_het
-    w22 = 1.0 + 0.3 if predator else 1.0 - s_bright * 0.4
+    w22 = 1.0 + 0.08 if predator else 1.0 - s_bright * sel_scale * 0.4
     q = 1.0 - p
     wbar = p*p*w11 + 2*p*q*w12 + q*q*w22
     if wbar < 1e-10: wbar = 1e-10
     dp = (p * q * (p * (w11 - w12) + q * (w12 - w22))) / wbar
     p_new = p + dp
     p_new = p_new * (1 - mu) + (1 - p_new) * mu * 0.01
-    p_new = p_new + mig_rate * (p_mig - p_new)
-    succ = binomial_sample(2 * N, clamp(p_new, 0.001, 0.999))
-    return clamp(succ / (2 * N), 0.001, 0.999)
+    p_new = p_new + mig_rate * 0.5 * (p_mig - p_new)
+    # Drift — use larger effective N to dampen stochastic swings
+    eff_N = max(N, 200)  # floor drift at N=200 equivalent
+    succ = binomial_sample(2 * eff_N, clamp(p_new, 0.001, 0.999))
+    return clamp(succ / (2 * eff_N), 0.001, 0.999)
 
 def update_spine(mean, va, N, h2, omega2, theta):
     Vp = va / h2
     S = -va * (mean - theta) / (Vp + omega2)
-    R = h2 * S
-    new_va = clamp(va + 0.05 - va*va/(va + omega2 + Vp), 0.1, 8.0)
-    drift = math.sqrt(max(0, va) / N) * randn() * 0.8
+    R = h2 * S * 0.4  # slower response to selection
+    new_va = clamp(va + 0.02 - va*va/(va + omega2 + Vp), 0.1, 8.0)
+    drift = math.sqrt(max(0, va) / max(N, 200)) * randn() * 0.3
     return clamp(mean + R + drift, 1.0, 20.0), new_va
 
 def lack_litter(C_opt, predator, food):
-    shift = -1.2 if predator else 0.0
-    food_shift = (food - 0.5) * 2.0
-    return max(1, round(C_opt + shift + food_shift + randn() * 0.5))
+    shift = -0.4 if predator else 0.0
+    food_shift = (food - 0.5) * 0.8
+    return max(1, round(C_opt + shift + food_shift + randn() * 0.2))
 
 def litter_fitness(C, C_opt, k=0.15):
     return C * math.exp(-k * (C - C_opt)**2)
 
 def update_body(mean, h2, theta, Va, N, omega):
     S = -h2 * Va * (mean - theta) / (Va / h2 + omega)
-    R = h2 * S
-    drift = math.sqrt(Va / N) * randn() * 0.6
+    R = h2 * S * 0.3  # very slow body size evolution
+    drift = math.sqrt(Va / max(N, 200)) * randn() * 0.2
     return clamp(mean + R + drift, 0.15, 0.8)
 
 def update_pop(N, r, K, predator, disease_rate=0.0, food_base=0.6, pred_strength=0.4, climate_stress=0.0):
-    eff_r = r * 0.6 if predator else r
-    eff_r = eff_r * (1.0 - disease_rate)
+    eff_r = r * 0.85 if predator else r
+    eff_r = eff_r * (1.0 - disease_rate * 0.5)
     eff_K = K * clamp(food_base + 0.1, 0.2, 1.0)
-    pred_kill = pred_strength * 0.06 * N if predator else 0
+    pred_kill = pred_strength * 0.015 * N if predator else 0
     dN = eff_r * N * (1 - N / eff_K) - pred_kill
-    noise_scale = 2.0 * (1.0 + abs(climate_stress) * 0.25)
+    noise_scale = 0.6 * (1.0 + abs(climate_stress) * 0.15)
     return max(2, round(N + dN + math.sqrt(max(1,N)) * randn() * noise_scale))
 
 def euler_lotka_r(l1, l2, m1, m2):
@@ -1415,8 +1419,8 @@ function newGame() {
   simData = [];
 
   // Reset God Panel to defaults
-  document.getElementById('god-food').value = 0.4;
-  document.getElementById('god-pred').value = 0.4;
+  document.getElementById('god-food').value = 0.3;
+  document.getElementById('god-pred').value = 0.3;
   document.getElementById('god-climate').value = 0;
   document.getElementById('god-disease').value = 0;
   updateGodLabels();
@@ -1469,9 +1473,9 @@ function updateDangerZones() {
 
 // ── SCENARIO PRESETS ──
 const PRESETS = {
-  easy:   { food: 0.2,  pred: 0.2,  climate: 0,   disease: 0 },
-  normal: { food: 0.4,  pred: 0.4,  climate: 0,   disease: 0.1 },
-  hard:   { food: 0.55, pred: 0.6,  climate: 1.5, disease: 0.2 },
+  easy:   { food: 0.15, pred: 0.15, climate: 0,   disease: 0 },
+  normal: { food: 0.3,  pred: 0.3,  climate: 0,   disease: 0.05 },
+  hard:   { food: 0.5,  pred: 0.5,  climate: 1.0, disease: 0.15 },
 };
 
 function loadPreset(name) {
