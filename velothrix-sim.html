@@ -291,6 +291,156 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg-dark); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
+
+/* ── FOLDER TAB (hidden on desktop) ── */
+.tray-tab { display: none; }
+
+/* ── MOBILE LAYOUT ── */
+@media (max-width: 768px) {
+  #app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+  }
+
+  #header {
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  #header h1 {
+    font-size: 16px;
+  }
+
+  .species-tabs {
+    order: 3;
+    margin-left: 0;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .species-tabs::-webkit-scrollbar { display: none; }
+
+  .header-controls {
+    margin-left: auto;
+  }
+
+  #gen-counter {
+    order: 2;
+    margin-left: 0;
+  }
+
+  #map-area {
+    min-height: 0;
+  }
+
+  /* Panel becomes a bottom tray */
+  #panel {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    max-height: 60vh;
+    overflow-y: auto;
+    background: rgba(26,13,0,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+  }
+  #panel.tray-open {
+    transform: translateY(0);
+  }
+
+  .chart-canvas {
+    height: 100px;
+  }
+  .chart-canvas.tall {
+    height: 130px;
+  }
+
+  #event-log {
+    grid-column: 1;
+    max-height: 100px;
+  }
+
+  #event-feed {
+    max-height: 80px;
+  }
+
+  /* Folder tab */
+  .tray-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 101;
+    background: rgba(26,13,0,0.95);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    padding: 10px 24px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: bottom 0.3s ease, background 0.2s;
+    font-family: var(--mono);
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.4);
+    min-width: 120px;
+  }
+  .tray-tab:active {
+    background: rgba(229,89,28,0.2);
+  }
+  .tray-tab-label {
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .tray-tab-chevron {
+    font-size: 12px;
+    color: var(--dim);
+    transition: transform 0.3s ease;
+    line-height: 1;
+  }
+  .tray-tab.tab-active .tray-tab-chevron {
+    transform: rotate(180deg);
+  }
+}
+
+@media (max-width: 420px) {
+  body { font-size: 11px; }
+
+  #header h1 { font-size: 14px; }
+
+  .header-controls button {
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+
+  .species-tab {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+
+  .panel-section {
+    padding: 8px;
+  }
+
+  .panel-section h3 {
+    font-size: 11px;
+  }
+}
 </style>
 </head>
 <body>
@@ -1346,6 +1496,52 @@ def get_and_clear_events():
 
 // ── BOOT ──
 init();
+</script>
+<script>
+// Mobile tool tray — folder tab for #panel
+(function() {
+  var panel = document.getElementById('panel');
+  if (!panel) return;
+
+  var tab = document.createElement('div');
+  tab.className = 'tray-tab';
+  tab.setAttribute('role', 'button');
+  tab.innerHTML = '<span class="tray-tab-label">Data</span><span class="tray-tab-chevron">&#9650;</span>';
+  document.body.appendChild(tab);
+
+  var isOpen = false;
+
+  function toggle(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    isOpen = !isOpen;
+    panel.classList.toggle('tray-open', isOpen);
+    tab.classList.toggle('tab-active', isOpen);
+    requestAnimationFrame(function() {
+      tab.style.bottom = isOpen ? panel.offsetHeight + 'px' : '0';
+    });
+  }
+
+  tab.addEventListener('click', toggle);
+  tab.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    toggle(e);
+  });
+
+  document.addEventListener('touchend', function(e) {
+    if (isOpen && !panel.contains(e.target) && !tab.contains(e.target)) toggle();
+  });
+  document.addEventListener('click', function(e) {
+    if (isOpen && !panel.contains(e.target) && !tab.contains(e.target)) toggle();
+  });
+
+  var startY = 0;
+  panel.addEventListener('touchstart', function(e) {
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  panel.addEventListener('touchend', function(e) {
+    if (e.changedTouches[0].clientY - startY > 60 && isOpen) toggle();
+  }, { passive: true });
+})();
 </script>
 </body>
 </html>
