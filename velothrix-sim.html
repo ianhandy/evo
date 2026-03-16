@@ -516,7 +516,9 @@ body {
   <h1>VELOTHRIX</h1>
   <p>Loading Pyodide runtime...</p>
   <div class="loader-bar"><div class="loader-bar-fill" id="loader-fill"></div></div>
+  <p id="loader-hint" style="color:#5a4a30;font-size:11px;margin-top:8px;display:none">First load downloads ~10 MB — may take a moment on mobile</p>
 </div>
+<script>setTimeout(function(){ var h = document.getElementById('loader-hint'); if (h) h.style.display = 'block'; }, 3000);</script>
 
 <!-- APP -->
 <div id="app">
@@ -613,23 +615,35 @@ const MAX_HISTORY = 200;
 // ── INIT ──
 async function init() {
   const fill = document.getElementById('loader-fill');
+  const loaderMsg = document.querySelector('#loader p');
   fill.style.width = '20%';
 
-  pyodide = await loadPyodide();
-  fill.style.width = '50%';
+  try {
+    loaderMsg.textContent = 'Downloading Pyodide runtime (~10 MB)...';
+    pyodide = await loadPyodide();
+    fill.style.width = '50%';
 
-  await pyodide.runPythonAsync(SIM_CODE);
-  fill.style.width = '80%';
+    loaderMsg.textContent = 'Initializing ecosystem simulation...';
+    await pyodide.runPythonAsync(SIM_CODE);
+    fill.style.width = '80%';
 
-  setupUI();
-  fill.style.width = '100%';
+    loaderMsg.textContent = 'Setting up interface...';
+    setupUI();
+    fill.style.width = '100%';
 
-  setTimeout(() => {
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('app').style.display = 'grid';
-    resizeCanvases();
-    renderAll();
-  }, 300);
+    setTimeout(() => {
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('app').style.display = 'grid';
+      resizeCanvases();
+      renderAll();
+    }, 300);
+  } catch (err) {
+    console.error('Init failed:', err);
+    loaderMsg.textContent = 'Failed to load: ' + (err.message || err);
+    loaderMsg.style.color = '#E5591C';
+    fill.style.width = '100%';
+    fill.style.background = '#E5591C';
+  }
 }
 
 function setupUI() {
