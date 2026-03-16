@@ -441,6 +441,186 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
 
+/* ── SPECIES DETAIL CARD ── */
+.species-card-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.species-card {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 520px;
+  max-width: 100%;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  position: relative;
+}
+.species-card-accent {
+  height: 4px;
+  border-radius: 8px 8px 0 0;
+}
+.species-card-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-size: 18px;
+  cursor: pointer;
+  font-family: var(--mono);
+  line-height: 1;
+  z-index: 1;
+}
+.species-card-close:hover { color: var(--text); }
+.species-card-body {
+  padding: 16px 20px 20px;
+}
+.sc-header {
+  margin-bottom: 14px;
+}
+.sc-name {
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+.sc-role {
+  font-size: 10px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.sc-trait-desc {
+  font-size: 11px;
+  color: var(--text);
+  margin-top: 6px;
+  line-height: 1.4;
+  opacity: 0.8;
+}
+.sc-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: var(--card);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.sc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sc-stat-label {
+  font-size: 9px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sc-stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--sans);
+}
+.sc-trend-up { color: #2ECC71; }
+.sc-trend-down { color: #C0392B; }
+.sc-trend-stable { color: var(--dim); }
+.sc-section {
+  margin-top: 16px;
+}
+.sc-section-title {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.sc-maps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sc-map-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sc-map-label {
+  font-size: 9px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sc-mini-canvas {
+  width: 200px;
+  height: 200px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  display: block;
+}
+.sc-chart-canvas {
+  width: 100%;
+  height: 100px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  display: block;
+  margin-top: 4px;
+}
+.sc-events {
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.sc-event-entry {
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(61,42,16,0.3);
+}
+.sc-event-entry .ev-gen { color: var(--gold); }
+.sc-event-entry .ev-text { color: var(--text); opacity: 0.8; }
+.sc-no-data {
+  color: var(--dim);
+  font-size: 10px;
+  font-style: italic;
+}
+.sc-ecology {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.sc-ecology-row {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+.sc-ecology-label {
+  font-size: 9px;
+  color: var(--dim);
+  text-transform: uppercase;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+.sc-ecology-value {
+  color: var(--text);
+}
+.sp-name-link {
+  cursor: pointer;
+}
+.sp-name-link:hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
 /* ── FOLDER TAB (hidden on desktop) ── */
 .tray-tab { display: none; }
 
@@ -659,6 +839,60 @@ body {
   </div>
 </div>
 
+<!-- SPECIES DETAIL CARD OVERLAY -->
+<div id="species-card-overlay" class="species-card-overlay" style="display:none" onclick="if(event.target===this)closeSpeciesCard()">
+  <div class="species-card" id="species-card">
+    <div class="species-card-accent" id="sc-accent"></div>
+    <button class="species-card-close" onclick="closeSpeciesCard()">&times;</button>
+    <div class="species-card-body">
+      <div class="sc-header">
+        <div class="sc-name" id="sc-name"></div>
+        <div class="sc-role" id="sc-role"></div>
+        <div class="sc-trait-desc" id="sc-trait-desc"></div>
+      </div>
+      <div class="sc-stat-row">
+        <div class="sc-stat">
+          <div class="sc-stat-label">Global Population</div>
+          <div class="sc-stat-value" id="sc-pop"></div>
+        </div>
+        <div class="sc-stat">
+          <div class="sc-stat-label">Mean Trait</div>
+          <div class="sc-stat-value" id="sc-trait"></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Spatial Distribution</div>
+        <div class="sc-maps">
+          <div class="sc-map-wrap">
+            <div class="sc-map-label">Trait Value (blue=low, red=high)</div>
+            <canvas class="sc-mini-canvas" id="sc-trait-map" width="200" height="200"></canvas>
+          </div>
+          <div class="sc-map-wrap">
+            <div class="sc-map-label">Population Density</div>
+            <canvas class="sc-mini-canvas" id="sc-pop-map" width="200" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Trait Over Time</div>
+        <canvas class="sc-chart-canvas" id="sc-trait-chart"></canvas>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Population Over Time</div>
+        <canvas class="sc-chart-canvas" id="sc-pop-chart"></canvas>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Ecological Relationships</div>
+        <div class="sc-ecology" id="sc-ecology"></div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Evolutionary History</div>
+        <div class="sc-events" id="sc-events"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── GLOBALS ──
 let pyodide = null;
@@ -669,6 +903,8 @@ let panelMode = 'global';
 let selectedTile = null; // {r, c} or null — Tile A (gold)
 let comparisonTile = null; // {r, c} or null — Tile B (orange)
 let popHistory = []; // [{gen, pops: [5 numbers]}]
+let traitHistory = []; // [{gen, traits: [5 numbers]}]
+let eventHistory = []; // [{gen, text, species}]
 let mapCanvas, mapCtx;
 let popCanvas, popCtx;
 let traitCanvas, traitCtx;
@@ -876,6 +1112,14 @@ function tick() {
   popHistory.push({ gen, pops: globalPops });
   if (popHistory.length > MAX_HISTORY) popHistory.shift();
 
+  // Collect global traits for history
+  const globalTraits = [];
+  for (let s = 0; s < 5; s++) {
+    globalTraits.push(pyodide.runPython(`get_global_trait(${s})`));
+  }
+  traitHistory.push({ gen, traits: globalTraits });
+  if (traitHistory.length > MAX_HISTORY) traitHistory.shift();
+
   // Check events
   const eventsJson = pyodide.runPython('get_and_clear_events()');
   const events = JSON.parse(eventsJson);
@@ -883,6 +1127,8 @@ function tick() {
     const feed = document.getElementById('event-feed');
     const log = document.getElementById('event-log');
     events.forEach(ev => {
+      eventHistory.push({ gen: ev.gen, text: ev.text, species: ev.species !== undefined ? ev.species : -1 });
+
       const feedDiv = document.createElement('div');
       feedDiv.innerHTML = `<span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text">${ev.text}</span>`;
       feed.appendChild(feedDiv);
@@ -1042,7 +1288,7 @@ function renderSpeciesList() {
       const barA = (popsA[s] / maxPop) * 100;
       const barB = (popsB[s] / maxPop) * 100;
       html += `<div class="cmp-row">
-        <div class="cmp-name"><span class="sp-dot" style="background:${SPECIES[s].color}"></span>${SPECIES[s].name}</div>
+        <div class="cmp-name"><span class="sp-dot" style="background:${SPECIES[s].color}"></span><span class="sp-name-link" onclick="openSpeciesCard(${s})">${SPECIES[s].name}</span></div>
         <div class="cmp-bars">
           <div class="cmp-bar-a" style="width:${barA}%;background:${SPECIES[s].color};opacity:0.8"></div>
           <div class="cmp-bar-b" style="width:${barB}%;background:${SPECIES[s].color};opacity:0.4"></div>
@@ -1070,7 +1316,7 @@ function renderSpeciesList() {
       const trait = pyodide.runPython(`get_global_trait(${s})`);
       html += `<div class="species-row">
         <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
-        <div class="sp-name">${SPECIES[s].fullName}</div>
+        <div class="sp-name sp-name-link" onclick="openSpeciesCard(${s})">${SPECIES[s].fullName}</div>
         <div class="sp-pop">${pop}</div>
         <div class="sp-trait">${trait.toFixed(3)}</div>
       </div>`;
@@ -1081,7 +1327,7 @@ function renderSpeciesList() {
       const trait = pyodide.runPython(`get_tile_trait(${selectedTile.r},${selectedTile.c},${s})`);
       html += `<div class="species-row">
         <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
-        <div class="sp-name">${SPECIES[s].name}</div>
+        <div class="sp-name sp-name-link" onclick="openSpeciesCard(${s})">${SPECIES[s].name}</div>
         <div class="sp-pop">${pop}</div>
         <div class="sp-trait">${trait.toFixed(3)}</div>
       </div>`;
@@ -1483,6 +1729,363 @@ function hexToRgb(hex) {
   return { r, g, b };
 }
 
+// ── SPECIES DETAIL CARD ──
+
+let ecologyData = null; // cached from Python
+
+function openSpeciesCard(speciesIdx) {
+  const overlay = document.getElementById('species-card-overlay');
+  overlay.style.display = 'flex';
+
+  const sp = SPECIES[speciesIdx];
+  const rgb = hexToRgb(sp.color);
+
+  // Load ecology data once
+  if (!ecologyData) {
+    ecologyData = JSON.parse(pyodide.runPython('get_species_ecology()'));
+  }
+  const eco = ecologyData.relationships[speciesIdx];
+
+  // Accent bar
+  document.getElementById('sc-accent').style.background = sp.color;
+
+  // Header
+  document.getElementById('sc-name').textContent = sp.fullName;
+  document.getElementById('sc-name').style.color = sp.color;
+  document.getElementById('sc-role').textContent = eco.role;
+  document.getElementById('sc-trait-desc').innerHTML =
+    `<strong>${sp.trait}:</strong> ${eco.trait_desc}`;
+
+  // Population & trend
+  const pop = pyodide.runPython(`get_global_pop(${speciesIdx})`);
+  let trendIcon = '<span class="sc-trend-stable">&#9644;</span>';
+  if (popHistory.length >= 10) {
+    const recent = popHistory.slice(-5);
+    const older = popHistory.slice(-10, -5);
+    const avgRecent = recent.reduce((s, e) => s + e.pops[speciesIdx], 0) / recent.length;
+    const avgOlder = older.reduce((s, e) => s + e.pops[speciesIdx], 0) / older.length;
+    const pctChange = (avgRecent - avgOlder) / Math.max(1, avgOlder);
+    if (pctChange > 0.05) trendIcon = '<span class="sc-trend-up">&#9650;</span>';
+    else if (pctChange < -0.05) trendIcon = '<span class="sc-trend-down">&#9660;</span>';
+  }
+  document.getElementById('sc-pop').innerHTML =
+    `<span style="color:${sp.color}">${pop.toLocaleString()}</span> ${trendIcon}`;
+
+  // Trait
+  const trait = pyodide.runPython(`get_global_trait(${speciesIdx})`);
+  document.getElementById('sc-trait').innerHTML =
+    `<span style="color:${sp.color}">${trait.toFixed(3)}</span>`;
+
+  // Mini maps
+  renderSpeciesCardMaps(speciesIdx);
+
+  // Charts
+  renderSpeciesCardTraitChart(speciesIdx);
+  renderSpeciesCardPopChart(speciesIdx);
+
+  // Ecology
+  renderSpeciesCardEcology(speciesIdx, eco);
+
+  // Events
+  renderSpeciesCardEvents(speciesIdx);
+
+  // Esc to close
+  document.addEventListener('keydown', speciesCardEscHandler);
+}
+
+function closeSpeciesCard() {
+  document.getElementById('species-card-overlay').style.display = 'none';
+  document.removeEventListener('keydown', speciesCardEscHandler);
+}
+
+function speciesCardEscHandler(e) {
+  if (e.key === 'Escape') closeSpeciesCard();
+}
+
+function renderSpeciesCardMaps(speciesIdx) {
+  const dataJson = pyodide.runPython(`get_trait_map_data(${speciesIdx})`);
+  const data = JSON.parse(dataJson);
+  const gs = data.traits.length;
+  const sp = SPECIES[speciesIdx];
+
+  // Trait distribution map
+  const traitCanvas = document.getElementById('sc-trait-map');
+  const tCtx = traitCanvas.getContext('2d');
+  const tw = 200 / gs;
+  const th = 200 / gs;
+
+  tCtx.fillStyle = '#1A0D00';
+  tCtx.fillRect(0, 0, 200, 200);
+
+  for (let r = 0; r < gs; r++) {
+    for (let c = 0; c < gs; c++) {
+      const x = c * tw;
+      const y = r * th;
+      const elev = data.elevations[r][c];
+
+      // Base terrain
+      const baseR = 26 + elev * 20;
+      const baseG = 13 + elev * 15;
+      const baseB = 0 + elev * 8;
+      tCtx.fillStyle = `rgb(${baseR|0},${baseG|0},${baseB|0})`;
+      tCtx.fillRect(x, y, tw, th);
+
+      const traitVal = data.traits[r][c];
+      if (traitVal >= 0) {
+        // Blue (low) to Red (high) gradient
+        const t = Math.max(0, Math.min(1, traitVal));
+        const cr = Math.round(t * 255);
+        const cb = Math.round((1 - t) * 255);
+        const cg = Math.round(Math.min(t, 1 - t) * 100);
+        tCtx.fillStyle = `rgba(${cr},${cg},${cb},0.85)`;
+        tCtx.fillRect(x, y, tw, th);
+      }
+    }
+  }
+
+  // Grid lines
+  tCtx.strokeStyle = 'rgba(61,42,16,0.3)';
+  tCtx.lineWidth = 0.5;
+  for (let i = 0; i <= gs; i++) {
+    tCtx.beginPath(); tCtx.moveTo(i * tw, 0); tCtx.lineTo(i * tw, 200); tCtx.stroke();
+    tCtx.beginPath(); tCtx.moveTo(0, i * th); tCtx.lineTo(200, i * th); tCtx.stroke();
+  }
+
+  // Population heatmap
+  const popCanvas = document.getElementById('sc-pop-map');
+  const pCtx = popCanvas.getContext('2d');
+
+  pCtx.fillStyle = '#1A0D00';
+  pCtx.fillRect(0, 0, 200, 200);
+
+  const rgb = hexToRgb(sp.color);
+  const maxPop = data.max_pop || 1;
+
+  for (let r = 0; r < gs; r++) {
+    for (let c = 0; c < gs; c++) {
+      const x = c * tw;
+      const y = r * th;
+      const elev = data.elevations[r][c];
+
+      const baseR = 26 + elev * 20;
+      const baseG = 13 + elev * 15;
+      const baseB = 0 + elev * 8;
+      pCtx.fillStyle = `rgb(${baseR|0},${baseG|0},${baseB|0})`;
+      pCtx.fillRect(x, y, tw, th);
+
+      const pop = data.pops[r][c];
+      if (pop > 0) {
+        const intensity = Math.min(1, pop / (maxPop * 0.7));
+        pCtx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${intensity * 0.9})`;
+        pCtx.fillRect(x, y, tw, th);
+      }
+    }
+  }
+
+  pCtx.strokeStyle = 'rgba(61,42,16,0.3)';
+  pCtx.lineWidth = 0.5;
+  for (let i = 0; i <= gs; i++) {
+    pCtx.beginPath(); pCtx.moveTo(i * tw, 0); pCtx.lineTo(i * tw, 200); pCtx.stroke();
+    pCtx.beginPath(); pCtx.moveTo(0, i * th); pCtx.lineTo(200, i * th); pCtx.stroke();
+  }
+}
+
+function renderSpeciesCardTraitChart(speciesIdx) {
+  const canvas = document.getElementById('sc-trait-chart');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  const sp = SPECIES[speciesIdx];
+
+  ctx.fillStyle = '#1A0D00';
+  ctx.fillRect(0, 0, w, h);
+
+  if (traitHistory.length < 2) {
+    ctx.fillStyle = '#5a6a50';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Gathering data...', w / 2, h / 2);
+    return;
+  }
+
+  const padL = 35, padR = 5, padT = 5, padB = 15;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  const vals = traitHistory.map(e => e.traits[speciesIdx]);
+  const minV = Math.min(...vals) * 0.95;
+  const maxV = Math.max(...vals) * 1.05 || 1;
+  const range = maxV - minV || 0.01;
+
+  // Y axis
+  ctx.fillStyle = '#5a6a50';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(maxV.toFixed(2), padL - 4, padT + 9);
+  ctx.fillText(minV.toFixed(2), padL - 4, h - padB);
+
+  // X axis line
+  ctx.strokeStyle = '#3d2a10';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(padL, h - padB);
+  ctx.lineTo(w - padR, h - padB);
+  ctx.stroke();
+
+  // Line
+  ctx.strokeStyle = sp.color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < traitHistory.length; i++) {
+    const x = padL + (i / (traitHistory.length - 1)) * plotW;
+    const y = padT + plotH - ((vals[i] - minV) / range) * plotH;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Gen range labels
+  ctx.fillStyle = '#8a7560';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('Gen ' + traitHistory[0].gen, padL, h - 1);
+  ctx.textAlign = 'right';
+  ctx.fillText('Gen ' + traitHistory[traitHistory.length - 1].gen, w - padR, h - 1);
+}
+
+function renderSpeciesCardPopChart(speciesIdx) {
+  const canvas = document.getElementById('sc-pop-chart');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  const sp = SPECIES[speciesIdx];
+
+  ctx.fillStyle = '#1A0D00';
+  ctx.fillRect(0, 0, w, h);
+
+  if (popHistory.length < 2) {
+    ctx.fillStyle = '#5a6a50';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Gathering data...', w / 2, h / 2);
+    return;
+  }
+
+  const padL = 35, padR = 5, padT = 5, padB = 15;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  const vals = popHistory.map(e => e.pops[speciesIdx]);
+  const maxPop = Math.max(...vals, 1);
+
+  // Y axis
+  ctx.fillStyle = '#5a6a50';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(maxPop.toString(), padL - 4, padT + 9);
+  ctx.fillText('0', padL - 4, h - padB);
+
+  // X axis line
+  ctx.strokeStyle = '#3d2a10';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(padL, h - padB);
+  ctx.lineTo(w - padR, h - padB);
+  ctx.stroke();
+
+  // Line
+  ctx.strokeStyle = sp.color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < popHistory.length; i++) {
+    const x = padL + (i / (popHistory.length - 1)) * plotW;
+    const y = padT + plotH - (vals[i] / maxPop) * plotH;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Subtle fill
+  const rgb = hexToRgb(sp.color);
+  ctx.lineTo(padL + plotW, padT + plotH);
+  ctx.lineTo(padL, padT + plotH);
+  ctx.closePath();
+  ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.1)`;
+  ctx.fill();
+
+  // Gen range labels
+  ctx.fillStyle = '#8a7560';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('Gen ' + popHistory[0].gen, padL, h - 1);
+  ctx.textAlign = 'right';
+  ctx.fillText('Gen ' + popHistory[popHistory.length - 1].gen, w - padR, h - 1);
+}
+
+function renderSpeciesCardEcology(speciesIdx, eco) {
+  const el = document.getElementById('sc-ecology');
+  let html = '';
+
+  if (eco.eats.length > 0) {
+    html += `<div class="sc-ecology-row">
+      <span class="sc-ecology-label">Preys on</span>
+      <span class="sc-ecology-value">${eco.eats.join(', ')}</span>
+    </div>`;
+  }
+  if (eco.eaten_by.length > 0) {
+    html += `<div class="sc-ecology-row">
+      <span class="sc-ecology-label">Preyed on by</span>
+      <span class="sc-ecology-value">${eco.eaten_by.join(', ')}</span>
+    </div>`;
+  }
+  if (eco.competes_with.length > 0) {
+    html += `<div class="sc-ecology-row">
+      <span class="sc-ecology-label">Competes with</span>
+      <span class="sc-ecology-value">${eco.competes_with.join(', ')}</span>
+    </div>`;
+  }
+  if (!html) {
+    html = '<div class="sc-no-data">No known ecological interactions</div>';
+  }
+  el.innerHTML = html;
+}
+
+function renderSpeciesCardEvents(speciesIdx) {
+  const el = document.getElementById('sc-events');
+  const sp = SPECIES[speciesIdx];
+
+  // Filter events for this species (by index or by name appearing in text)
+  const relevant = eventHistory.filter(ev => {
+    if (ev.species === speciesIdx) return true;
+    if (ev.species === -1) {
+      // Environmental events — include if species name is mentioned
+      return ev.text.includes(sp.name) || ev.text.includes(sp.fullName);
+    }
+    return false;
+  });
+
+  if (relevant.length === 0) {
+    el.innerHTML = '<div class="sc-no-data">No recorded events yet — let the simulation run</div>';
+    return;
+  }
+
+  // Show most recent first, limit to 30
+  const display = relevant.slice(-30).reverse();
+  el.innerHTML = display.map(ev =>
+    `<div class="sc-event-entry"><span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text">${ev.text}</span></div>`
+  ).join('');
+}
+
 // ── PYTHON SIM CODE ──
 const SIM_CODE = `
 import json
@@ -1745,7 +2348,8 @@ def _check_events(season):
         region = "eastern" if cc > GRID_SIZE//2 else "western"
         _emit_event({
             'gen': generation,
-            'text': f'Drought in {region} marsh — food and water levels dropping'
+            'text': f'Drought in {region} marsh — food and water levels dropping',
+            'species': -1
         })
 
     if random.random() < FLOOD_PROB:
@@ -1761,7 +2365,8 @@ def _check_events(season):
         region = "northern" if cr < GRID_SIZE//2 else "southern"
         _emit_event({
             'gen': generation,
-            'text': f'Flooding in {region} tidal flats — water levels surging'
+            'text': f'Flooding in {region} tidal flats — water levels surging',
+            'species': -1
         })
 
     if random.random() < DISEASE_PROB:
@@ -1773,7 +2378,8 @@ def _check_events(season):
                 grid[r][c]['pops'][target] = int(grid[r][c]['pops'][target] * 0.85)
         _emit_event({
             'gen': generation,
-            'text': f'Disease outbreak affecting {names[target]} population'
+            'text': f'Disease outbreak affecting {names[target]} population',
+            'species': target
         })
 
 def _update_tile(r, c, season):
@@ -2002,7 +2608,8 @@ def _check_speciation():
                 high_region = sorted_traits[-1]
                 _emit_event({
                     'gen': generation,
-                    'text': f'{names[s]} population split detected — variant near ({low_region[0]},{low_region[1]}) has {trait_names[s]} {low_region[2]:.2f} vs ({high_region[0]},{high_region[1]}) at {high_region[2]:.2f}'
+                    'text': f'{names[s]} population split detected — variant near ({low_region[0]},{low_region[1]}) has {trait_names[s]} {low_region[2]:.2f} vs ({high_region[0]},{high_region[1]}) at {high_region[2]:.2f}',
+                    'species': s
                 })
                 trait_divergence_counter[key] = 0  # Reset to avoid spam
         else:
@@ -2019,12 +2626,14 @@ def _check_speciation():
             if ratio > 2.0:
                 _emit_event({
                     'gen': generation,
-                    'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)'
+                    'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)',
+                    'species': s
                 })
             elif ratio < 0.2 and total > 0:
                 _emit_event({
                     'gen': generation,
-                    'text': f'{names[s]} population critically low — only {total} individuals remain'
+                    'text': f'{names[s]} population critically low — only {total} individuals remain',
+                    'species': s
                 })
 
 # ── API FUNCTIONS (called from JS) ──
@@ -2155,6 +2764,76 @@ def get_and_clear_events():
     out = json.dumps(events_buffer)
     events_buffer = []
     return out
+
+def get_trait_map_data(species_idx):
+    """Return per-tile trait values and elevations for a species."""
+    traits = []
+    elevations = []
+    pops = []
+    max_pop = 1
+    for r in range(GRID_SIZE):
+        trait_row = []
+        elev_row = []
+        pop_row = []
+        for c in range(GRID_SIZE):
+            t = grid[r][c]
+            p = t['pops'][species_idx]
+            trait_row.append(t['traits'][species_idx] if p > 0 else -1)
+            elev_row.append(t['elevation'])
+            pop_row.append(p)
+            if p > max_pop:
+                max_pop = p
+        traits.append(trait_row)
+        elevations.append(elev_row)
+        pops.append(pop_row)
+    return json.dumps({'traits': traits, 'elevations': elevations, 'pops': pops, 'max_pop': max_pop})
+
+def get_species_ecology():
+    """Return ecological relationships metadata."""
+    return json.dumps({
+        'relationships': [
+            {
+                'name': 'Velothrix aurantis',
+                'role': 'Protagonist Herbivore/Omnivore',
+                'trait_desc': 'Brightness of crest plumage — drives mate selection but attracts predators',
+                'eaten_by': ['Kelp Leviathan'],
+                'eats': ['Bioluminescent Worm'],
+                'competes_with': ['Reed Crawler']
+            },
+            {
+                'name': 'Kelp Leviathan',
+                'role': 'Apex Predator',
+                'trait_desc': 'Hunting range radius — wider range finds more prey but costs more energy',
+                'eaten_by': [],
+                'eats': ['Velothrix aurantis', 'Bioluminescent Worm'],
+                'competes_with': []
+            },
+            {
+                'name': 'Reed Crawler',
+                'role': 'Burrowing Herbivore',
+                'trait_desc': 'Depth of burrow — deeper is safer from predators but limits food access',
+                'eaten_by': ['Kelp Leviathan'],
+                'eats': [],
+                'competes_with': ['Velothrix aurantis']
+            },
+            {
+                'name': 'Tidal Crab',
+                'role': 'Armored Generalist',
+                'trait_desc': 'Shell thickness — thicker armor protects but slows movement and feeding',
+                'eaten_by': [],
+                'eats': [],
+                'competes_with': ['(all — space competition)']
+            },
+            {
+                'name': 'Bioluminescent Worm',
+                'role': 'Prey / Sexual Signaler',
+                'trait_desc': 'Glow intensity — brighter attracts mates but also predators',
+                'eaten_by': ['Velothrix aurantis', 'Kelp Leviathan'],
+                'eats': [],
+                'competes_with': []
+            }
+        ]
+    })
 `;
 
 // ── BOOT ──
