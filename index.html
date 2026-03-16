@@ -74,7 +74,7 @@ body {
   display: none;
   height: 100vh;
   grid-template-columns: 1fr 340px;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto 1fr auto;
 }
 
 /* ── HEADER ── */
@@ -233,6 +233,12 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .species-row:last-child { border-bottom: none; }
+.species-variant {
+  padding-left: 16px;
+  border-bottom: none;
+}
+.species-variant + .species-variant { padding-top: 0; }
+.sp-variant-name { font-style: italic; font-size: 9px; }
 .sp-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
@@ -259,96 +265,6 @@ body {
   min-width: 40px;
 }
 
-/* ── COMPARISON MODE ── */
-.cmp-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0 6px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
-  font-size: 10px;
-  font-weight: 700;
-}
-.cmp-label-a { color: #FFE9A3; }
-.cmp-label-mid { color: var(--dim); }
-.cmp-label-b { color: #E5591C; }
-
-.cmp-section-title {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--dim);
-  padding: 6px 0 3px;
-  border-bottom: 1px solid var(--border);
-}
-
-.cmp-row {
-  display: flex;
-  align-items: center;
-  padding: 3px 0;
-  gap: 6px;
-  border-bottom: 1px solid rgba(61,42,16,0.3);
-  font-size: 10px;
-}
-.cmp-row:last-child { border-bottom: none; }
-
-.cmp-name {
-  flex: 0 0 80px;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 9px;
-}
-.cmp-name .sp-dot { flex-shrink: 0; }
-
-.cmp-bars {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.cmp-bar-a, .cmp-bar-b {
-  height: 5px;
-  border-radius: 1px;
-  min-width: 1px;
-}
-
-.cmp-vals {
-  flex: 0 0 55px;
-  text-align: right;
-  color: var(--dim);
-  font-size: 9px;
-}
-.cmp-vs {
-  color: rgba(138,117,96,0.5);
-  font-size: 8px;
-  margin: 0 2px;
-}
-
-.cmp-val-a {
-  flex: 0 0 40px;
-  text-align: right;
-  color: #FFE9A3;
-  font-size: 10px;
-}
-.cmp-val-b {
-  flex: 0 0 40px;
-  text-align: right;
-  color: #E5591C;
-  font-size: 10px;
-}
-
-.cmp-delta {
-  flex: 0 0 45px;
-  text-align: right;
-  font-size: 10px;
-  font-weight: 700;
-}
-
 /* ── CHART CANVASES ── */
 .chart-canvas {
   width: 100%;
@@ -359,63 +275,55 @@ body {
   height: 160px;
 }
 
-/* ── TIMELINE SCRUBBER ── */
-#timeline-bar {
-  grid-column: 1 / -1;
-  position: relative;
+/* ── SCATTER CONTROLS ── */
+.scatter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.scatter-mode-toggle {
+  display: flex;
+  gap: 2px;
+}
+.scatter-mode-toggle button {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 3px 0;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.scatter-mode-toggle button.active {
+  color: var(--gold);
+  border-color: var(--gold);
   background: var(--bg-dark);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  height: 38px;
+}
+.scatter-axes {
+  display: flex;
+  gap: 8px;
+}
+.scatter-axes label {
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  gap: 10px;
-}
-#timeline-canvas {
-  flex: 1;
-  height: 28px;
-  cursor: pointer;
-  display: block;
-}
-#btn-live {
-  display: none;
-  background: var(--orange);
-  border: none;
-  color: #fff;
-  font-family: var(--mono);
+  gap: 4px;
   font-size: 10px;
-  padding: 4px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-#btn-live:hover { opacity: 0.85; }
-#timeline-gen-label {
   color: var(--dim);
-  font-size: 10px;
-  white-space: nowrap;
-  min-width: 80px;
-  text-align: right;
-  flex-shrink: 0;
+  flex: 1;
 }
-.timeline-tooltip {
-  display: none;
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  background: var(--card);
+.scatter-axes select {
+  flex: 1;
+  background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
-  font-size: 10px;
   font-family: var(--mono);
-  padding: 4px 8px;
-  border-radius: 3px;
-  pointer-events: none;
-  white-space: nowrap;
-  z-index: 10;
-  max-width: 300px;
+  font-size: 9px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  min-width: 0;
 }
 
 /* ── EVENT LOG ── */
@@ -434,192 +342,21 @@ body {
 }
 #event-log .log-entry .ev-gen { color: var(--gold); }
 #event-log .log-entry .ev-text { color: var(--text); }
+#event-log .log-entry.speciation-event {
+  background: rgba(221,193,101,0.1);
+  border-left: 3px solid var(--gold);
+  padding: 4px 8px;
+  margin: 4px 0;
+  font-size: 11px;
+}
+#event-log .log-entry.speciation-event .ev-gen { color: #FFE9A3; font-weight: 700; }
+#event-log .log-entry.speciation-event .ev-text { color: var(--gold-light); }
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-dark); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
-
-/* ── SPECIES DETAIL CARD ── */
-.species-card-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.species-card {
-  background: var(--bg-dark);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  width: 520px;
-  max-width: 100%;
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  position: relative;
-}
-.species-card-accent {
-  height: 4px;
-  border-radius: 8px 8px 0 0;
-}
-.species-card-close {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  background: none;
-  border: none;
-  color: var(--dim);
-  font-size: 18px;
-  cursor: pointer;
-  font-family: var(--mono);
-  line-height: 1;
-  z-index: 1;
-}
-.species-card-close:hover { color: var(--text); }
-.species-card-body {
-  padding: 16px 20px 20px;
-}
-.sc-header {
-  margin-bottom: 14px;
-}
-.sc-name {
-  font-family: var(--sans);
-  font-size: 18px;
-  font-weight: 800;
-  margin-bottom: 2px;
-}
-.sc-role {
-  font-size: 10px;
-  color: var(--dim);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.sc-trait-desc {
-  font-size: 11px;
-  color: var(--text);
-  margin-top: 6px;
-  line-height: 1.4;
-  opacity: 0.8;
-}
-.sc-stat-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-  padding: 8px 10px;
-  background: var(--card);
-  border-radius: 4px;
-  border: 1px solid var(--border);
-}
-.sc-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.sc-stat-label {
-  font-size: 9px;
-  color: var(--dim);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.sc-stat-value {
-  font-size: 14px;
-  font-weight: 700;
-  font-family: var(--sans);
-}
-.sc-trend-up { color: #2ECC71; }
-.sc-trend-down { color: #C0392B; }
-.sc-trend-stable { color: var(--dim); }
-.sc-section {
-  margin-top: 16px;
-}
-.sc-section-title {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--gold);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-}
-.sc-maps {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.sc-map-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.sc-map-label {
-  font-size: 9px;
-  color: var(--dim);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.sc-mini-canvas {
-  width: 200px;
-  height: 200px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  display: block;
-}
-.sc-chart-canvas {
-  width: 100%;
-  height: 100px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  display: block;
-  margin-top: 4px;
-}
-.sc-events {
-  max-height: 140px;
-  overflow-y: auto;
-  font-size: 10px;
-  line-height: 1.5;
-}
-.sc-event-entry {
-  padding: 2px 0;
-  border-bottom: 1px solid rgba(61,42,16,0.3);
-}
-.sc-event-entry .ev-gen { color: var(--gold); }
-.sc-event-entry .ev-text { color: var(--text); opacity: 0.8; }
-.sc-no-data {
-  color: var(--dim);
-  font-size: 10px;
-  font-style: italic;
-}
-.sc-ecology {
-  font-size: 11px;
-  line-height: 1.6;
-}
-.sc-ecology-row {
-  display: flex;
-  gap: 6px;
-  align-items: baseline;
-}
-.sc-ecology-label {
-  font-size: 9px;
-  color: var(--dim);
-  text-transform: uppercase;
-  min-width: 80px;
-  flex-shrink: 0;
-}
-.sc-ecology-value {
-  color: var(--text);
-}
-.sp-name-link {
-  cursor: pointer;
-}
-.sp-name-link:hover {
-  text-decoration: underline;
-  text-decoration-style: dotted;
-}
 
 /* ── FOLDER TAB (hidden on desktop) ── */
 .tray-tab { display: none; }
@@ -628,7 +365,7 @@ body {
 @media (max-width: 768px) {
   #app {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto auto;
+    grid-template-rows: auto 1fr auto;
     height: 100vh;
   }
 
@@ -823,73 +560,26 @@ body {
       <h3 id="trait-title">Trait Distribution</h3>
       <canvas class="chart-canvas" id="trait-chart"></canvas>
     </div>
-  </div>
 
-  <!-- TIMELINE SCRUBBER -->
-  <div id="timeline-bar">
-    <canvas id="timeline-canvas"></canvas>
-    <div id="timeline-tooltip" class="timeline-tooltip"></div>
-    <button id="btn-live" onclick="returnToLive()">&#9654; Return to Live</button>
-    <span id="timeline-gen-label"></span>
+    <div class="panel-section">
+      <h3>Scatter Plot</h3>
+      <div class="scatter-controls">
+        <div class="scatter-mode-toggle">
+          <button class="active" onclick="setScatterMode('spatial')">Spatial</button>
+          <button onclick="setScatterMode('temporal')">Temporal</button>
+        </div>
+        <div class="scatter-axes">
+          <label>X <select id="scatter-x"></select></label>
+          <label>Y <select id="scatter-y"></select></label>
+        </div>
+      </div>
+      <canvas class="chart-canvas tall" id="scatter-chart"></canvas>
+    </div>
   </div>
 
   <!-- EVENT LOG -->
   <div id="event-log">
     <div class="log-entry"><span class="ev-gen">[System]</span> <span class="ev-text">Ecosystem initializing...</span></div>
-  </div>
-</div>
-
-<!-- SPECIES DETAIL CARD OVERLAY -->
-<div id="species-card-overlay" class="species-card-overlay" style="display:none" onclick="if(event.target===this)closeSpeciesCard()">
-  <div class="species-card" id="species-card">
-    <div class="species-card-accent" id="sc-accent"></div>
-    <button class="species-card-close" onclick="closeSpeciesCard()">&times;</button>
-    <div class="species-card-body">
-      <div class="sc-header">
-        <div class="sc-name" id="sc-name"></div>
-        <div class="sc-role" id="sc-role"></div>
-        <div class="sc-trait-desc" id="sc-trait-desc"></div>
-      </div>
-      <div class="sc-stat-row">
-        <div class="sc-stat">
-          <div class="sc-stat-label">Global Population</div>
-          <div class="sc-stat-value" id="sc-pop"></div>
-        </div>
-        <div class="sc-stat">
-          <div class="sc-stat-label">Mean Trait</div>
-          <div class="sc-stat-value" id="sc-trait"></div>
-        </div>
-      </div>
-      <div class="sc-section">
-        <div class="sc-section-title">Spatial Distribution</div>
-        <div class="sc-maps">
-          <div class="sc-map-wrap">
-            <div class="sc-map-label">Trait Value (blue=low, red=high)</div>
-            <canvas class="sc-mini-canvas" id="sc-trait-map" width="200" height="200"></canvas>
-          </div>
-          <div class="sc-map-wrap">
-            <div class="sc-map-label">Population Density</div>
-            <canvas class="sc-mini-canvas" id="sc-pop-map" width="200" height="200"></canvas>
-          </div>
-        </div>
-      </div>
-      <div class="sc-section">
-        <div class="sc-section-title">Trait Over Time</div>
-        <canvas class="sc-chart-canvas" id="sc-trait-chart"></canvas>
-      </div>
-      <div class="sc-section">
-        <div class="sc-section-title">Population Over Time</div>
-        <canvas class="sc-chart-canvas" id="sc-pop-chart"></canvas>
-      </div>
-      <div class="sc-section">
-        <div class="sc-section-title">Ecological Relationships</div>
-        <div class="sc-ecology" id="sc-ecology"></div>
-      </div>
-      <div class="sc-section">
-        <div class="sc-section-title">Evolutionary History</div>
-        <div class="sc-events" id="sc-events"></div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -900,30 +590,22 @@ let playing = false;
 let speed = 1;
 let selectedSpecies = 0; // index into SPECIES
 let panelMode = 'global';
-let selectedTile = null; // {r, c} or null — Tile A (gold)
-let comparisonTile = null; // {r, c} or null — Tile B (orange)
+let selectedTile = null; // {r, c} or null
 let popHistory = []; // [{gen, pops: [5 numbers]}]
-let traitHistory = []; // [{gen, traits: [5 numbers]}]
-let eventHistory = []; // [{gen, text, species}]
 let mapCanvas, mapCtx;
 let popCanvas, popCtx;
 let traitCanvas, traitCtx;
+let scatterCanvas, scatterCtx;
+let scatterMode = 'spatial'; // 'spatial' or 'temporal'
 let animFrame = null;
 let stepsPerFrame = 1;
 
-// Timeline scrubber state
-let timelineLive = true; // true = showing live state
-let timelineSnapshotIdx = -1; // index into Python snapshots array when scrubbing
-let timelineCanvas, timelineCtx;
-let timelineDragging = false;
-let cachedSnapGens = []; // [{gen, hasEvents}] — refreshed each tick
-
 const SPECIES = [
-  { name: 'Velothrix', fullName: 'Velothrix aurantis', color: '#DDC165', trait: 'Crest Brightness' },
-  { name: 'Leviathan', fullName: 'Kelp Leviathan', color: '#C0392B', trait: 'Hunting Range' },
-  { name: 'Crawler', fullName: 'Reed Crawler', color: '#2ECC71', trait: 'Burrowing Depth' },
-  { name: 'Crab', fullName: 'Tidal Crab', color: '#E5591C', trait: 'Shell Thickness' },
-  { name: 'Worm', fullName: 'Bioluminescent Worm', color: '#9B59B6', trait: 'Glow Intensity' }
+  { name: 'Velothrix', fullName: 'Velothrix aurantis', color: '#DDC165', trait: 'Crest Brightness', variantColor: '#CC8833' },
+  { name: 'Leviathan', fullName: 'Kelp Leviathan', color: '#C0392B', trait: 'Hunting Range', variantColor: '#E06040' },
+  { name: 'Crawler', fullName: 'Reed Crawler', color: '#2ECC71', trait: 'Burrowing Depth', variantColor: '#1A9050' },
+  { name: 'Crab', fullName: 'Tidal Crab', color: '#E5591C', trait: 'Shell Thickness', variantColor: '#CC9944' },
+  { name: 'Worm', fullName: 'Bioluminescent Worm', color: '#9B59B6', trait: 'Glow Intensity', variantColor: '#6E3FA0' }
 ];
 
 const MAX_HISTORY = 200;
@@ -969,14 +651,14 @@ function setupUI() {
   popCtx = popCanvas.getContext('2d');
   traitCanvas = document.getElementById('trait-chart');
   traitCtx = traitCanvas.getContext('2d');
+  scatterCanvas = document.getElementById('scatter-chart');
+  scatterCtx = scatterCanvas.getContext('2d');
 
-  // Timeline scrubber
-  timelineCanvas = document.getElementById('timeline-canvas');
-  timelineCtx = timelineCanvas.getContext('2d');
-  setupTimelineInteraction();
+  // Populate scatter dropdowns
+  populateScatterDropdowns();
 
   mapCanvas.addEventListener('click', onMapClick);
-  window.addEventListener('resize', () => { resizeCanvases(); renderAll(); renderTimeline(); });
+  window.addEventListener('resize', () => { resizeCanvases(); renderAll(); });
 }
 
 function resizeCanvases() {
@@ -984,12 +666,8 @@ function resizeCanvases() {
   mapCanvas.width = mapArea.clientWidth;
   mapCanvas.height = mapArea.clientHeight;
 
-  // Timeline canvas
-  timelineCanvas.width = timelineCanvas.clientWidth;
-  timelineCanvas.height = timelineCanvas.clientHeight;
-
   const dpr = window.devicePixelRatio || 1;
-  for (const c of [popCanvas, traitCanvas]) {
+  for (const c of [popCanvas, traitCanvas, scatterCanvas]) {
     c.width = c.clientWidth * dpr;
     c.height = c.clientHeight * dpr;
     c.getContext('2d').scale(dpr, dpr);
@@ -1014,10 +692,7 @@ function setPanelMode(mode) {
     btn.classList.toggle('active', (mode === 'global' && idx === 0) || (mode === 'tile' && idx === 1));
   });
   if (mode === 'global') {
-    if (selectedTile) pyodide.runPython(`untrack_tile(${selectedTile.r},${selectedTile.c})`);
-    if (comparisonTile) pyodide.runPython(`untrack_tile(${comparisonTile.r},${comparisonTile.c})`);
     selectedTile = null;
-    comparisonTile = null;
     document.getElementById('panel-title').textContent = 'Global Overview';
   } else if (!selectedTile) {
     document.getElementById('panel-title').textContent = 'Click a tile';
@@ -1039,35 +714,12 @@ function onMapClick(e) {
   const r = Math.floor(y / tileH);
 
   if (r >= 0 && r < gridSize && c >= 0 && c < gridSize) {
-    if (e.shiftKey && selectedTile) {
-      // Shift+click sets Tile B for comparison
-      if (comparisonTile) {
-        pyodide.runPython(`untrack_tile(${comparisonTile.r},${comparisonTile.c})`);
-      }
-      comparisonTile = { r, c };
-      pyodide.runPython(`track_tile(${r},${c})`);
-      panelMode = 'compare';
-      document.querySelectorAll('.panel-toggle button').forEach((btn, idx) => {
-        btn.classList.toggle('active', idx === 1);
-      });
-      document.getElementById('panel-title').textContent = `Comparing (${selectedTile.r},${selectedTile.c}) vs (${r},${c})`;
-    } else {
-      // Normal click: set Tile A, clear Tile B
-      if (comparisonTile) {
-        pyodide.runPython(`untrack_tile(${comparisonTile.r},${comparisonTile.c})`);
-        comparisonTile = null;
-      }
-      if (selectedTile) {
-        pyodide.runPython(`untrack_tile(${selectedTile.r},${selectedTile.c})`);
-      }
-      selectedTile = { r, c };
-      pyodide.runPython(`track_tile(${r},${c})`);
-      panelMode = 'tile';
-      document.querySelectorAll('.panel-toggle button').forEach((btn, idx) => {
-        btn.classList.toggle('active', idx === 1);
-      });
-      document.getElementById('panel-title').textContent = `Tile (${r}, ${c})`;
-    }
+    selectedTile = { r, c };
+    panelMode = 'tile';
+    document.querySelectorAll('.panel-toggle button').forEach((btn, idx) => {
+      btn.classList.toggle('active', idx === 1);
+    });
+    document.getElementById('panel-title').textContent = `Tile (${r}, ${c})`;
     renderAll();
   }
 }
@@ -1077,10 +729,7 @@ function togglePlay() {
   playing = !playing;
   const btn = document.getElementById('btn-play');
   btn.textContent = playing ? '⏸ Pause' : '▶ Play';
-  if (playing) {
-    if (!timelineLive) returnToLive();
-    tick();
-  }
+  if (playing) tick();
 }
 
 function setSpeed(s) {
@@ -1093,7 +742,7 @@ function setSpeed(s) {
 
 // ── SIM TICK ──
 function tick() {
-  if (!playing || !timelineLive) return;
+  if (!playing) return;
 
   const steps = Math.max(1, Math.floor(stepsPerFrame));
   for (let i = 0; i < steps; i++) {
@@ -1109,16 +758,14 @@ function tick() {
   for (let s = 0; s < 5; s++) {
     globalPops.push(pyodide.runPython(`get_global_pop(${s})`));
   }
-  popHistory.push({ gen, pops: globalPops });
-  if (popHistory.length > MAX_HISTORY) popHistory.shift();
-
-  // Collect global traits for history
+  // Collect global traits and season for scatter temporal mode
   const globalTraits = [];
   for (let s = 0; s < 5; s++) {
     globalTraits.push(pyodide.runPython(`get_global_trait(${s})`));
   }
-  traitHistory.push({ gen, traits: globalTraits });
-  if (traitHistory.length > MAX_HISTORY) traitHistory.shift();
+  const season = pyodide.runPython('get_season()');
+  popHistory.push({ gen, pops: globalPops, traits: globalTraits, season });
+  if (popHistory.length > MAX_HISTORY) popHistory.shift();
 
   // Check events
   const eventsJson = pyodide.runPython('get_and_clear_events()');
@@ -1127,14 +774,14 @@ function tick() {
     const feed = document.getElementById('event-feed');
     const log = document.getElementById('event-log');
     events.forEach(ev => {
-      eventHistory.push({ gen: ev.gen, text: ev.text, species: ev.species !== undefined ? ev.species : -1 });
-
+      const isSpeciation = ev.speciation === true;
       const feedDiv = document.createElement('div');
       feedDiv.innerHTML = `<span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text">${ev.text}</span>`;
+      if (isSpeciation) feedDiv.style.color = 'var(--gold-light)';
       feed.appendChild(feedDiv);
 
       const logDiv = document.createElement('div');
-      logDiv.className = 'log-entry';
+      logDiv.className = 'log-entry' + (isSpeciation ? ' speciation-event' : '');
       logDiv.innerHTML = feedDiv.innerHTML;
       log.appendChild(logDiv);
     });
@@ -1145,8 +792,6 @@ function tick() {
   }
 
   renderAll();
-  refreshTimelineData();
-  renderTimeline();
 
   if (speed <= 5) {
     animFrame = requestAnimationFrame(tick);
@@ -1161,6 +806,7 @@ function renderAll() {
   renderSpeciesList();
   renderPopChart();
   renderTraitChart();
+  renderScatterPlot();
 }
 
 // ── RENDER MAP ──
@@ -1177,55 +823,56 @@ function renderMap() {
   const si = selectedSpecies;
   const color = SPECIES[si].color;
 
-  // Get density data — historical or live
-  let dataJson;
-  if (!timelineLive && timelineSnapshotIdx >= 0) {
-    dataJson = pyodide.runPython(`get_historical_map_data(${timelineSnapshotIdx}, ${si})`);
-  } else {
-    dataJson = pyodide.runPython(`get_map_data(${si})`);
-  }
+  // Get density data
+  const dataJson = pyodide.runPython(`get_map_data(${si})`);
   const data = JSON.parse(dataJson);
+
+  // Biome base colors: [r, g, b]
+  const BIOME_COLORS = {
+    deep_water:    [15, 30, 60],
+    shallow_marsh: [25, 50, 35],
+    reed_beds:     [40, 55, 25],
+    tidal_flats:   [55, 45, 30],
+    rocky_shore:   [65, 50, 40],
+  };
 
   for (let r = 0; r < gs; r++) {
     for (let c = 0; c < gs; c++) {
       const pop = data.pops[r][c];
       const elev = data.elevations[r][c];
+      const biome = data.biomes[r][c];
       const maxPop = data.max_pop || 1;
 
-      // Base tile color from elevation
-      const baseR = 26 + elev * 20;
-      const baseG = 13 + elev * 15;
-      const baseB = 0 + elev * 8;
+      // Base tile color from biome with elevation-based variation
+      const bc = BIOME_COLORS[biome] || [30, 20, 10];
+      const ev = elev * 0.3; // subtle elevation shading
+      const baseR = bc[0] + ev * 30;
+      const baseG = bc[1] + ev * 20;
+      const baseB = bc[2] + ev * 15;
 
       const x = c * tw;
       const y = r * th;
 
-      // Draw base
+      // Draw base biome
       mapCtx.fillStyle = `rgb(${baseR|0},${baseG|0},${baseB|0})`;
       mapCtx.fillRect(x, y, tw - 1, th - 1);
 
       // Draw species density overlay
       if (pop > 0) {
         const intensity = Math.min(1, pop / (maxPop * 0.7));
-        const rgb = hexToRgb(color);
+        // Use variant color if speciated
+        const tileColor = (data.speciated && data.variants[r][c] === 1)
+          ? SPECIES[si].variantColor : color;
+        const rgb = hexToRgb(tileColor);
         mapCtx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${intensity * 0.8})`;
         mapCtx.fillRect(x, y, tw - 1, th - 1);
       }
 
-      // Selected tile highlights
+      // Selected tile highlight
       if (selectedTile && selectedTile.r === r && selectedTile.c === c) {
-        mapCtx.strokeStyle = '#FFE9A3'; // gold for Tile A
+        mapCtx.strokeStyle = '#FFE9A3';
         mapCtx.lineWidth = 2;
         mapCtx.strokeRect(x + 1, y + 1, tw - 3, th - 3);
-        mapCtx.fillStyle = 'rgba(221,193,101,0.15)';
-        mapCtx.fillRect(x, y, tw - 1, th - 1);
-      }
-      if (comparisonTile && comparisonTile.r === r && comparisonTile.c === c) {
-        mapCtx.strokeStyle = '#E5591C'; // orange for Tile B
-        mapCtx.lineWidth = 2;
-        mapCtx.strokeRect(x + 1, y + 1, tw - 3, th - 3);
-        mapCtx.fillStyle = 'rgba(229,89,28,0.15)';
-        mapCtx.fillRect(x, y, tw - 1, th - 1);
       }
     }
   }
@@ -1250,84 +897,67 @@ function renderSpeciesList() {
   const listEl = document.getElementById('species-list');
   let html = '';
 
-  if (panelMode === 'compare' && selectedTile && comparisonTile) {
-    // Comparison mode
-    const tA = selectedTile, tB = comparisonTile;
+  // Fetch speciation info once
+  const specInfoJson = pyodide.runPython('get_speciation_info()');
+  const specInfo = JSON.parse(specInfoJson);
 
-    // Environment comparison
-    const envA = JSON.parse(pyodide.runPython(`get_tile_env(${tA.r},${tA.c})`));
-    const envB = JSON.parse(pyodide.runPython(`get_tile_env(${tB.r},${tB.c})`));
-
-    html += `<div class="cmp-header">
-      <span class="cmp-label-a">A (${tA.r},${tA.c})</span>
-      <span class="cmp-label-mid">Δ</span>
-      <span class="cmp-label-b">B (${tB.r},${tB.c})</span>
-    </div>`;
-
-    // Environment rows
-    html += '<div class="cmp-section-title">Environment</div>';
-    const envKeys = ['elevation', 'food', 'water', 'temp'];
-    const envLabels = ['Elevation', 'Food', 'Water', 'Temp'];
-    for (let i = 0; i < envKeys.length; i++) {
-      const a = envA[envKeys[i]], b = envB[envKeys[i]];
-      const delta = a - b;
-      html += renderComparisonRow(envLabels[i], a.toFixed(3), b.toFixed(3), delta, 1);
-    }
-
-    // Species comparison
-    html += '<div class="cmp-section-title">Populations</div>';
-    let maxPop = 1;
-    const popsA = [], popsB = [];
-    for (let s = 0; s < 5; s++) {
-      popsA[s] = pyodide.runPython(`get_tile_pop(${tA.r},${tA.c},${s})`);
-      popsB[s] = pyodide.runPython(`get_tile_pop(${tB.r},${tB.c},${s})`);
-      maxPop = Math.max(maxPop, popsA[s], popsB[s]);
-    }
-    for (let s = 0; s < 5; s++) {
-      const delta = popsA[s] - popsB[s];
-      const barA = (popsA[s] / maxPop) * 100;
-      const barB = (popsB[s] / maxPop) * 100;
-      html += `<div class="cmp-row">
-        <div class="cmp-name"><span class="sp-dot" style="background:${SPECIES[s].color}"></span><span class="sp-name-link" onclick="openSpeciesCard(${s})">${SPECIES[s].name}</span></div>
-        <div class="cmp-bars">
-          <div class="cmp-bar-a" style="width:${barA}%;background:${SPECIES[s].color};opacity:0.8"></div>
-          <div class="cmp-bar-b" style="width:${barB}%;background:${SPECIES[s].color};opacity:0.4"></div>
-        </div>
-        <div class="cmp-vals">${popsA[s]}<span class="cmp-vs">vs</span>${popsB[s]}</div>
-        <div class="cmp-delta" style="color:${deltaColor(delta, maxPop)}">${delta > 0 ? '+' : ''}${delta}</div>
-      </div>`;
-    }
-
-    // Traits comparison
-    html += '<div class="cmp-section-title">Traits</div>';
-    for (let s = 0; s < 5; s++) {
-      const tA_val = pyodide.runPython(`get_tile_trait(${tA.r},${tA.c},${s})`);
-      const tB_val = pyodide.runPython(`get_tile_trait(${tB.r},${tB.c},${s})`);
-      const delta = tA_val - tB_val;
-      html += renderComparisonRow(
-        `<span class="sp-dot" style="background:${SPECIES[s].color}"></span>${SPECIES[s].trait}`,
-        tA_val.toFixed(3), tB_val.toFixed(3), delta, 1
-      );
-    }
-
-  } else if (panelMode === 'global') {
+  if (panelMode === 'global') {
     for (let s = 0; s < 5; s++) {
       const pop = pyodide.runPython(`get_global_pop(${s})`);
       const trait = pyodide.runPython(`get_global_trait(${s})`);
-      html += `<div class="species-row">
-        <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
-        <div class="sp-name sp-name-link" onclick="openSpeciesCard(${s})">${SPECIES[s].fullName}</div>
-        <div class="sp-pop">${pop}</div>
-        <div class="sp-trait">${trait.toFixed(3)}</div>
-      </div>`;
+      const info = specInfo[String(s)];
+
+      if (info) {
+        // Show parent species row
+        html += `<div class="species-row">
+          <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
+          <div class="sp-name">${SPECIES[s].fullName}</div>
+          <div class="sp-pop">${pop}</div>
+          <div class="sp-trait">${trait.toFixed(3)}</div>
+        </div>`;
+        // Variant sub-entries
+        html += `<div class="species-row species-variant">
+          <div class="sp-dot" style="background:${SPECIES[s].color}; width:6px; height:6px;"></div>
+          <div class="sp-name sp-variant-name">${info.parent_name}</div>
+          <div class="sp-pop">${info.parent_pop}</div>
+          <div class="sp-trait">${info.parent_trait.toFixed(3)}</div>
+        </div>`;
+        html += `<div class="species-row species-variant">
+          <div class="sp-dot" style="background:${SPECIES[s].variantColor}; width:6px; height:6px;"></div>
+          <div class="sp-name sp-variant-name">${info.variant_name}</div>
+          <div class="sp-pop">${info.variant_pop}</div>
+          <div class="sp-trait">${info.variant_trait.toFixed(3)}</div>
+        </div>`;
+      } else {
+        html += `<div class="species-row">
+          <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
+          <div class="sp-name">${SPECIES[s].fullName}</div>
+          <div class="sp-pop">${pop}</div>
+          <div class="sp-trait">${trait.toFixed(3)}</div>
+        </div>`;
+      }
     }
   } else if (selectedTile) {
     for (let s = 0; s < 5; s++) {
       const pop = pyodide.runPython(`get_tile_pop(${selectedTile.r},${selectedTile.c},${s})`);
       const trait = pyodide.runPython(`get_tile_trait(${selectedTile.r},${selectedTile.c},${s})`);
+      const info = specInfo[String(s)];
+
+      // Determine variant color for this tile
+      let dotColor = SPECIES[s].color;
+      let tileName = SPECIES[s].name;
+      if (info && pop > 0) {
+        if (trait > info.split_trait) {
+          dotColor = SPECIES[s].variantColor;
+          tileName = info.variant_name;
+        } else {
+          tileName = info.parent_name;
+        }
+      }
+
       html += `<div class="species-row">
-        <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
-        <div class="sp-name sp-name-link" onclick="openSpeciesCard(${s})">${SPECIES[s].name}</div>
+        <div class="sp-dot" style="background:${dotColor}"></div>
+        <div class="sp-name">${tileName}</div>
         <div class="sp-pop">${pop}</div>
         <div class="sp-trait">${trait.toFixed(3)}</div>
       </div>`;
@@ -1337,23 +967,6 @@ function renderSpeciesList() {
   }
 
   listEl.innerHTML = html;
-}
-
-function deltaColor(delta, maxRange) {
-  if (delta === 0) return 'var(--dim)';
-  const intensity = Math.min(1, Math.abs(delta) / (maxRange * 0.5));
-  const alpha = 0.4 + intensity * 0.6;
-  if (delta > 0) return `rgba(46,204,113,${alpha})`; // green: A > B
-  return `rgba(229,89,28,${alpha})`; // orange: B > A
-}
-
-function renderComparisonRow(label, valA, valB, delta, maxRange) {
-  return `<div class="cmp-row">
-    <div class="cmp-name">${label}</div>
-    <div class="cmp-val-a">${valA}</div>
-    <div class="cmp-delta" style="color:${deltaColor(delta, maxRange)}">${delta > 0 ? '+' : ''}${delta.toFixed(3)}</div>
-    <div class="cmp-val-b">${valB}</div>
-  </div>`;
 }
 
 // ── RENDER POP CHART ──
@@ -1366,6 +979,14 @@ function renderPopChart() {
   ctx.fillStyle = '#1A0D00';
   ctx.fillRect(0, 0, w, h);
 
+  if (popHistory.length < 2) return;
+
+  // Find max for scaling
+  let maxPop = 1;
+  popHistory.forEach(entry => {
+    entry.pops.forEach(p => { if (p > maxPop) maxPop = p; });
+  });
+
   const padL = 35;
   const padR = 5;
   const padT = 5;
@@ -1373,111 +994,38 @@ function renderPopChart() {
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
 
-  if (panelMode === 'compare' && selectedTile && comparisonTile) {
-    // Tile comparison mode — overlay both tiles' histories
-    const histA = JSON.parse(pyodide.runPython(`get_tile_history(${selectedTile.r},${selectedTile.c})`));
-    const histB = JSON.parse(pyodide.runPython(`get_tile_history(${comparisonTile.r},${comparisonTile.c})`));
+  // Y axis labels
+  ctx.fillStyle = '#5a6a50';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(maxPop.toString(), padL - 4, padT + 9);
+  ctx.fillText('0', padL - 4, h - padB);
 
-    if (histA.length < 2 && histB.length < 2) return;
+  // X axis
+  ctx.strokeStyle = '#3d2a10';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(padL, h - padB);
+  ctx.lineTo(w - padR, h - padB);
+  ctx.stroke();
 
-    // Find max across both
-    let maxPop = 1;
-    [histA, histB].forEach(hist => {
-      hist.forEach(entry => {
-        entry.pops.forEach(p => { if (p > maxPop) maxPop = p; });
-      });
-    });
-
-    // Y axis labels
-    ctx.fillStyle = '#5a6a50';
-    ctx.font = '9px monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(maxPop.toString(), padL - 4, padT + 9);
-    ctx.fillText('0', padL - 4, h - padB);
-
-    // X axis
-    ctx.strokeStyle = '#3d2a10';
-    ctx.lineWidth = 0.5;
+  // Draw lines for each species
+  for (let s = 0; s < 5; s++) {
+    ctx.strokeStyle = SPECIES[s].color;
+    ctx.lineWidth = s === selectedSpecies ? 2 : 1;
+    ctx.globalAlpha = s === selectedSpecies ? 1 : 0.4;
     ctx.beginPath();
-    ctx.moveTo(padL, h - padB);
-    ctx.lineTo(w - padR, h - padB);
-    ctx.stroke();
 
-    // Draw Tile A lines (solid)
-    function drawTileLines(hist, dashed) {
-      if (hist.length < 2) return;
-      for (let s = 0; s < 5; s++) {
-        ctx.strokeStyle = SPECIES[s].color;
-        ctx.lineWidth = s === selectedSpecies ? 2 : 1;
-        ctx.globalAlpha = s === selectedSpecies ? 1 : 0.4;
-        ctx.setLineDash(dashed ? [4, 3] : []);
-        ctx.beginPath();
-
-        for (let i = 0; i < hist.length; i++) {
-          const x = padL + (i / (hist.length - 1)) * plotW;
-          const y = padT + plotH - (hist[i].pops[s] / maxPop) * plotH;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      }
+    for (let i = 0; i < popHistory.length; i++) {
+      const x = padL + (i / (popHistory.length - 1)) * plotW;
+      const y = padT + plotH - (popHistory[i].pops[s] / maxPop) * plotH;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     }
 
-    drawTileLines(histA, false); // Tile A: solid
-    drawTileLines(histB, true);  // Tile B: dashed
-    ctx.globalAlpha = 1;
-    ctx.setLineDash([]);
-
-    // Legend
-    ctx.fillStyle = '#FFE9A3';
-    ctx.font = '8px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('— A (solid)', padL + 4, padT + 10);
-    ctx.fillStyle = '#E5591C';
-    ctx.fillText('--- B (dashed)', padL + 75, padT + 10);
-
-  } else {
-    // Global mode
-    if (popHistory.length < 2) return;
-
-    let maxPop = 1;
-    popHistory.forEach(entry => {
-      entry.pops.forEach(p => { if (p > maxPop) maxPop = p; });
-    });
-
-    // Y axis labels
-    ctx.fillStyle = '#5a6a50';
-    ctx.font = '9px monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(maxPop.toString(), padL - 4, padT + 9);
-    ctx.fillText('0', padL - 4, h - padB);
-
-    // X axis
-    ctx.strokeStyle = '#3d2a10';
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(padL, h - padB);
-    ctx.lineTo(w - padR, h - padB);
     ctx.stroke();
-
-    // Draw lines for each species
-    for (let s = 0; s < 5; s++) {
-      ctx.strokeStyle = SPECIES[s].color;
-      ctx.lineWidth = s === selectedSpecies ? 2 : 1;
-      ctx.globalAlpha = s === selectedSpecies ? 1 : 0.4;
-      ctx.beginPath();
-
-      for (let i = 0; i < popHistory.length; i++) {
-        const x = padL + (i / (popHistory.length - 1)) * plotW;
-        const y = padT + plotH - (popHistory[i].pops[s] / maxPop) * plotH;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
   }
+  ctx.globalAlpha = 1;
 }
 
 // ── RENDER TRAIT CHART ──
@@ -1526,201 +1074,6 @@ function renderTraitChart() {
   ctx.fillText('1.0', padL + plotW, h - 2);
 }
 
-// ── TIMELINE SCRUBBER ──
-function refreshTimelineData() {
-  const json = pyodide.runPython('get_snapshot_generations()');
-  cachedSnapGens = JSON.parse(json);
-}
-
-function renderTimeline() {
-  if (!timelineCanvas || cachedSnapGens.length === 0) return;
-  const ctx = timelineCtx;
-  const w = timelineCanvas.width;
-  const h = timelineCanvas.height;
-  if (w === 0) return;
-
-  ctx.clearRect(0, 0, w, h);
-
-  const n = cachedSnapGens.length;
-  const padL = 2, padR = 2;
-  const trackW = w - padL - padR;
-  const trackY = h / 2;
-  const trackH = 4;
-
-  // Track background
-  ctx.fillStyle = '#3d2a10';
-  ctx.fillRect(padL, trackY - trackH / 2, trackW, trackH);
-  ctx.roundRect && ctx.beginPath();
-
-  // Filled portion (up to current position)
-  let fillFrac = 1;
-  if (!timelineLive && timelineSnapshotIdx >= 0 && n > 1) {
-    fillFrac = timelineSnapshotIdx / (n - 1);
-  }
-  ctx.fillStyle = 'rgba(221,193,101,0.4)';
-  ctx.fillRect(padL, trackY - trackH / 2, trackW * fillFrac, trackH);
-
-  // Event markers
-  for (let i = 0; i < n; i++) {
-    if (cachedSnapGens[i].hasEvents) {
-      const x = padL + (i / (n - 1)) * trackW;
-      ctx.fillStyle = '#E5591C';
-      ctx.beginPath();
-      ctx.arc(x, trackY - 6, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Playhead
-  const headX = padL + fillFrac * trackW;
-  ctx.fillStyle = timelineLive ? 'var(--gold)' : '#FFE9A3';
-  ctx.fillStyle = timelineLive ? '#DDC165' : '#FFE9A3';
-  ctx.beginPath();
-  ctx.arc(headX, trackY, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#1A0D00';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Generation labels
-  ctx.fillStyle = '#8a7560';
-  ctx.font = '8px monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('Gen ' + cachedSnapGens[0].gen, padL, h - 1);
-  ctx.textAlign = 'right';
-  ctx.fillText('Gen ' + cachedSnapGens[n - 1].gen, w - padR, h - 1);
-
-  // Update gen label
-  const label = document.getElementById('timeline-gen-label');
-  if (timelineLive) {
-    label.textContent = 'LIVE';
-    label.style.color = '#2ECC71';
-  } else if (timelineSnapshotIdx >= 0 && timelineSnapshotIdx < n) {
-    label.textContent = 'Gen ' + cachedSnapGens[timelineSnapshotIdx].gen;
-    label.style.color = 'var(--gold-light)';
-  }
-
-  // Show/hide live button
-  document.getElementById('btn-live').style.display = timelineLive ? 'none' : 'block';
-}
-
-function setupTimelineInteraction() {
-  const canvas = timelineCanvas;
-
-  function snapIdxFromX(clientX) {
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const frac = Math.max(0, Math.min(1, x / rect.width));
-    const n = cachedSnapGens.length;
-    if (n === 0) return -1;
-    return Math.round(frac * (n - 1));
-  }
-
-  canvas.addEventListener('mousedown', (e) => {
-    if (cachedSnapGens.length < 2) return;
-    timelineDragging = true;
-    const idx = snapIdxFromX(e.clientX);
-    scrubTo(idx);
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    if (!timelineDragging) {
-      // Hover tooltip for event markers
-      handleTimelineHover(e);
-      return;
-    }
-    const idx = snapIdxFromX(e.clientX);
-    scrubTo(idx);
-  });
-
-  window.addEventListener('mouseup', () => {
-    timelineDragging = false;
-  });
-
-  // Touch support
-  canvas.addEventListener('touchstart', (e) => {
-    if (cachedSnapGens.length < 2) return;
-    e.preventDefault();
-    timelineDragging = true;
-    const idx = snapIdxFromX(e.touches[0].clientX);
-    scrubTo(idx);
-  }, { passive: false });
-
-  canvas.addEventListener('touchmove', (e) => {
-    if (!timelineDragging) return;
-    e.preventDefault();
-    const idx = snapIdxFromX(e.touches[0].clientX);
-    scrubTo(idx);
-  }, { passive: false });
-
-  canvas.addEventListener('touchend', () => {
-    timelineDragging = false;
-  });
-}
-
-function handleTimelineHover(e) {
-  const tooltip = document.getElementById('timeline-tooltip');
-  const rect = timelineCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const n = cachedSnapGens.length;
-  if (n < 2 || x < 0 || x > rect.width) {
-    tooltip.style.display = 'none';
-    return;
-  }
-
-  const frac = x / rect.width;
-  const idx = Math.round(frac * (n - 1));
-  if (idx >= 0 && idx < n && cachedSnapGens[idx].hasEvents) {
-    const evJson = pyodide.runPython(`get_snapshot_events(${idx})`);
-    const evs = JSON.parse(evJson);
-    if (evs.length > 0) {
-      const text = evs.map(ev => `[Gen ${ev.gen}] ${ev.text}`).join('<br>');
-      tooltip.innerHTML = text;
-      tooltip.style.display = 'block';
-      tooltip.style.left = Math.min(rect.width - 150, Math.max(0, x - 50)) + 'px';
-      return;
-    }
-  }
-  tooltip.style.display = 'none';
-}
-
-function scrubTo(idx) {
-  if (idx < 0 || cachedSnapGens.length === 0) return;
-  const n = cachedSnapGens.length;
-  idx = Math.max(0, Math.min(n - 1, idx));
-
-  // If scrubbing to the last snapshot (present), return to live
-  if (idx === n - 1) {
-    returnToLive();
-    return;
-  }
-
-  timelineLive = false;
-  timelineSnapshotIdx = idx;
-
-  // Update gen counter to show historical gen
-  document.getElementById('gen-num').textContent = cachedSnapGens[idx].gen.toLocaleString();
-
-  renderMap();
-  renderTimeline();
-}
-
-function returnToLive() {
-  timelineLive = true;
-  timelineSnapshotIdx = -1;
-  document.getElementById('timeline-tooltip').style.display = 'none';
-
-  // Restore live gen counter
-  const gen = pyodide.runPython('generation');
-  document.getElementById('gen-num').textContent = gen.toLocaleString();
-
-  renderAll();
-  renderTimeline();
-
-  // Resume ticking if was playing
-  if (playing && !animFrame) tick();
-}
-
 // ── UTIL ──
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -1729,361 +1082,213 @@ function hexToRgb(hex) {
   return { r, g, b };
 }
 
-// ── SPECIES DETAIL CARD ──
+// ── SCATTER PLOT ──
+function populateScatterDropdowns() {
+  const xSel = document.getElementById('scatter-x');
+  const ySel = document.getElementById('scatter-y');
 
-let ecologyData = null; // cached from Python
-
-function openSpeciesCard(speciesIdx) {
-  const overlay = document.getElementById('species-card-overlay');
-  overlay.style.display = 'flex';
-
-  const sp = SPECIES[speciesIdx];
-  const rgb = hexToRgb(sp.color);
-
-  // Load ecology data once
-  if (!ecologyData) {
-    ecologyData = JSON.parse(pyodide.runPython('get_species_ecology()'));
-  }
-  const eco = ecologyData.relationships[speciesIdx];
-
-  // Accent bar
-  document.getElementById('sc-accent').style.background = sp.color;
-
-  // Header
-  document.getElementById('sc-name').textContent = sp.fullName;
-  document.getElementById('sc-name').style.color = sp.color;
-  document.getElementById('sc-role').textContent = eco.role;
-  document.getElementById('sc-trait-desc').innerHTML =
-    `<strong>${sp.trait}:</strong> ${eco.trait_desc}`;
-
-  // Population & trend
-  const pop = pyodide.runPython(`get_global_pop(${speciesIdx})`);
-  let trendIcon = '<span class="sc-trend-stable">&#9644;</span>';
-  if (popHistory.length >= 10) {
-    const recent = popHistory.slice(-5);
-    const older = popHistory.slice(-10, -5);
-    const avgRecent = recent.reduce((s, e) => s + e.pops[speciesIdx], 0) / recent.length;
-    const avgOlder = older.reduce((s, e) => s + e.pops[speciesIdx], 0) / older.length;
-    const pctChange = (avgRecent - avgOlder) / Math.max(1, avgOlder);
-    if (pctChange > 0.05) trendIcon = '<span class="sc-trend-up">&#9650;</span>';
-    else if (pctChange < -0.05) trendIcon = '<span class="sc-trend-down">&#9660;</span>';
-  }
-  document.getElementById('sc-pop').innerHTML =
-    `<span style="color:${sp.color}">${pop.toLocaleString()}</span> ${trendIcon}`;
-
-  // Trait
-  const trait = pyodide.runPython(`get_global_trait(${speciesIdx})`);
-  document.getElementById('sc-trait').innerHTML =
-    `<span style="color:${sp.color}">${trait.toFixed(3)}</span>`;
-
-  // Mini maps
-  renderSpeciesCardMaps(speciesIdx);
-
-  // Charts
-  renderSpeciesCardTraitChart(speciesIdx);
-  renderSpeciesCardPopChart(speciesIdx);
-
-  // Ecology
-  renderSpeciesCardEcology(speciesIdx, eco);
-
-  // Events
-  renderSpeciesCardEvents(speciesIdx);
-
-  // Esc to close
-  document.addEventListener('keydown', speciesCardEscHandler);
-}
-
-function closeSpeciesCard() {
-  document.getElementById('species-card-overlay').style.display = 'none';
-  document.removeEventListener('keydown', speciesCardEscHandler);
-}
-
-function speciesCardEscHandler(e) {
-  if (e.key === 'Escape') closeSpeciesCard();
-}
-
-function renderSpeciesCardMaps(speciesIdx) {
-  const dataJson = pyodide.runPython(`get_trait_map_data(${speciesIdx})`);
-  const data = JSON.parse(dataJson);
-  const gs = data.traits.length;
-  const sp = SPECIES[speciesIdx];
-
-  // Trait distribution map
-  const traitCanvas = document.getElementById('sc-trait-map');
-  const tCtx = traitCanvas.getContext('2d');
-  const tw = 200 / gs;
-  const th = 200 / gs;
-
-  tCtx.fillStyle = '#1A0D00';
-  tCtx.fillRect(0, 0, 200, 200);
-
-  for (let r = 0; r < gs; r++) {
-    for (let c = 0; c < gs; c++) {
-      const x = c * tw;
-      const y = r * th;
-      const elev = data.elevations[r][c];
-
-      // Base terrain
-      const baseR = 26 + elev * 20;
-      const baseG = 13 + elev * 15;
-      const baseB = 0 + elev * 8;
-      tCtx.fillStyle = `rgb(${baseR|0},${baseG|0},${baseB|0})`;
-      tCtx.fillRect(x, y, tw, th);
-
-      const traitVal = data.traits[r][c];
-      if (traitVal >= 0) {
-        // Blue (low) to Red (high) gradient
-        const t = Math.max(0, Math.min(1, traitVal));
-        const cr = Math.round(t * 255);
-        const cb = Math.round((1 - t) * 255);
-        const cg = Math.round(Math.min(t, 1 - t) * 100);
-        tCtx.fillStyle = `rgba(${cr},${cg},${cb},0.85)`;
-        tCtx.fillRect(x, y, tw, th);
+  function buildOptions(mode) {
+    const opts = [];
+    if (mode === 'spatial') {
+      for (let s = 0; s < 5; s++) {
+        opts.push({ value: `pop_${s}`, label: `${SPECIES[s].name} Pop` });
+        opts.push({ value: `trait_${s}`, label: `${SPECIES[s].name} ${SPECIES[s].trait}` });
       }
-    }
-  }
-
-  // Grid lines
-  tCtx.strokeStyle = 'rgba(61,42,16,0.3)';
-  tCtx.lineWidth = 0.5;
-  for (let i = 0; i <= gs; i++) {
-    tCtx.beginPath(); tCtx.moveTo(i * tw, 0); tCtx.lineTo(i * tw, 200); tCtx.stroke();
-    tCtx.beginPath(); tCtx.moveTo(0, i * th); tCtx.lineTo(200, i * th); tCtx.stroke();
-  }
-
-  // Population heatmap
-  const popCanvas = document.getElementById('sc-pop-map');
-  const pCtx = popCanvas.getContext('2d');
-
-  pCtx.fillStyle = '#1A0D00';
-  pCtx.fillRect(0, 0, 200, 200);
-
-  const rgb = hexToRgb(sp.color);
-  const maxPop = data.max_pop || 1;
-
-  for (let r = 0; r < gs; r++) {
-    for (let c = 0; c < gs; c++) {
-      const x = c * tw;
-      const y = r * th;
-      const elev = data.elevations[r][c];
-
-      const baseR = 26 + elev * 20;
-      const baseG = 13 + elev * 15;
-      const baseB = 0 + elev * 8;
-      pCtx.fillStyle = `rgb(${baseR|0},${baseG|0},${baseB|0})`;
-      pCtx.fillRect(x, y, tw, th);
-
-      const pop = data.pops[r][c];
-      if (pop > 0) {
-        const intensity = Math.min(1, pop / (maxPop * 0.7));
-        pCtx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${intensity * 0.9})`;
-        pCtx.fillRect(x, y, tw, th);
+      opts.push({ value: 'elevation', label: 'Elevation' });
+      opts.push({ value: 'food', label: 'Food Level' });
+      opts.push({ value: 'water', label: 'Water Level' });
+      opts.push({ value: 'temp', label: 'Temperature' });
+    } else {
+      for (let s = 0; s < 5; s++) {
+        opts.push({ value: `pop_${s}`, label: `${SPECIES[s].name} Pop` });
+        opts.push({ value: `trait_${s}`, label: `${SPECIES[s].name} ${SPECIES[s].trait}` });
       }
+      opts.push({ value: 'season', label: 'Season Factor' });
     }
+    return opts;
   }
 
-  pCtx.strokeStyle = 'rgba(61,42,16,0.3)';
-  pCtx.lineWidth = 0.5;
-  for (let i = 0; i <= gs; i++) {
-    pCtx.beginPath(); pCtx.moveTo(i * tw, 0); pCtx.lineTo(i * tw, 200); pCtx.stroke();
-    pCtx.beginPath(); pCtx.moveTo(0, i * th); pCtx.lineTo(200, i * th); pCtx.stroke();
+  function fill(sel, opts, defaultIdx) {
+    sel.innerHTML = '';
+    opts.forEach((o, i) => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      if (i === defaultIdx) opt.selected = true;
+      sel.appendChild(opt);
+    });
   }
+
+  const opts = buildOptions(scatterMode);
+  // Default: X = Velothrix Pop, Y = Leviathan Pop
+  fill(xSel, opts, 0);
+  fill(ySel, opts, 2);
+
+  xSel.onchange = () => renderScatterPlot();
+  ySel.onchange = () => renderScatterPlot();
 }
 
-function renderSpeciesCardTraitChart(speciesIdx) {
-  const canvas = document.getElementById('sc-trait-chart');
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = canvas.clientWidth * dpr;
-  canvas.height = canvas.clientHeight * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  const sp = SPECIES[speciesIdx];
-
-  ctx.fillStyle = '#1A0D00';
-  ctx.fillRect(0, 0, w, h);
-
-  if (traitHistory.length < 2) {
-    ctx.fillStyle = '#5a6a50';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('Gathering data...', w / 2, h / 2);
-    return;
-  }
-
-  const padL = 35, padR = 5, padT = 5, padB = 15;
-  const plotW = w - padL - padR;
-  const plotH = h - padT - padB;
-
-  const vals = traitHistory.map(e => e.traits[speciesIdx]);
-  const minV = Math.min(...vals) * 0.95;
-  const maxV = Math.max(...vals) * 1.05 || 1;
-  const range = maxV - minV || 0.01;
-
-  // Y axis
-  ctx.fillStyle = '#5a6a50';
-  ctx.font = '9px monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText(maxV.toFixed(2), padL - 4, padT + 9);
-  ctx.fillText(minV.toFixed(2), padL - 4, h - padB);
-
-  // X axis line
-  ctx.strokeStyle = '#3d2a10';
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  ctx.moveTo(padL, h - padB);
-  ctx.lineTo(w - padR, h - padB);
-  ctx.stroke();
-
-  // Line
-  ctx.strokeStyle = sp.color;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i < traitHistory.length; i++) {
-    const x = padL + (i / (traitHistory.length - 1)) * plotW;
-    const y = padT + plotH - ((vals[i] - minV) / range) * plotH;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  // Gen range labels
-  ctx.fillStyle = '#8a7560';
-  ctx.font = '8px monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('Gen ' + traitHistory[0].gen, padL, h - 1);
-  ctx.textAlign = 'right';
-  ctx.fillText('Gen ' + traitHistory[traitHistory.length - 1].gen, w - padR, h - 1);
-}
-
-function renderSpeciesCardPopChart(speciesIdx) {
-  const canvas = document.getElementById('sc-pop-chart');
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = canvas.clientWidth * dpr;
-  canvas.height = canvas.clientHeight * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  const sp = SPECIES[speciesIdx];
-
-  ctx.fillStyle = '#1A0D00';
-  ctx.fillRect(0, 0, w, h);
-
-  if (popHistory.length < 2) {
-    ctx.fillStyle = '#5a6a50';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('Gathering data...', w / 2, h / 2);
-    return;
-  }
-
-  const padL = 35, padR = 5, padT = 5, padB = 15;
-  const plotW = w - padL - padR;
-  const plotH = h - padT - padB;
-
-  const vals = popHistory.map(e => e.pops[speciesIdx]);
-  const maxPop = Math.max(...vals, 1);
-
-  // Y axis
-  ctx.fillStyle = '#5a6a50';
-  ctx.font = '9px monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText(maxPop.toString(), padL - 4, padT + 9);
-  ctx.fillText('0', padL - 4, h - padB);
-
-  // X axis line
-  ctx.strokeStyle = '#3d2a10';
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  ctx.moveTo(padL, h - padB);
-  ctx.lineTo(w - padR, h - padB);
-  ctx.stroke();
-
-  // Line
-  ctx.strokeStyle = sp.color;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i < popHistory.length; i++) {
-    const x = padL + (i / (popHistory.length - 1)) * plotW;
-    const y = padT + plotH - (vals[i] / maxPop) * plotH;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  // Subtle fill
-  const rgb = hexToRgb(sp.color);
-  ctx.lineTo(padL + plotW, padT + plotH);
-  ctx.lineTo(padL, padT + plotH);
-  ctx.closePath();
-  ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.1)`;
-  ctx.fill();
-
-  // Gen range labels
-  ctx.fillStyle = '#8a7560';
-  ctx.font = '8px monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('Gen ' + popHistory[0].gen, padL, h - 1);
-  ctx.textAlign = 'right';
-  ctx.fillText('Gen ' + popHistory[popHistory.length - 1].gen, w - padR, h - 1);
-}
-
-function renderSpeciesCardEcology(speciesIdx, eco) {
-  const el = document.getElementById('sc-ecology');
-  let html = '';
-
-  if (eco.eats.length > 0) {
-    html += `<div class="sc-ecology-row">
-      <span class="sc-ecology-label">Preys on</span>
-      <span class="sc-ecology-value">${eco.eats.join(', ')}</span>
-    </div>`;
-  }
-  if (eco.eaten_by.length > 0) {
-    html += `<div class="sc-ecology-row">
-      <span class="sc-ecology-label">Preyed on by</span>
-      <span class="sc-ecology-value">${eco.eaten_by.join(', ')}</span>
-    </div>`;
-  }
-  if (eco.competes_with.length > 0) {
-    html += `<div class="sc-ecology-row">
-      <span class="sc-ecology-label">Competes with</span>
-      <span class="sc-ecology-value">${eco.competes_with.join(', ')}</span>
-    </div>`;
-  }
-  if (!html) {
-    html = '<div class="sc-no-data">No known ecological interactions</div>';
-  }
-  el.innerHTML = html;
-}
-
-function renderSpeciesCardEvents(speciesIdx) {
-  const el = document.getElementById('sc-events');
-  const sp = SPECIES[speciesIdx];
-
-  // Filter events for this species (by index or by name appearing in text)
-  const relevant = eventHistory.filter(ev => {
-    if (ev.species === speciesIdx) return true;
-    if (ev.species === -1) {
-      // Environmental events — include if species name is mentioned
-      return ev.text.includes(sp.name) || ev.text.includes(sp.fullName);
-    }
-    return false;
+function setScatterMode(mode) {
+  scatterMode = mode;
+  document.querySelectorAll('.scatter-mode-toggle button').forEach((btn, idx) => {
+    btn.classList.toggle('active', (mode === 'spatial' && idx === 0) || (mode === 'temporal' && idx === 1));
   });
+  populateScatterDropdowns();
+  renderScatterPlot();
+}
 
-  if (relevant.length === 0) {
-    el.innerHTML = '<div class="sc-no-data">No recorded events yet — let the simulation run</div>';
-    return;
+function getScatterValue(entry, varKey) {
+  // entry is either a tile object (spatial) or a popHistory entry (temporal)
+  if (varKey.startsWith('pop_')) {
+    const s = parseInt(varKey.split('_')[1]);
+    return entry.pops[s];
+  }
+  if (varKey.startsWith('trait_')) {
+    const s = parseInt(varKey.split('_')[1]);
+    return entry.traits[s];
+  }
+  if (varKey === 'elevation') return entry.elev;
+  if (varKey === 'food') return entry.food;
+  if (varKey === 'water') return entry.water;
+  if (varKey === 'temp') return entry.temp;
+  if (varKey === 'season') return entry.season;
+  return 0;
+}
+
+function getVarLabel(varKey) {
+  if (varKey.startsWith('pop_')) {
+    const s = parseInt(varKey.split('_')[1]);
+    return SPECIES[s].name + ' Pop';
+  }
+  if (varKey.startsWith('trait_')) {
+    const s = parseInt(varKey.split('_')[1]);
+    return SPECIES[s].trait;
+  }
+  const labels = { elevation: 'Elevation', food: 'Food', water: 'Water', temp: 'Temp', season: 'Season' };
+  return labels[varKey] || varKey;
+}
+
+function renderScatterPlot() {
+  const ctx = scatterCtx;
+  const w = scatterCanvas.clientWidth;
+  const h = scatterCanvas.clientHeight;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#1A0D00';
+  ctx.fillRect(0, 0, w, h);
+
+  const xVar = document.getElementById('scatter-x').value;
+  const yVar = document.getElementById('scatter-y').value;
+
+  const padL = 40;
+  const padR = 10;
+  const padT = 10;
+  const padB = 22;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  let points = [];
+
+  if (scatterMode === 'spatial') {
+    // Get all tile data from Python
+    const tilesJson = pyodide.runPython('get_scatter_spatial()');
+    const tiles = JSON.parse(tilesJson);
+    let maxElev = 0;
+    tiles.forEach(t => { if (t.elev > maxElev) maxElev = t.elev; });
+
+    for (let i = 0; i < tiles.length; i++) {
+      const tile = tiles[i];
+      const xVal = getScatterValue(tile, xVar);
+      const yVal = getScatterValue(tile, yVar);
+      // Color by elevation
+      const elevNorm = maxElev > 0 ? tile.elev / maxElev : 0;
+      const r = Math.round(60 + 160 * elevNorm);
+      const g = Math.round(40 + 120 * (1 - elevNorm));
+      const b = Math.round(20 + 80 * (1 - elevNorm));
+      points.push({ x: xVal, y: yVal, color: `rgb(${r},${g},${b})`, alpha: 0.85 });
+    }
+  } else {
+    // Temporal mode: each dot is one generation from popHistory
+    if (popHistory.length < 2) return;
+    const total = popHistory.length;
+    for (let i = 0; i < total; i++) {
+      const entry = popHistory[i];
+      const xVal = getScatterValue(entry, xVar);
+      const yVal = getScatterValue(entry, yVar);
+      // Color by recency (older = dimmer)
+      const recency = (i + 1) / total;
+      const rgb = hexToRgb(SPECIES[selectedSpecies].color);
+      points.push({
+        x: xVal, y: yVal,
+        color: `rgb(${rgb.r},${rgb.g},${rgb.b})`,
+        alpha: 0.15 + 0.85 * recency
+      });
+    }
   }
 
-  // Show most recent first, limit to 30
-  const display = relevant.slice(-30).reverse();
-  el.innerHTML = display.map(ev =>
-    `<div class="sc-event-entry"><span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text">${ev.text}</span></div>`
-  ).join('');
+  if (points.length === 0) return;
+
+  // Compute ranges
+  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  points.forEach(p => {
+    if (p.x < xMin) xMin = p.x;
+    if (p.x > xMax) xMax = p.x;
+    if (p.y < yMin) yMin = p.y;
+    if (p.y > yMax) yMax = p.y;
+  });
+  // Prevent zero-range
+  if (xMax === xMin) { xMin -= 0.5; xMax += 0.5; }
+  if (yMax === yMin) { yMin -= 0.5; yMax += 0.5; }
+  const xRange = xMax - xMin;
+  const yRange = yMax - yMin;
+
+  // Draw grid lines
+  ctx.strokeStyle = '#3d2a10';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const gx = padL + (i / 4) * plotW;
+    const gy = padT + (i / 4) * plotH;
+    ctx.beginPath(); ctx.moveTo(gx, padT); ctx.lineTo(gx, padT + plotH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(padL + plotW, gy); ctx.stroke();
+  }
+
+  // Draw points
+  points.forEach(p => {
+    const px = padL + ((p.x - xMin) / xRange) * plotW;
+    const py = padT + plotH - ((p.y - yMin) / yRange) * plotH;
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Axis labels
+  ctx.fillStyle = '#8a7560';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'center';
+
+  // X axis
+  ctx.fillText(formatAxisVal(xMin), padL, h - 2);
+  ctx.fillText(formatAxisVal(xMax), padL + plotW, h - 2);
+  ctx.fillText(getVarLabel(xVar), padL + plotW / 2, h - 2);
+
+  // Y axis
+  ctx.textAlign = 'right';
+  ctx.fillText(formatAxisVal(yMax), padL - 4, padT + 9);
+  ctx.fillText(formatAxisVal(yMin), padL - 4, padT + plotH);
+  ctx.save();
+  ctx.translate(8, padT + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillText(getVarLabel(yVar), 0, 0);
+  ctx.restore();
+}
+
+function formatAxisVal(v) {
+  if (Number.isInteger(v) || Math.abs(v) >= 100) return Math.round(v).toString();
+  return v.toFixed(2);
 }
 
 // ── PYTHON SIM CODE ──
@@ -2143,26 +1348,19 @@ SEASON_LENGTH = 100
 SPECIATION_THRESHOLD = 0.3
 SPECIATION_GENS = 100
 
-# ── SNAPSHOT CONFIG ──
-SNAPSHOT_INTERVAL = 10
-MAX_SNAPSHOTS = 500
-
 # ── STATE ──
 generation = 0
 events_buffer = []
 
-# Timeline snapshot ring buffer: list of {gen, pops, traits, events}
-# pops/traits are flat lists: [row0col0_sp0..sp4, row0col1_sp0..sp4, ...]
-snapshots = []
-snapshot_events = []  # events accumulated since last snapshot
-
-def _emit_event(ev):
-    events_buffer.append(ev)
-    snapshot_events.append(ev)
-
-# Per-tile population history ring buffer
-TILE_HISTORY_LEN = 200
-tile_history = {}  # (r,c) -> list of {gen, pops: [5 ints]}
+# Persistent speciation state: species_idx -> {
+#   'split_trait': float,       # trait value where the split occurred
+#   'gen': int,                 # generation when speciation was detected
+#   'variant_name': str,        # name for the new variant
+#   'parent_name': str,         # name for the original variant
+#   'variant_color': str,       # hex color for the new variant
+#   'parent_color': str,        # hex color for the parent
+# }
+speciation_events = {}
 
 # Grid state: [row][col] -> tile
 # Each tile: {
@@ -2177,22 +1375,116 @@ tile_history = {}  # (r,c) -> list of {gen, pops: [5 ints]}
 
 grid = []
 
+TERRAIN_SEED = None  # Set to an int for reproducible maps, None for random
+
+# Biome thresholds
+BIOME_DEEP_WATER = 0.2
+BIOME_SHALLOW_MARSH = 0.4
+BIOME_REED_BEDS = 0.5
+BIOME_TIDAL_FLATS = 0.7
+
+def _hash_noise(ix, iy, seed):
+    """Integer hash-based pseudo-random for value noise."""
+    n = ix * 374761393 + iy * 668265263 + seed * 1274126177
+    n = (n ^ (n >> 13)) * 1274126177
+    n = n ^ (n >> 16)
+    return (n & 0x7fffffff) / 0x7fffffff
+
+def _value_noise(x, y, seed):
+    """Smoothed value noise with bicubic-ish interpolation."""
+    ix = int(math.floor(x))
+    iy = int(math.floor(y))
+    fx = x - ix
+    fy = y - iy
+    # Smoothstep
+    fx = fx * fx * (3 - 2 * fx)
+    fy = fy * fy * (3 - 2 * fy)
+    n00 = _hash_noise(ix, iy, seed)
+    n10 = _hash_noise(ix + 1, iy, seed)
+    n01 = _hash_noise(ix, iy + 1, seed)
+    n11 = _hash_noise(ix + 1, iy + 1, seed)
+    nx0 = n00 * (1 - fx) + n10 * fx
+    nx1 = n01 * (1 - fx) + n11 * fx
+    return nx0 * (1 - fy) + nx1 * fy
+
+def _octave_noise(x, y, seed, octaves=4, lacunarity=2.0, persistence=0.5):
+    """Multi-octave value noise returning 0-1."""
+    total = 0.0
+    amplitude = 1.0
+    frequency = 1.0
+    max_val = 0.0
+    for i in range(octaves):
+        total += _value_noise(x * frequency, y * frequency, seed + i * 31) * amplitude
+        max_val += amplitude
+        amplitude *= persistence
+        frequency *= lacunarity
+    return total / max_val
+
 def generate_elevation():
-    """Simple value noise for terrain."""
+    """Multi-octave value noise terrain with water bodies and ridges."""
+    seed = TERRAIN_SEED if TERRAIN_SEED is not None else random.randint(0, 999999)
     elev = [[0.0]*GRID_SIZE for _ in range(GRID_SIZE)]
-    # Use midpoint displacement-like approach
-    random.seed(42)  # Reproducible
-    # Place some random control points
+    scale = 0.35  # Controls feature size relative to grid
+
+    # Generate raw noise
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
-            # Distance from center creates a basin (marsh in center, shores at edges)
-            cx, cy = GRID_SIZE/2, GRID_SIZE/2
-            dist = math.sqrt((r-cx)**2 + (c-cy)**2) / (GRID_SIZE * 0.7)
-            base = 0.3 + dist * 0.5
-            noise = random.uniform(-0.15, 0.15)
-            elev[r][c] = max(0.0, min(1.0, base + noise))
-    random.seed()  # Unseed
+            nx = c * scale
+            ny = r * scale
+            # Base terrain: multi-octave noise
+            base = _octave_noise(nx, ny, seed, octaves=4, persistence=0.45)
+            # Ridge layer: fold noise to create ridge lines
+            ridge = _octave_noise(nx + 50, ny + 50, seed + 100, octaves=3, persistence=0.5)
+            ridge = 1.0 - abs(ridge * 2 - 1)  # Fold into ridges
+            ridge = ridge * ridge  # Sharpen ridges
+            # Combine: base terrain + subtle ridge influence
+            combined = base * 0.7 + ridge * 0.3
+            # Basin effect: lower center to create water body
+            cx, cy = GRID_SIZE / 2.0, GRID_SIZE / 2.0
+            dist = math.sqrt((r - cy)**2 + (c - cx)**2) / (GRID_SIZE * 0.6)
+            basin = max(0, 1.0 - dist * dist) * 0.25
+            combined = combined - basin
+            elev[r][c] = combined
+
+    # Normalize to 0-1
+    flat = [elev[r][c] for r in range(GRID_SIZE) for c in range(GRID_SIZE)]
+    lo, hi = min(flat), max(flat)
+    span = hi - lo if hi > lo else 1.0
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            elev[r][c] = (elev[r][c] - lo) / span
+
+    # Flood-fill to connect low regions into water bodies
+    # Push lowest 20% of tiles further down to form coherent water
+    threshold = sorted(flat)[max(1, len(flat) // 5)]
+    threshold_norm = (threshold - lo) / span
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            if elev[r][c] < threshold_norm:
+                elev[r][c] = elev[r][c] * 0.7  # Deepen low areas
+
+    # Re-normalize after deepening
+    flat2 = [elev[r][c] for r in range(GRID_SIZE) for c in range(GRID_SIZE)]
+    lo2, hi2 = min(flat2), max(flat2)
+    span2 = hi2 - lo2 if hi2 > lo2 else 1.0
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            elev[r][c] = (elev[r][c] - lo2) / span2
+
     return elev
+
+def get_biome(elev):
+    """Classify elevation into biome type."""
+    if elev < BIOME_DEEP_WATER:
+        return 'deep_water'
+    elif elev < BIOME_SHALLOW_MARSH:
+        return 'shallow_marsh'
+    elif elev < BIOME_REED_BEDS:
+        return 'reed_beds'
+    elif elev < BIOME_TIDAL_FLATS:
+        return 'tidal_flats'
+    else:
+        return 'rocky_shore'
 
 def init_grid():
     global grid
@@ -2214,34 +1506,15 @@ def init_grid():
                 'trait_var': [0.01]*NUM_SPECIES,
             }
 
-            # Set initial populations based on habitat
-            # Velothrix: prefer mid elevation (0.3-0.7)
-            if 0.2 < elev < 0.8:
-                tile['pops'][VELOTHRIX] = int(BASE_K[VELOTHRIX] * random.uniform(0.4, 0.7))
-            else:
-                tile['pops'][VELOTHRIX] = int(BASE_K[VELOTHRIX] * random.uniform(0.05, 0.2))
-
-            # Leviathan: prefer low elevation (deep water)
-            if elev < 0.5:
-                tile['pops'][LEVIATHAN] = int(BASE_K[LEVIATHAN] * random.uniform(0.3, 0.6))
-            else:
-                tile['pops'][LEVIATHAN] = int(BASE_K[LEVIATHAN] * random.uniform(0.0, 0.1))
-
-            # Crawler: prefer mid-low (reeds)
-            if 0.25 < elev < 0.65:
-                tile['pops'][CRAWLER] = int(BASE_K[CRAWLER] * random.uniform(0.3, 0.6))
-            else:
-                tile['pops'][CRAWLER] = int(BASE_K[CRAWLER] * random.uniform(0.05, 0.15))
-
-            # Crab: prefer high elevation (shores)
-            if elev > 0.5:
-                tile['pops'][CRAB] = int(BASE_K[CRAB] * random.uniform(0.3, 0.6))
-            else:
-                tile['pops'][CRAB] = int(BASE_K[CRAB] * random.uniform(0.0, 0.1))
-
-            # Worm: everywhere, prefer wet
-            water_factor = tile['water']
-            tile['pops'][WORM] = int(BASE_K[WORM] * water_factor * random.uniform(0.3, 0.7))
+            # Set initial populations based on biome suitability
+            for s in range(NUM_SPECIES):
+                suit = habitat_suitability(elev, s)
+                if suit > 0.5:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.4, 0.7))
+                elif suit > 0.1:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.1, 0.3))
+                else:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.0, 0.1))
 
             # Initial trait values with slight spatial variation
             for s in range(NUM_SPECIES):
@@ -2254,22 +1527,64 @@ def init_grid():
 init_grid()
 
 def habitat_suitability(elev, species_idx):
-    """Returns 0-1 suitability for species at given elevation."""
+    """Returns 0-1 suitability for species at given elevation/biome."""
+    biome = get_biome(elev)
     if species_idx == VELOTHRIX:
-        # Peak at 0.5
-        return max(0, 1.0 - abs(elev - 0.5) * 2.5)
+        # Prime habitat: shallow marsh (0.2-0.4)
+        if biome == 'shallow_marsh':
+            return 1.0
+        elif biome == 'reed_beds':
+            return 0.6
+        elif biome == 'tidal_flats':
+            return 0.3
+        elif biome == 'deep_water':
+            return 0.15
+        else:
+            return 0.1
     elif species_idx == LEVIATHAN:
-        # Prefer low (deep water)
-        return max(0, 1.0 - elev * 1.8)
+        # Deep water territory (< 0.2)
+        if biome == 'deep_water':
+            return 1.0
+        elif biome == 'shallow_marsh':
+            return 0.4
+        elif biome == 'reed_beds':
+            return 0.1
+        else:
+            return 0.0
     elif species_idx == CRAWLER:
-        # Peak at 0.4
-        return max(0, 1.0 - abs(elev - 0.4) * 2.5)
+        # Reed beds territory (0.3-0.5)
+        if biome == 'reed_beds':
+            return 1.0
+        elif biome == 'shallow_marsh':
+            return 0.5
+        elif biome == 'tidal_flats':
+            return 0.4
+        elif biome == 'deep_water':
+            return 0.05
+        else:
+            return 0.2
     elif species_idx == CRAB:
-        # Prefer high (shores)
-        return max(0, elev * 1.5 - 0.2)
+        # Rocky shore territory (0.7+)
+        if biome == 'rocky_shore':
+            return 1.0
+        elif biome == 'tidal_flats':
+            return 0.6
+        elif biome == 'reed_beds':
+            return 0.2
+        else:
+            return 0.05
     elif species_idx == WORM:
-        # Everywhere but slightly prefer wet
-        return max(0.2, 1.0 - elev * 0.5)
+        # Everywhere, prefer wet areas
+        if biome == 'deep_water':
+            return 0.9
+        elif biome == 'shallow_marsh':
+            return 1.0
+        elif biome == 'reed_beds':
+            return 0.7
+        elif biome == 'tidal_flats':
+            return 0.4
+        else:
+            return 0.25
     return 0.5
 
 def get_season():
@@ -2306,34 +1621,6 @@ def step():
     if generation % 50 == 0:
         _check_speciation()
 
-    # 6. Record per-tile history for tracked tiles
-    for key in list(tile_history.keys()):
-        r2, c2 = key
-        pops = list(grid[r2][c2]['pops'])
-        tile_history[key].append({'gen': generation, 'pops': pops})
-        if len(tile_history[key]) > TILE_HISTORY_LEN:
-            tile_history[key] = tile_history[key][-TILE_HISTORY_LEN:]
-
-    # 7. Snapshot for timeline scrubber
-    if generation % SNAPSHOT_INTERVAL == 0:
-        flat_pops = []
-        flat_traits = []
-        for r3 in range(GRID_SIZE):
-            for c3 in range(GRID_SIZE):
-                t = grid[r3][c3]
-                flat_pops.extend(t['pops'])
-                flat_traits.extend(t['traits'])
-        snap = {
-            'gen': generation,
-            'pops': list(flat_pops),
-            'traits': list(flat_traits),
-            'events': list(snapshot_events)
-        }
-        snapshots.append(snap)
-        if len(snapshots) > MAX_SNAPSHOTS:
-            snapshots.pop(0)
-        snapshot_events.clear()
-
 def _check_events(season):
     """Check for random environmental events."""
     if random.random() < DROUGHT_PROB:
@@ -2346,10 +1633,9 @@ def _check_events(season):
                 grid[r][c]['food'] *= 0.4
                 grid[r][c]['water'] *= 0.5
         region = "eastern" if cc > GRID_SIZE//2 else "western"
-        _emit_event({
+        events_buffer.append({
             'gen': generation,
-            'text': f'Drought in {region} marsh — food and water levels dropping',
-            'species': -1
+            'text': f'Drought in {region} marsh — food and water levels dropping'
         })
 
     if random.random() < FLOOD_PROB:
@@ -2363,10 +1649,9 @@ def _check_events(season):
                 grid[r][c]['pops'][CRAB] = int(grid[r][c]['pops'][CRAB] * 0.7)
                 grid[r][c]['pops'][CRAWLER] = int(grid[r][c]['pops'][CRAWLER] * 0.8)
         region = "northern" if cr < GRID_SIZE//2 else "southern"
-        _emit_event({
+        events_buffer.append({
             'gen': generation,
-            'text': f'Flooding in {region} tidal flats — water levels surging',
-            'species': -1
+            'text': f'Flooding in {region} tidal flats — water levels surging'
         })
 
     if random.random() < DISEASE_PROB:
@@ -2376,10 +1661,9 @@ def _check_events(season):
         for r in range(GRID_SIZE):
             for c in range(GRID_SIZE):
                 grid[r][c]['pops'][target] = int(grid[r][c]['pops'][target] * 0.85)
-        _emit_event({
+        events_buffer.append({
             'gen': generation,
-            'text': f'Disease outbreak affecting {names[target]} population',
-            'species': target
+            'text': f'Disease outbreak affecting {names[target]} population'
         })
 
 def _update_tile(r, c, season):
@@ -2581,7 +1865,22 @@ trait_divergence_counter = {}
 
 def _check_speciation():
     """Check if any species has diverged enough to speciate."""
+    global speciation_events
+    names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
+    trait_names = ['crest brightness', 'hunting range', 'burrowing depth', 'shell thickness', 'glow intensity']
+    variant_suffixes = [
+        ('aurantis', 'amberi'),
+        ('major', 'minor'),
+        ('viridis', 'pallida'),
+        ('robusta', 'gracilis'),
+        ('lucens', 'obscura'),
+    ]
+
     for s in range(NUM_SPECIES):
+        # Skip species that have already speciated
+        if s in speciation_events:
+            continue
+
         # Collect traits across all tiles with population
         traits_by_tile = []
         for r in range(GRID_SIZE):
@@ -2600,18 +1899,37 @@ def _check_speciation():
         if max_diff > SPECIATION_THRESHOLD:
             trait_divergence_counter[key] = trait_divergence_counter.get(key, 0) + 50  # we check every 50 gens
             if trait_divergence_counter[key] >= SPECIATION_GENS:
-                names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
-                trait_names = ['crest brightness', 'hunting range', 'burrowing depth', 'shell thickness', 'glow intensity']
-                # Find where the split is
+                # Find the median trait to determine the split point
                 sorted_traits = sorted(traits_by_tile, key=lambda x: x[2])
+                mid = len(sorted_traits) // 2
+                split_trait = (sorted_traits[mid-1][2] + sorted_traits[mid][2]) / 2.0
+
                 low_region = sorted_traits[0]
                 high_region = sorted_traits[-1]
-                _emit_event({
+
+                # Compute geographic centers for each variant
+                low_tiles = [(r, c) for r, c, t in sorted_traits if t <= split_trait]
+                high_tiles = [(r, c) for r, c, t in sorted_traits if t > split_trait]
+                low_center = f"({sum(r for r,c in low_tiles)//max(1,len(low_tiles))},{sum(c for r,c in low_tiles)//max(1,len(low_tiles))})"
+                high_center = f"({sum(r for r,c in high_tiles)//max(1,len(high_tiles))},{sum(c for r,c in high_tiles)//max(1,len(high_tiles))})"
+
+                parent_suffix, variant_suffix = variant_suffixes[s]
+
+                # Store permanent speciation state
+                speciation_events[s] = {
+                    'split_trait': split_trait,
                     'gen': generation,
-                    'text': f'{names[s]} population split detected — variant near ({low_region[0]},{low_region[1]}) has {trait_names[s]} {low_region[2]:.2f} vs ({high_region[0]},{high_region[1]}) at {high_region[2]:.2f}',
-                    'species': s
+                    'parent_name': f'{names[s]} {parent_suffix}',
+                    'variant_name': f'{names[s]} {variant_suffix}',
+                }
+
+                # Fire prominent speciation event
+                events_buffer.append({
+                    'gen': generation,
+                    'text': f'⚡ SPECIATION: {names[s]} has split into two species! {names[s]} {parent_suffix} ({trait_names[s]} ≤{split_trait:.2f}, centered {low_center}, {len(low_tiles)} tiles) vs {names[s]} {variant_suffix} ({trait_names[s]} >{split_trait:.2f}, centered {high_center}, {len(high_tiles)} tiles). Divergence sustained for {SPECIATION_GENS}+ generations.',
+                    'speciation': True
                 })
-                trait_divergence_counter[key] = 0  # Reset to avoid spam
+                trait_divergence_counter[key] = 0
         else:
             trait_divergence_counter[key] = 0
 
@@ -2624,16 +1942,14 @@ def _check_speciation():
         if expected > 0:
             ratio = total / expected
             if ratio > 2.0:
-                _emit_event({
+                events_buffer.append({
                     'gen': generation,
-                    'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)',
-                    'species': s
+                    'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)'
                 })
             elif ratio < 0.2 and total > 0:
-                _emit_event({
+                events_buffer.append({
                     'gen': generation,
-                    'text': f'{names[s]} population critically low — only {total} individuals remain',
-                    'species': s
+                    'text': f'{names[s]} population critically low — only {total} individuals remain'
                 })
 
 # ── API FUNCTIONS (called from JS) ──
@@ -2667,19 +1983,73 @@ def get_tile_trait(r, c, species_idx):
 def get_map_data(species_idx):
     pops = []
     elevations = []
+    biomes = []
+    variants = []  # 0 = no speciation or parent, 1 = variant
     max_pop = 1
+    has_speciation = species_idx in speciation_events
+    split_trait = speciation_events[species_idx]['split_trait'] if has_speciation else 0
+
     for r in range(GRID_SIZE):
         pop_row = []
         elev_row = []
+        biome_row = []
+        var_row = []
         for c in range(GRID_SIZE):
             p = grid[r][c]['pops'][species_idx]
+            e = grid[r][c]['elevation']
             pop_row.append(p)
-            elev_row.append(grid[r][c]['elevation'])
+            elev_row.append(e)
+            biome_row.append(get_biome(e))
+            if has_speciation and p > 0:
+                var_row.append(1 if grid[r][c]['traits'][species_idx] > split_trait else 0)
+            else:
+                var_row.append(0)
             if p > max_pop:
                 max_pop = p
         pops.append(pop_row)
         elevations.append(elev_row)
-    return json.dumps({'pops': pops, 'elevations': elevations, 'max_pop': max_pop})
+        biomes.append(biome_row)
+        variants.append(var_row)
+    return json.dumps({'pops': pops, 'elevations': elevations, 'biomes': biomes, 'max_pop': max_pop, 'variants': variants, 'speciated': has_speciation})
+
+def get_speciation_info():
+    """Return all speciation events for JS."""
+    result = {}
+    names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
+    for s, info in speciation_events.items():
+        # Compute per-variant stats
+        parent_pop = 0
+        parent_trait_sum = 0.0
+        parent_tiles = []
+        variant_pop = 0
+        variant_trait_sum = 0.0
+        variant_tiles = []
+        for r in range(GRID_SIZE):
+            for c in range(GRID_SIZE):
+                p = grid[r][c]['pops'][s]
+                if p > 0:
+                    t = grid[r][c]['traits'][s]
+                    if t > info['split_trait']:
+                        variant_pop += p
+                        variant_trait_sum += t * p
+                        variant_tiles.append(f'{r},{c}')
+                    else:
+                        parent_pop += p
+                        parent_trait_sum += t * p
+                        parent_tiles.append(f'{r},{c}')
+        result[str(s)] = {
+            'parent_name': info['parent_name'],
+            'variant_name': info['variant_name'],
+            'split_trait': info['split_trait'],
+            'gen': info['gen'],
+            'parent_pop': parent_pop,
+            'parent_trait': parent_trait_sum / max(1, parent_pop),
+            'parent_tiles': len(parent_tiles),
+            'variant_pop': variant_pop,
+            'variant_trait': variant_trait_sum / max(1, variant_pop),
+            'variant_tiles': len(variant_tiles),
+        }
+    return json.dumps(result)
 
 def get_trait_histogram(species_idx):
     """Return histogram of trait values across all tiles (weighted by pop)."""
@@ -2697,143 +2067,28 @@ def get_trait_histogram(species_idx):
         result.append({'low': i/num_bins, 'high': (i+1)/num_bins, 'count': bins[i]})
     return json.dumps(result)
 
-def get_tile_env(r, c):
-    t = grid[r][c]
-    return json.dumps({
-        'elevation': round(t['elevation'], 3),
-        'food': round(t['food'], 3),
-        'water': round(t['water'], 3),
-        'temp': round(t['temp'], 3)
-    })
-
-def track_tile(r, c):
-    key = (r, c)
-    if key not in tile_history:
-        tile_history[key] = []
-
-def untrack_tile(r, c):
-    key = (r, c)
-    if key in tile_history:
-        del tile_history[key]
-
-def get_tile_history(r, c):
-    key = (r, c)
-    return json.dumps(tile_history.get(key, []))
-
-def get_snapshot_count():
-    return len(snapshots)
-
-def get_snapshot_generations():
-    """Return list of {gen, hasEvents} for all snapshots."""
-    result = []
-    for s in snapshots:
-        result.append({'gen': s['gen'], 'hasEvents': len(s['events']) > 0})
-    return json.dumps(result)
-
-def get_snapshot_events(idx):
-    """Return events for a specific snapshot."""
-    if 0 <= idx < len(snapshots):
-        return json.dumps(snapshots[idx]['events'])
-    return '[]'
-
-def get_historical_map_data(snapshot_idx, species_idx):
-    """Return map data from a historical snapshot."""
-    if snapshot_idx < 0 or snapshot_idx >= len(snapshots):
-        return json.dumps({'pops': [], 'elevations': [], 'max_pop': 1, 'gen': 0})
-    snap = snapshots[snapshot_idx]
-    pops = []
-    elevations = []
-    max_pop = 1
-    stride = NUM_SPECIES
+def get_scatter_spatial():
+    """Return per-tile data for spatial scatter plot."""
+    tiles = []
+    season = get_season()
     for r in range(GRID_SIZE):
-        pop_row = []
-        elev_row = []
         for c in range(GRID_SIZE):
-            offset = (r * GRID_SIZE + c) * stride
-            p = snap['pops'][offset + species_idx]
-            pop_row.append(p)
-            elev_row.append(grid[r][c]['elevation'])
-            if p > max_pop:
-                max_pop = p
-        pops.append(pop_row)
-        elevations.append(elev_row)
-    return json.dumps({'pops': pops, 'elevations': elevations, 'max_pop': max_pop, 'gen': snap['gen']})
+            t = grid[r][c]
+            tiles.append({
+                'pops': t['pops'][:],
+                'traits': [round(v, 4) for v in t['traits']],
+                'elev': round(t['elevation'], 4),
+                'food': round(t['food'], 4),
+                'water': round(t['water'], 4),
+                'temp': round(t['temp'], 4),
+            })
+    return json.dumps(tiles)
 
 def get_and_clear_events():
     global events_buffer
     out = json.dumps(events_buffer)
     events_buffer = []
     return out
-
-def get_trait_map_data(species_idx):
-    """Return per-tile trait values and elevations for a species."""
-    traits = []
-    elevations = []
-    pops = []
-    max_pop = 1
-    for r in range(GRID_SIZE):
-        trait_row = []
-        elev_row = []
-        pop_row = []
-        for c in range(GRID_SIZE):
-            t = grid[r][c]
-            p = t['pops'][species_idx]
-            trait_row.append(t['traits'][species_idx] if p > 0 else -1)
-            elev_row.append(t['elevation'])
-            pop_row.append(p)
-            if p > max_pop:
-                max_pop = p
-        traits.append(trait_row)
-        elevations.append(elev_row)
-        pops.append(pop_row)
-    return json.dumps({'traits': traits, 'elevations': elevations, 'pops': pops, 'max_pop': max_pop})
-
-def get_species_ecology():
-    """Return ecological relationships metadata."""
-    return json.dumps({
-        'relationships': [
-            {
-                'name': 'Velothrix aurantis',
-                'role': 'Protagonist Herbivore/Omnivore',
-                'trait_desc': 'Brightness of crest plumage — drives mate selection but attracts predators',
-                'eaten_by': ['Kelp Leviathan'],
-                'eats': ['Bioluminescent Worm'],
-                'competes_with': ['Reed Crawler']
-            },
-            {
-                'name': 'Kelp Leviathan',
-                'role': 'Apex Predator',
-                'trait_desc': 'Hunting range radius — wider range finds more prey but costs more energy',
-                'eaten_by': [],
-                'eats': ['Velothrix aurantis', 'Bioluminescent Worm'],
-                'competes_with': []
-            },
-            {
-                'name': 'Reed Crawler',
-                'role': 'Burrowing Herbivore',
-                'trait_desc': 'Depth of burrow — deeper is safer from predators but limits food access',
-                'eaten_by': ['Kelp Leviathan'],
-                'eats': [],
-                'competes_with': ['Velothrix aurantis']
-            },
-            {
-                'name': 'Tidal Crab',
-                'role': 'Armored Generalist',
-                'trait_desc': 'Shell thickness — thicker armor protects but slows movement and feeding',
-                'eaten_by': [],
-                'eats': [],
-                'competes_with': ['(all — space competition)']
-            },
-            {
-                'name': 'Bioluminescent Worm',
-                'role': 'Prey / Sexual Signaler',
-                'trait_desc': 'Glow intensity — brighter attracts mates but also predators',
-                'eaten_by': ['Velothrix aurantis', 'Kelp Leviathan'],
-                'eats': [],
-                'competes_with': []
-            }
-        ]
-    })
 `;
 
 // ── BOOT ──
