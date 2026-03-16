@@ -1500,46 +1500,6 @@ def get_biome(elev):
     else:
         return 'rocky_shore'
 
-def init_grid():
-    global grid
-    elevations = generate_elevation()
-    grid = []
-    for r in range(GRID_SIZE):
-        row = []
-        for c in range(GRID_SIZE):
-            elev = elevations[r][c]
-            # Habitat suitability based on elevation
-            # Low elevation = deep water (leviathans), mid = marsh (velothrix), high = shore (crabs)
-            tile = {
-                'elevation': elev,
-                'food': 0.7 + random.uniform(-0.1, 0.1),
-                'water': max(0, 1.0 - elev + random.uniform(-0.1, 0.1)),
-                'temp': 0.5 + random.uniform(-0.1, 0.1),
-                'pops': [0]*NUM_SPECIES,
-                'traits': [0.5]*NUM_SPECIES,
-                'trait_var': [0.01]*NUM_SPECIES,
-            }
-
-            # Set initial populations based on biome suitability
-            for s in range(NUM_SPECIES):
-                suit = habitat_suitability(elev, s)
-                if suit > 0.5:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.4, 0.7))
-                elif suit > 0.1:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.1, 0.3))
-                else:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.0, 0.1))
-
-            # Initial trait values with slight spatial variation
-            for s in range(NUM_SPECIES):
-                tile['traits'][s] = 0.5 + random.uniform(-0.05, 0.05)
-                tile['trait_var'][s] = 0.01
-
-            row.append(tile)
-        grid.append(row)
-
-init_grid()
-
 def habitat_suitability(elev, species_idx):
     """Returns 0-1 suitability for species at given elevation/biome."""
     biome = get_biome(elev)
@@ -1600,6 +1560,44 @@ def habitat_suitability(elev, species_idx):
         else:
             return 0.25
     return 0.5
+
+def init_grid():
+    global grid
+    elevations = generate_elevation()
+    grid = []
+    for r in range(GRID_SIZE):
+        row = []
+        for c in range(GRID_SIZE):
+            elev = elevations[r][c]
+            tile = {
+                'elevation': elev,
+                'food': 0.7 + random.uniform(-0.1, 0.1),
+                'water': max(0, 1.0 - elev + random.uniform(-0.1, 0.1)),
+                'temp': 0.5 + random.uniform(-0.1, 0.1),
+                'pops': [0]*NUM_SPECIES,
+                'traits': [0.5]*NUM_SPECIES,
+                'trait_var': [0.01]*NUM_SPECIES,
+            }
+
+            # Set initial populations based on biome suitability
+            for s in range(NUM_SPECIES):
+                suit = habitat_suitability(elev, s)
+                if suit > 0.5:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.4, 0.7))
+                elif suit > 0.1:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.1, 0.3))
+                else:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.0, 0.1))
+
+            # Initial trait values with slight spatial variation
+            for s in range(NUM_SPECIES):
+                tile['traits'][s] = 0.5 + random.uniform(-0.05, 0.05)
+                tile['trait_var'][s] = 0.01
+
+            row.append(tile)
+        grid.append(row)
+
+init_grid()
 
 def get_season():
     """Returns season factor 0-1 (0=harsh winter, 1=peak summer)."""
