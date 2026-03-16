@@ -275,6 +275,57 @@ body {
   height: 160px;
 }
 
+/* ── SCATTER CONTROLS ── */
+.scatter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.scatter-mode-toggle {
+  display: flex;
+  gap: 2px;
+}
+.scatter-mode-toggle button {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 3px 0;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.scatter-mode-toggle button.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: var(--bg-dark);
+}
+.scatter-axes {
+  display: flex;
+  gap: 8px;
+}
+.scatter-axes label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--dim);
+  flex: 1;
+}
+.scatter-axes select {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  min-width: 0;
+}
+
 /* ── EVENT LOG ── */
 #event-log {
   grid-column: 1 / -1;
@@ -509,6 +560,21 @@ body {
       <h3 id="trait-title">Trait Distribution</h3>
       <canvas class="chart-canvas" id="trait-chart"></canvas>
     </div>
+
+    <div class="panel-section">
+      <h3>Scatter Plot</h3>
+      <div class="scatter-controls">
+        <div class="scatter-mode-toggle">
+          <button class="active" onclick="setScatterMode('spatial')">Spatial</button>
+          <button onclick="setScatterMode('temporal')">Temporal</button>
+        </div>
+        <div class="scatter-axes">
+          <label>X <select id="scatter-x"></select></label>
+          <label>Y <select id="scatter-y"></select></label>
+        </div>
+      </div>
+      <canvas class="chart-canvas tall" id="scatter-chart"></canvas>
+    </div>
   </div>
 
   <!-- EVENT LOG -->
@@ -529,6 +595,8 @@ let popHistory = []; // [{gen, pops: [5 numbers]}]
 let mapCanvas, mapCtx;
 let popCanvas, popCtx;
 let traitCanvas, traitCtx;
+let scatterCanvas, scatterCtx;
+let scatterMode = 'spatial'; // 'spatial' or 'temporal'
 let animFrame = null;
 let stepsPerFrame = 1;
 
@@ -583,6 +651,11 @@ function setupUI() {
   popCtx = popCanvas.getContext('2d');
   traitCanvas = document.getElementById('trait-chart');
   traitCtx = traitCanvas.getContext('2d');
+  scatterCanvas = document.getElementById('scatter-chart');
+  scatterCtx = scatterCanvas.getContext('2d');
+
+  // Populate scatter dropdowns
+  populateScatterDropdowns();
 
   mapCanvas.addEventListener('click', onMapClick);
   window.addEventListener('resize', () => { resizeCanvases(); renderAll(); });
@@ -594,7 +667,7 @@ function resizeCanvases() {
   mapCanvas.height = mapArea.clientHeight;
 
   const dpr = window.devicePixelRatio || 1;
-  for (const c of [popCanvas, traitCanvas]) {
+  for (const c of [popCanvas, traitCanvas, scatterCanvas]) {
     c.width = c.clientWidth * dpr;
     c.height = c.clientHeight * dpr;
     c.getContext('2d').scale(dpr, dpr);
@@ -685,7 +758,13 @@ function tick() {
   for (let s = 0; s < 5; s++) {
     globalPops.push(pyodide.runPython(`get_global_pop(${s})`));
   }
-  popHistory.push({ gen, pops: globalPops });
+  // Collect global traits and season for scatter temporal mode
+  const globalTraits = [];
+  for (let s = 0; s < 5; s++) {
+    globalTraits.push(pyodide.runPython(`get_global_trait(${s})`));
+  }
+  const season = pyodide.runPython('get_season()');
+  popHistory.push({ gen, pops: globalPops, traits: globalTraits, season });
   if (popHistory.length > MAX_HISTORY) popHistory.shift();
 
   // Check events
@@ -727,6 +806,7 @@ function renderAll() {
   renderSpeciesList();
   renderPopChart();
   renderTraitChart();
+  renderScatterPlot();
 }
 
 // ── RENDER MAP ──
@@ -988,6 +1068,215 @@ function hexToRgb(hex) {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return { r, g, b };
+}
+
+// ── SCATTER PLOT ──
+function populateScatterDropdowns() {
+  const xSel = document.getElementById('scatter-x');
+  const ySel = document.getElementById('scatter-y');
+
+  function buildOptions(mode) {
+    const opts = [];
+    if (mode === 'spatial') {
+      for (let s = 0; s < 5; s++) {
+        opts.push({ value: `pop_${s}`, label: `${SPECIES[s].name} Pop` });
+        opts.push({ value: `trait_${s}`, label: `${SPECIES[s].name} ${SPECIES[s].trait}` });
+      }
+      opts.push({ value: 'elevation', label: 'Elevation' });
+      opts.push({ value: 'food', label: 'Food Level' });
+      opts.push({ value: 'water', label: 'Water Level' });
+      opts.push({ value: 'temp', label: 'Temperature' });
+    } else {
+      for (let s = 0; s < 5; s++) {
+        opts.push({ value: `pop_${s}`, label: `${SPECIES[s].name} Pop` });
+        opts.push({ value: `trait_${s}`, label: `${SPECIES[s].name} ${SPECIES[s].trait}` });
+      }
+      opts.push({ value: 'season', label: 'Season Factor' });
+    }
+    return opts;
+  }
+
+  function fill(sel, opts, defaultIdx) {
+    sel.innerHTML = '';
+    opts.forEach((o, i) => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      if (i === defaultIdx) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  const opts = buildOptions(scatterMode);
+  // Default: X = Velothrix Pop, Y = Leviathan Pop
+  fill(xSel, opts, 0);
+  fill(ySel, opts, 2);
+
+  xSel.onchange = () => renderScatterPlot();
+  ySel.onchange = () => renderScatterPlot();
+}
+
+function setScatterMode(mode) {
+  scatterMode = mode;
+  document.querySelectorAll('.scatter-mode-toggle button').forEach((btn, idx) => {
+    btn.classList.toggle('active', (mode === 'spatial' && idx === 0) || (mode === 'temporal' && idx === 1));
+  });
+  populateScatterDropdowns();
+  renderScatterPlot();
+}
+
+function getScatterValue(entry, varKey) {
+  // entry is either a tile object (spatial) or a popHistory entry (temporal)
+  if (varKey.startsWith('pop_')) {
+    const s = parseInt(varKey.split('_')[1]);
+    return entry.pops[s];
+  }
+  if (varKey.startsWith('trait_')) {
+    const s = parseInt(varKey.split('_')[1]);
+    return entry.traits[s];
+  }
+  if (varKey === 'elevation') return entry.elev;
+  if (varKey === 'food') return entry.food;
+  if (varKey === 'water') return entry.water;
+  if (varKey === 'temp') return entry.temp;
+  if (varKey === 'season') return entry.season;
+  return 0;
+}
+
+function getVarLabel(varKey) {
+  if (varKey.startsWith('pop_')) {
+    const s = parseInt(varKey.split('_')[1]);
+    return SPECIES[s].name + ' Pop';
+  }
+  if (varKey.startsWith('trait_')) {
+    const s = parseInt(varKey.split('_')[1]);
+    return SPECIES[s].trait;
+  }
+  const labels = { elevation: 'Elevation', food: 'Food', water: 'Water', temp: 'Temp', season: 'Season' };
+  return labels[varKey] || varKey;
+}
+
+function renderScatterPlot() {
+  const ctx = scatterCtx;
+  const w = scatterCanvas.clientWidth;
+  const h = scatterCanvas.clientHeight;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#1A0D00';
+  ctx.fillRect(0, 0, w, h);
+
+  const xVar = document.getElementById('scatter-x').value;
+  const yVar = document.getElementById('scatter-y').value;
+
+  const padL = 40;
+  const padR = 10;
+  const padT = 10;
+  const padB = 22;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  let points = [];
+
+  if (scatterMode === 'spatial') {
+    // Get all tile data from Python
+    const tilesJson = pyodide.runPython('get_scatter_spatial()');
+    const tiles = JSON.parse(tilesJson);
+    let maxElev = 0;
+    tiles.forEach(t => { if (t.elev > maxElev) maxElev = t.elev; });
+
+    for (let i = 0; i < tiles.length; i++) {
+      const tile = tiles[i];
+      const xVal = getScatterValue(tile, xVar);
+      const yVal = getScatterValue(tile, yVar);
+      // Color by elevation
+      const elevNorm = maxElev > 0 ? tile.elev / maxElev : 0;
+      const r = Math.round(60 + 160 * elevNorm);
+      const g = Math.round(40 + 120 * (1 - elevNorm));
+      const b = Math.round(20 + 80 * (1 - elevNorm));
+      points.push({ x: xVal, y: yVal, color: `rgb(${r},${g},${b})`, alpha: 0.85 });
+    }
+  } else {
+    // Temporal mode: each dot is one generation from popHistory
+    if (popHistory.length < 2) return;
+    const total = popHistory.length;
+    for (let i = 0; i < total; i++) {
+      const entry = popHistory[i];
+      const xVal = getScatterValue(entry, xVar);
+      const yVal = getScatterValue(entry, yVar);
+      // Color by recency (older = dimmer)
+      const recency = (i + 1) / total;
+      const rgb = hexToRgb(SPECIES[selectedSpecies].color);
+      points.push({
+        x: xVal, y: yVal,
+        color: `rgb(${rgb.r},${rgb.g},${rgb.b})`,
+        alpha: 0.15 + 0.85 * recency
+      });
+    }
+  }
+
+  if (points.length === 0) return;
+
+  // Compute ranges
+  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  points.forEach(p => {
+    if (p.x < xMin) xMin = p.x;
+    if (p.x > xMax) xMax = p.x;
+    if (p.y < yMin) yMin = p.y;
+    if (p.y > yMax) yMax = p.y;
+  });
+  // Prevent zero-range
+  if (xMax === xMin) { xMin -= 0.5; xMax += 0.5; }
+  if (yMax === yMin) { yMin -= 0.5; yMax += 0.5; }
+  const xRange = xMax - xMin;
+  const yRange = yMax - yMin;
+
+  // Draw grid lines
+  ctx.strokeStyle = '#3d2a10';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const gx = padL + (i / 4) * plotW;
+    const gy = padT + (i / 4) * plotH;
+    ctx.beginPath(); ctx.moveTo(gx, padT); ctx.lineTo(gx, padT + plotH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(padL + plotW, gy); ctx.stroke();
+  }
+
+  // Draw points
+  points.forEach(p => {
+    const px = padL + ((p.x - xMin) / xRange) * plotW;
+    const py = padT + plotH - ((p.y - yMin) / yRange) * plotH;
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Axis labels
+  ctx.fillStyle = '#8a7560';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'center';
+
+  // X axis
+  ctx.fillText(formatAxisVal(xMin), padL, h - 2);
+  ctx.fillText(formatAxisVal(xMax), padL + plotW, h - 2);
+  ctx.fillText(getVarLabel(xVar), padL + plotW / 2, h - 2);
+
+  // Y axis
+  ctx.textAlign = 'right';
+  ctx.fillText(formatAxisVal(yMax), padL - 4, padT + 9);
+  ctx.fillText(formatAxisVal(yMin), padL - 4, padT + plotH);
+  ctx.save();
+  ctx.translate(8, padT + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillText(getVarLabel(yVar), 0, 0);
+  ctx.restore();
+}
+
+function formatAxisVal(v) {
+  if (Number.isInteger(v) || Math.abs(v) >= 100) return Math.round(v).toString();
+  return v.toFixed(2);
 }
 
 // ── PYTHON SIM CODE ──
@@ -1643,6 +1932,23 @@ def get_trait_histogram(species_idx):
     for i in range(num_bins):
         result.append({'low': i/num_bins, 'high': (i+1)/num_bins, 'count': bins[i]})
     return json.dumps(result)
+
+def get_scatter_spatial():
+    """Return per-tile data for spatial scatter plot."""
+    tiles = []
+    season = get_season()
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            t = grid[r][c]
+            tiles.append({
+                'pops': t['pops'][:],
+                'traits': [round(v, 4) for v in t['traits']],
+                'elev': round(t['elevation'], 4),
+                'food': round(t['food'], 4),
+                'water': round(t['water'], 4),
+                'temp': round(t['temp'], 4),
+            })
+    return json.dumps(tiles)
 
 def get_and_clear_events():
     global events_buffer
