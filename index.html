@@ -158,24 +158,32 @@ body {
   height: 100%;
 }
 
-/* ── EVENT FEED OVERLAY ── */
+/* ── EVENT FEED OVERLAY (single notification) ── */
 #event-feed {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  max-height: 120px;
-  overflow-y: auto;
-  background: linear-gradient(transparent, rgba(26,13,0,0.95));
-  padding: 40px 12px 8px;
+  bottom: 12px; left: 12px; right: 12px;
   pointer-events: none;
+  text-align: center;
 }
-#event-feed div {
-  font-size: 10px;
-  color: var(--dim);
-  padding: 2px 0;
-  pointer-events: auto;
+#event-feed .feed-notif {
+  display: inline-block;
+  background: rgba(26,13,0,0.9);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text);
+  opacity: 0;
+  transition: opacity 0.4s;
+  max-width: 90%;
 }
-#event-feed div .ev-gen { color: var(--gold); }
-#event-feed div .ev-text { color: var(--text); }
+#event-feed .feed-notif.visible { opacity: 1; }
+#event-feed .feed-notif.speciation {
+  border-color: var(--gold);
+  color: var(--gold-light);
+  background: rgba(42,24,0,0.95);
+}
 
 /* ── RIGHT PANEL ── */
 #panel {
@@ -812,6 +820,7 @@ let scatterCanvas, scatterCtx;
 let scatterMode = 'spatial'; // 'spatial' or 'temporal'
 let animFrame = null;
 let stepsPerFrame = 1;
+let tickDelay = 2000; // ms between ticks at 1x
 let viewMode = 'field'; // 'field' or 'lab'
 
 // Field mode canvases
@@ -1147,7 +1156,11 @@ function togglePlay() {
 
 function setSpeed(s) {
   speed = s;
-  stepsPerFrame = s >= 20 ? s / 5 : 1;
+  // 1x = 1 gen every 2s, 5x = 1 gen per 400ms, 20x = 4 steps per 50ms, 100x = 20 steps per 16ms
+  if (s <= 1) { stepsPerFrame = 1; tickDelay = 2000; }
+  else if (s <= 5) { stepsPerFrame = 1; tickDelay = 400; }
+  else if (s <= 20) { stepsPerFrame = 4; tickDelay = 50; }
+  else { stepsPerFrame = 20; tickDelay = 16; }
   document.querySelectorAll('.speed-btn').forEach(btn => {
     btn.classList.toggle('active', parseInt(btn.dataset.speed) === s);
   });
@@ -1197,42 +1210,24 @@ function tick() {
   if (events.length > 0) {
     const feed = document.getElementById('event-feed');
     const log = document.getElementById('event-log');
+    // Show only the latest event on the map overlay (1 at a time, auto-dismiss)
+    const lastEv = events[events.length - 1];
+    showMapNotification(lastEv.text, lastEv.speciation === true);
+
+    // All events go to the persistent log
     events.forEach(ev => {
       const isSpeciation = ev.speciation === true;
-
-      // Field mode: narrative voice in feed
-      const feedDiv = document.createElement('div');
-      if (viewMode === 'field') {
-        feedDiv.innerHTML = `<span class="ev-text" style="font-style:italic">${ev.text}</span>`;
-      } else {
-        feedDiv.innerHTML = `<span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text">${ev.text}</span>`;
-      }
-      if (isSpeciation) feedDiv.style.color = 'var(--gold-light)';
-      feed.appendChild(feedDiv);
-
       const logDiv = document.createElement('div');
       logDiv.className = 'log-entry' + (isSpeciation ? ' speciation-event' : '');
       logDiv.innerHTML = `<span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text">${ev.text}</span>`;
       log.appendChild(logDiv);
-
-      // Notification banner for critical events
-      if (isSpeciation || ev.text.includes('critically low') || ev.text.includes('surge')) {
-        showNotification(ev.text, isSpeciation);
-      }
     });
-    // Keep feed short
-    while (feed.children.length > 20) feed.removeChild(feed.firstChild);
     log.scrollTop = log.scrollHeight;
-    feed.scrollTop = feed.scrollHeight;
   }
 
   renderAll();
 
-  if (speed <= 5) {
-    animFrame = requestAnimationFrame(tick);
-  } else {
-    animFrame = setTimeout(tick, 16);
-  }
+  animFrame = setTimeout(tick, tickDelay);
 }
 
 // ── RENDER ALL ──
@@ -1835,6 +1830,23 @@ function showNotification(text, isSpeciation) {
   banner.className = 'notif-banner show' + (isSpeciation ? ' speciation-notif' : '');
   if (notifTimeout) clearTimeout(notifTimeout);
   notifTimeout = setTimeout(() => { banner.classList.remove('show'); }, 4000);
+}
+
+// ── MAP EVENT NOTIFICATION (single, auto-dismiss) ──
+let feedTimeout = null;
+function showMapNotification(text, isSpeciation) {
+  const feed = document.getElementById('event-feed');
+  // Replace content with a single notification
+  feed.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'feed-notif' + (isSpeciation ? ' speciation' : '');
+  div.textContent = text;
+  feed.appendChild(div);
+  // Trigger fade-in
+  requestAnimationFrame(() => div.classList.add('visible'));
+  // Auto-dismiss after 4 seconds
+  if (feedTimeout) clearTimeout(feedTimeout);
+  feedTimeout = setTimeout(() => { div.classList.remove('visible'); }, 4000);
 }
 
 // ── KPI STRIP ──
@@ -3293,23 +3305,24 @@ def _check_speciation():
         else:
             trait_divergence_counter[key] = 0
 
-    # Population surge/crash monitoring
-    for s in range(NUM_SPECIES):
-        total = sum(grid[r][c]['pops'][s] for r in range(GRID_SIZE) for c in range(GRID_SIZE))
-        expected = sum(BASE_K[s] * habitat_suitability(grid[r][c]['elevation'], s) * 0.5
-                      for r in range(GRID_SIZE) for c in range(GRID_SIZE))
-        if expected > 0:
-            ratio = total / expected
-            if ratio > 2.0:
-                events_buffer.append({
-                    'gen': generation,
-                    'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)'
-                })
-            elif ratio < 0.2 and total > 0:
-                events_buffer.append({
-                    'gen': generation,
-                    'text': f'{names[s]} population critically low — only {total} individuals remain'
-                })
+    # Population surge/crash monitoring (only fire every 200 gens to avoid spam)
+    if generation % 200 == 0:
+        for s in range(NUM_SPECIES):
+            total = sum(grid[r][c]['pops'][s] for r in range(GRID_SIZE) for c in range(GRID_SIZE))
+            expected = sum(BASE_K[s] * habitat_suitability(grid[r][c]['elevation'], s) * 0.5
+                          for r in range(GRID_SIZE) for c in range(GRID_SIZE))
+            if expected > 0:
+                ratio = total / expected
+                if ratio > 3.0:
+                    events_buffer.append({
+                        'gen': generation,
+                        'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)'
+                    })
+                elif ratio < 0.05 and total > 0:
+                    events_buffer.append({
+                        'gen': generation,
+                        'text': f'{names[s]} population critically low — only {total} individuals remain'
+                    })
 
 # ── API FUNCTIONS (called from JS) ──
 
