@@ -1528,10 +1528,10 @@ CRAB = 3
 WORM = 4
 
 # Carrying capacities per tile
-BASE_K = [60, 15, 40, 35, 80]  # Velothrix, Leviathan, Crawler, Crab, Worm
+BASE_K = [50, 30, 42, 38, 50]  # Velothrix, Leviathan, Crawler, Crab, Worm
 
 # Growth rates (per generation, logistic)
-GROWTH_RATES = [0.03, 0.015, 0.025, 0.02, 0.04]
+GROWTH_RATES = [0.028, 0.022, 0.026, 0.024, 0.03]
 
 # Mutation rate and step
 MUTATION_RATE = 0.002
@@ -1544,13 +1544,13 @@ DRIFT_STRENGTH = 0.005
 SELECTION_STRENGTH = 0.02
 
 # Predation rates (fraction of prey eaten per predator per gen)
-PREDATION_LEVIATHAN_VELOTHRIX = 0.003
-PREDATION_LEVIATHAN_WORM = 0.002
-PREDATION_VELOTHRIX_WORM = 0.001
+PREDATION_LEVIATHAN_VELOTHRIX = 0.005
+PREDATION_LEVIATHAN_WORM = 0.004
+PREDATION_VELOTHRIX_WORM = 0.002
 
 # Competition coefficients
-COMPETITION_VELOTHRIX_CRAWLER = 0.001
-COMPETITION_CRAB_SPACE = 0.0005
+COMPETITION_VELOTHRIX_CRAWLER = 0.0006
+COMPETITION_CRAB_SPACE = 0.0008
 
 # Migration rate (fraction that migrates per gen)
 MIGRATION_RATE = 0.01
@@ -1725,9 +1725,9 @@ def habitat_suitability(elev, species_idx):
         if biome == 'deep_water':
             return 1.0
         elif biome == 'shallow_marsh':
-            return 0.4
+            return 0.55
         elif biome == 'reed_beds':
-            return 0.1
+            return 0.15
         else:
             return 0.0
     elif species_idx == CRAWLER:
@@ -1735,13 +1735,13 @@ def habitat_suitability(elev, species_idx):
         if biome == 'reed_beds':
             return 1.0
         elif biome == 'shallow_marsh':
-            return 0.5
+            return 0.65
         elif biome == 'tidal_flats':
-            return 0.4
+            return 0.45
         elif biome == 'deep_water':
-            return 0.05
+            return 0.1
         else:
-            return 0.2
+            return 0.25
     elif species_idx == CRAB:
         # Rocky shore territory (0.7+)
         if biome == 'rocky_shore':
@@ -1753,17 +1753,17 @@ def habitat_suitability(elev, species_idx):
         else:
             return 0.05
     elif species_idx == WORM:
-        # Everywhere, prefer wet areas
+        # Prefer wet areas, weaker in dry biomes
         if biome == 'deep_water':
-            return 0.9
+            return 0.85
         elif biome == 'shallow_marsh':
             return 1.0
         elif biome == 'reed_beds':
-            return 0.7
+            return 0.5
         elif biome == 'tidal_flats':
-            return 0.4
+            return 0.2
         else:
-            return 0.25
+            return 0.1
     return 0.5
 
 def init_grid():
@@ -1930,7 +1930,7 @@ def _update_tile(r, c, season):
             hunt_bonus = trait * 0.005 * prey_available / max(1, BASE_K[VELOTHRIX])
             energy_cost = trait * trait * 0.01
             growth = GROWTH_RATES[s] + hunt_bonus - energy_cost
-            k = max(1, k * (0.5 + prey_available / max(1, BASE_K[VELOTHRIX] + BASE_K[WORM])))
+            k = max(1, k * (0.6 + 0.4 * prey_available / max(1, BASE_K[VELOTHRIX] + BASE_K[WORM])))
             sel_pressure = 0
             if prey_available > BASE_K[VELOTHRIX] * 0.3:
                 sel_pressure = SELECTION_STRENGTH * 0.2  # push range up when prey abundant
@@ -1940,7 +1940,7 @@ def _update_tile(r, c, season):
         elif s == CRAWLER:
             # Burrowing depth: deeper = safer but less food
             safety = trait * 0.8
-            food_access = 1.0 - trait * 0.4
+            food_access = 1.0 - trait * 0.3
             lev_pop = tile['pops'][LEVIATHAN]
             predation_loss = lev_pop * 0.001 * (1 - safety)
             growth = GROWTH_RATES[s] * food_access
