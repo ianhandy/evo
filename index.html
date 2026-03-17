@@ -447,6 +447,120 @@ body {
   display: block;
 }
 
+/* ── SPLIT CARD OVERLAY ── */
+#split-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 500;
+  justify-content: center;
+  align-items: center;
+}
+#split-overlay.active { display: flex; }
+.split-card {
+  background: var(--card);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 600px;
+  width: 90%;
+  color: var(--text);
+}
+.split-card h2 {
+  font-family: var(--sans);
+  font-size: 18px;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.split-card .split-subtitle {
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 16px;
+}
+.split-pentagons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.split-pop-info {
+  text-align: center;
+  margin-bottom: 8px;
+}
+.split-pop-info .pop-name {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold-light);
+}
+.split-pop-info .pop-stats {
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: 2px;
+}
+.split-sparkline {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 12px;
+}
+.split-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.split-buttons button {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.split-buttons button:hover {
+  background: var(--card-hover);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── GHOST PANEL ── */
+#ghost-panel {
+  display: none;
+}
+#ghost-panel.has-ghosts {
+  display: block;
+}
+.ghost-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  opacity: 0.7;
+}
+.ghost-entry:last-child { border-bottom: none; }
+.ghost-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+}
+.ghost-dot.alive { background: var(--gold); opacity: 0.5; }
+.ghost-name {
+  flex: 1;
+  font-size: 10px;
+  font-style: italic;
+  color: var(--dim);
+}
+.ghost-stat {
+  font-size: 10px;
+  color: var(--dim);
+  min-width: 35px;
+  text-align: right;
+}
+
 /* ── FIELD MODE CENTERPIECE ── */
 .field-centerpiece {
   display: grid;
@@ -711,6 +825,35 @@ body {
   <!-- NOTIFICATION BANNER -->
   <div class="notif-banner" id="notif-banner"></div>
 
+  <!-- SPLIT CARD OVERLAY -->
+  <div id="split-overlay">
+    <div class="split-card">
+      <h2>Population Split Detected</h2>
+      <div class="split-subtitle" id="split-subtitle"></div>
+      <canvas class="split-sparkline" id="split-sparkline"></canvas>
+      <div class="split-pentagons">
+        <div>
+          <div class="split-pop-info">
+            <div class="pop-name" id="split-name-a"></div>
+            <div class="pop-stats" id="split-stats-a"></div>
+          </div>
+          <canvas class="pentagon-canvas" id="split-pent-a" width="200" height="200"></canvas>
+        </div>
+        <div>
+          <div class="split-pop-info">
+            <div class="pop-name" id="split-name-b"></div>
+            <div class="pop-stats" id="split-stats-b"></div>
+          </div>
+          <canvas class="pentagon-canvas" id="split-pent-b" width="200" height="200"></canvas>
+        </div>
+      </div>
+      <div class="split-buttons">
+        <button onclick="chooseSplit('larger')">Follow Ancestral</button>
+        <button onclick="chooseSplit('smaller')">Follow Founding</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MAP -->
   <div id="map-area">
     <canvas id="map-canvas"></canvas>
@@ -756,6 +899,11 @@ body {
           <h3>Fitness</h3>
           <canvas class="chart-canvas" id="field-chart-fitness"></canvas>
         </div>
+      </div>
+
+      <div class="panel-section" id="ghost-panel">
+        <h3>Ghost Lineages</h3>
+        <div id="ghost-list"></div>
       </div>
     </div>
 
@@ -1225,6 +1373,11 @@ function tick() {
     log.scrollTop = log.scrollHeight;
   }
 
+  // Check for pending split card
+  checkSplitCard();
+  // Check for speciation completion (pentagon reset animation)
+  checkSpeciationCompletion();
+
   renderAll();
 
   animFrame = setTimeout(tick, tickDelay);
@@ -1239,6 +1392,7 @@ function renderAll() {
     renderStatusPentagon();
     renderSpecimen();
     renderFieldCharts();
+    renderGhostPanel();
   } else {
     renderSpeciesList();
     renderPopChart();
@@ -1990,8 +2144,9 @@ function renderTraitPentagon() {
     const d = JSON.parse(genJson);
     const labels = ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP'];
     const values = [
-      d.alleles.crest, d.alleles.spine, d.alleles.body,
-      d.alleles.litter, d.alleles.dispersal
+      d.alleles.crest * pentagonAnimScale, d.alleles.spine * pentagonAnimScale,
+      d.alleles.body * pentagonAnimScale, d.alleles.litter * pentagonAnimScale,
+      d.alleles.dispersal * pentagonAnimScale
     ];
     renderPentagon(traitPentCtx, traitPentCanvas, labels, values, '#DDC165', 0.85);
   } catch(e) {}
@@ -2014,11 +2169,11 @@ sum(1 for r in range(GRID_SIZE) for c in range(GRID_SIZE) if grid[r][c]['pops'][
 
     const labels = ['w\u0304', 'VIAB', 'DIV', 'STRESS', 'DIVERG'];
     const values = [
-      d.w_bar,
-      viab,
-      d.mean_H * 2, // scale up for visibility (H max ~0.5)
-      stress,
-      Math.min(1, d.fst / 0.25) // normalize to speciation threshold
+      d.w_bar * pentagonAnimScale,
+      viab * pentagonAnimScale,
+      d.mean_H * 2 * pentagonAnimScale,
+      stress * pentagonAnimScale,
+      Math.min(1, d.fst / 0.25) * pentagonAnimScale
     ];
     renderPentagon(statusPentCtx, statusPentCanvas, labels, values, '#E5591C', 0.85);
   } catch(e) {}
@@ -2223,6 +2378,216 @@ function _renderFieldLine(ctx, canvas, data1, color1, label1, data2, color2, lab
   drawLine(data2, color2);
 }
 
+// ── SPLIT CARD ──
+function checkSplitCard() {
+  try {
+    const cardJson = pyodide.runPython('get_split_card()');
+    const card = JSON.parse(cardJson);
+    if (card && card.type === 'split_ready') {
+      showSplitCard(card);
+    }
+  } catch(e) {}
+}
+
+function showSplitCard(data) {
+  // Pause sim
+  playing = false;
+  document.getElementById('btn-play').textContent = '\u25b6 Play';
+
+  const overlay = document.getElementById('split-overlay');
+  overlay.classList.add('active');
+
+  document.getElementById('split-subtitle').textContent =
+    `Gen ${data.gen} — Separation score: ${data.separation.toFixed(2)}`;
+
+  // Larger pop info
+  document.getElementById('split-name-a').textContent = data.larger.name;
+  document.getElementById('split-stats-a').textContent =
+    `Pop: ${data.larger.pop} | ${data.larger.tiles.length} tiles`;
+
+  // Smaller pop info
+  document.getElementById('split-name-b').textContent = data.smaller.name;
+  document.getElementById('split-stats-b').textContent =
+    `Pop: ${data.smaller.pop} (founded from ${data.smaller.trajectory.length} gen buffer)`;
+
+  // Draw pentagons
+  const labels = ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP'];
+  const pentA = document.getElementById('split-pent-a');
+  const pentB = document.getElementById('split-pent-b');
+  // Size canvases
+  const size = pentA.parentElement.clientWidth || 200;
+  const dpr = window.devicePixelRatio || 1;
+  for (const c of [pentA, pentB]) {
+    c.width = size * dpr;
+    c.height = size * dpr;
+    c.style.width = size + 'px';
+    c.style.height = size + 'px';
+    c.getContext('2d').scale(dpr, dpr);
+  }
+  renderPentagon(pentA.getContext('2d'), pentA, labels, data.larger.alleles, '#DDC165', 0);
+  renderPentagon(pentB.getContext('2d'), pentB, labels, data.smaller.alleles, '#E5591C', 0);
+
+  // Draw sparkline of founding colony trajectory
+  const sparkCanvas = document.getElementById('split-sparkline');
+  const sw = sparkCanvas.clientWidth;
+  const sh = sparkCanvas.clientHeight;
+  sparkCanvas.width = sw * dpr;
+  sparkCanvas.height = sh * dpr;
+  const sctx = sparkCanvas.getContext('2d');
+  sctx.scale(dpr, dpr);
+  sctx.fillStyle = '#1A0D00';
+  sctx.fillRect(0, 0, sw, sh);
+
+  const traj = data.smaller.trajectory;
+  if (traj.length > 1) {
+    let maxN = 1;
+    traj.forEach(t => { if (t[1] > maxN) maxN = t[1]; });
+    sctx.strokeStyle = '#E5591C';
+    sctx.lineWidth = 1.5;
+    sctx.beginPath();
+    for (let i = 0; i < traj.length; i++) {
+      const x = (i / (traj.length - 1)) * sw;
+      const y = sh - (traj[i][1] / maxN) * (sh - 4) - 2;
+      if (i === 0) sctx.moveTo(x, y);
+      else sctx.lineTo(x, y);
+    }
+    sctx.stroke();
+    // Label
+    sctx.fillStyle = '#8a7560';
+    sctx.font = '8px monospace';
+    sctx.fillText('Founding colony viability', 4, 10);
+  }
+
+  // Update button labels
+  const buttons = overlay.querySelectorAll('.split-buttons button');
+  buttons[0].textContent = 'Follow ' + data.larger.name.split('(')[0].trim();
+  buttons[1].textContent = 'Follow ' + data.smaller.name.split('(')[0].trim();
+}
+
+function chooseSplit(choice) {
+  pyodide.runPython(`execute_split("${choice}")`);
+  document.getElementById('split-overlay').classList.remove('active');
+  // Resume play
+  playing = true;
+  document.getElementById('btn-play').textContent = '\u23f8 Pause';
+  tick();
+}
+
+// ── GHOST PANEL ──
+function renderGhostPanel() {
+  try {
+    const ghostJson = pyodide.runPython('get_ghost_data()');
+    const ghosts = JSON.parse(ghostJson);
+    const panel = document.getElementById('ghost-panel');
+    const list = document.getElementById('ghost-list');
+
+    if (ghosts.length === 0) {
+      panel.classList.remove('has-ghosts');
+      return;
+    }
+    panel.classList.add('has-ghosts');
+
+    let html = '';
+    ghosts.forEach(g => {
+      const dotClass = g.alive ? 'alive' : '';
+      const status = g.alive ? `N:${g.N}` : 'extinct';
+      const fstPct = (g.fst * 100).toFixed(1);
+      html += `<div class="ghost-entry">
+        <div class="ghost-dot ${dotClass}"></div>
+        <div class="ghost-name">${g.name}</div>
+        <div class="ghost-stat">${status}</div>
+        <div class="ghost-stat">${fstPct}%</div>
+      </div>`;
+    });
+    list.innerHTML = html;
+  } catch(e) {}
+}
+
+// ── SPECIATION COMPLETION & PENTAGON ZERO-RESET ──
+let pentagonAnimState = null; // null or {phase, startTime, duration}
+
+function checkSpeciationCompletion() {
+  if (pentagonAnimState) return; // animation in progress
+  try {
+    const json = pyodide.runPython('get_speciation_completion()');
+    const data = JSON.parse(json);
+    if (data) {
+      triggerPentagonReset(data);
+    }
+  } catch(e) {}
+}
+
+function triggerPentagonReset(data) {
+  // Pause sim during animation
+  const wasPlaying = playing;
+  playing = false;
+
+  // Show speciation notification
+  showMapNotification(
+    `Speciation complete! ${data.ghost_name} is now a separate species (FST=${data.fst.toFixed(3)})`,
+    true
+  );
+
+  // Start collapse phase
+  pentagonAnimState = {
+    phase: 'collapse',
+    startTime: performance.now(),
+    duration: 1200,
+    wasPlaying: wasPlaying,
+    ghostName: data.ghost_name,
+  };
+
+  // Run the animation loop
+  requestAnimationFrame(animatePentagonReset);
+}
+
+function animatePentagonReset(now) {
+  if (!pentagonAnimState) return;
+
+  const elapsed = now - pentagonAnimState.startTime;
+  const t = Math.min(1, elapsed / pentagonAnimState.duration);
+
+  // Ease in-out
+  const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+  if (pentagonAnimState.phase === 'collapse') {
+    // Scale values from 1 → 0
+    pentagonAnimScale = 1 - ease;
+    renderTraitPentagon();
+    renderStatusPentagon();
+
+    if (t >= 1) {
+      // Transition to expand phase
+      pentagonAnimState.phase = 'expand';
+      pentagonAnimState.startTime = performance.now();
+      pentagonAnimState.duration = 1500;
+    }
+    requestAnimationFrame(animatePentagonReset);
+
+  } else if (pentagonAnimState.phase === 'expand') {
+    // Scale values from 0 → 1
+    pentagonAnimScale = ease;
+    renderTraitPentagon();
+    renderStatusPentagon();
+
+    if (t >= 1) {
+      // Animation complete
+      pentagonAnimScale = 1;
+      const wasPlaying = pentagonAnimState.wasPlaying;
+      pentagonAnimState = null;
+      // Resume sim
+      if (wasPlaying) {
+        playing = true;
+        tick();
+      }
+    } else {
+      requestAnimationFrame(animatePentagonReset);
+    }
+  }
+}
+
+let pentagonAnimScale = 1; // 0-1, multiplied against pentagon values during animation
+
 // ── PYTHON SIM CODE ──
 const SIM_CODE = `
 import json
@@ -2357,6 +2722,20 @@ active_events = []  # [{'def_idx': int, 'remaining': int, 'region': (r,c,radius)
 fst_history = []       # list of (gen, fst_value)
 fst_divergence_counter = 0  # Gens sustained above threshold
 fst_warning_fired = False
+
+# ── PHASE 1: Population splitting & ghost lineages ──
+SUBGROUP_CHECK_INTERVAL = 25    # Check for subgroups every N gens
+SUBGROUP_SEPARATION_THRESHOLD = 1.1  # Cluster quality ratio to trigger
+FOUNDING_MORTALITY_BASE = 0.3   # Base mortality for founding colony
+FOUNDING_MIN_N = 8              # Minimum viable founding colony
+BUFFER_SIM_GENS = 40            # Generations to simulate founding viability
+GHOST_UPDATE_INTERVAL = 7       # Update ghosts every N gens
+GHOST_FST_REINTEGRATION = 0.05  # FST below this → reintegration possible
+
+pending_subgroup = None         # None or dict with detection/buffer data
+ghost_populations = []          # list of ghost pop dicts
+split_card_pending = None       # None or dict for JS to pick up
+speciation_completed = None     # None or dict with speciation info for JS animation
 
 # Grid state: [row][col] -> tile
 # Each tile: {
@@ -2701,6 +3080,12 @@ def step():
     # 6. FST and speciation check (every 50 gens)
     if generation % 50 == 0:
         _check_speciation()
+
+    # 7. Subgroup detection & split processing
+    _step_pending_subgroup()
+
+    # 8. Ghost population updates
+    _step_ghosts()
 
 def _get_region_name(cr, cc):
     """Get a narrative region name from grid coordinates."""
@@ -3204,59 +3589,17 @@ def _check_speciation():
         ('lucens', 'obscura'),
     ]
 
-    # ── VELOTHRIX: FST-based speciation ──
-    if VELOTHRIX not in speciation_events:
-        fst = _compute_velothrix_fst()
-        fst_history.append((generation, fst))
+    # ── VELOTHRIX: FST tracking only (speciation handled by Phase 1 split/ghost system) ──
+    fst = _compute_velothrix_fst()
+    fst_history.append((generation, fst))
 
-        # Early warning
-        if fst > FST_WARNING_THRESHOLD and not fst_warning_fired:
-            fst_warning_fired = True
-            events_buffer.append({
-                'gen': generation,
-                'text': f'Field observation: Velothrix subgroups showing genetic divergence (FST={fst:.3f}). Outcome uncertain.',
-            })
-
-        if fst > FST_SPECIATION_THRESHOLD:
-            fst_divergence_counter += 50  # checked every 50 gens
-            if fst_divergence_counter >= SPECIATION_SUSTAINED_GENS:
-                # Determine split: cluster tiles by CREST frequency
-                traits_by_tile = []
-                for r in range(GRID_SIZE):
-                    for c in range(GRID_SIZE):
-                        if grid[r][c]['pops'][VELOTHRIX] > 5:
-                            traits_by_tile.append((r, c, grid[r][c]['alleles'][LOCUS_CREST]))
-
-                if len(traits_by_tile) >= 4:
-                    sorted_traits = sorted(traits_by_tile, key=lambda x: x[2])
-                    mid = len(sorted_traits) // 2
-                    split_trait = (sorted_traits[mid-1][2] + sorted_traits[mid][2]) / 2.0
-
-                    low_tiles = [(r, c) for r, c, t in sorted_traits if t <= split_trait]
-                    high_tiles = [(r, c) for r, c, t in sorted_traits if t > split_trait]
-                    low_center = f"({sum(r for r,c in low_tiles)//max(1,len(low_tiles))},{sum(c for r,c in low_tiles)//max(1,len(low_tiles))})"
-                    high_center = f"({sum(r for r,c in high_tiles)//max(1,len(high_tiles))},{sum(c for r,c in high_tiles)//max(1,len(high_tiles))})"
-
-                    speciation_events[VELOTHRIX] = {
-                        'split_trait': split_trait,
-                        'gen': generation,
-                        'parent_name': 'Velothrix aurantis',
-                        'variant_name': 'Velothrix amberi',
-                        'fst_at_split': fst,
-                    }
-
-                    events_buffer.append({
-                        'gen': generation,
-                        'text': f'⚡ SPECIATION: Velothrix has split into two species! Velothrix aurantis (centered {low_center}, {len(low_tiles)} tiles) vs Velothrix amberi (centered {high_center}, {len(high_tiles)} tiles). Reproductive isolation confirmed at FST={fst:.3f}.',
-                        'speciation': True
-                    })
-                    fst_divergence_counter = 0
-        else:
-            fst_divergence_counter = max(0, fst_divergence_counter - 25)  # slow decay
-    else:
-        # Still track FST post-speciation
-        fst = _compute_velothrix_fst()
-        fst_history.append((generation, fst))
+    # Early warning (informational only — no speciation trigger)
+    if fst > FST_WARNING_THRESHOLD and not fst_warning_fired:
+        fst_warning_fired = True
+        events_buffer.append({
+            'gen': generation,
+            'text': f'Field observation: Velothrix subgroups showing genetic divergence (FST={fst:.3f}). Outcome uncertain.',
+        })
 
     # ── OTHER SPECIES: Legacy trait divergence ──
     for s in range(1, NUM_SPECIES):
@@ -3323,6 +3666,419 @@ def _check_speciation():
                         'gen': generation,
                         'text': f'{names[s]} population critically low — only {total} individuals remain'
                     })
+
+# ── PHASE 1: SUBGROUP DETECTION & SPLITTING ──
+
+def _detect_subgroups():
+    """Detect forming spatial subgroups using 2-means clustering on allele vectors.
+    Returns None or dict with cluster info."""
+    # Collect populated tiles
+    tiles = []
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            p = grid[r][c]['pops'][VELOTHRIX]
+            if p > 5:
+                tiles.append((r, c, p, grid[r][c]['alleles'][:]))
+
+    if len(tiles) < 6:  # need at least 3 tiles per cluster
+        return None
+
+    # Build feature vectors: 5 allele freqs + 2 scaled spatial coords
+    spatial_weight = 0.3
+    features = []
+    for r, c, pop, alleles in tiles:
+        vec = alleles + [r / GRID_SIZE * spatial_weight, c / GRID_SIZE * spatial_weight]
+        features.append(vec)
+
+    # 2-means clustering with multiple restarts
+    best_labels = None
+    best_score = -1
+
+    for restart in range(5):
+        # Random init: pick 2 distinct tiles as centroids
+        idx_a = random.randint(0, len(features) - 1)
+        idx_b = random.randint(0, len(features) - 2)
+        if idx_b >= idx_a:
+            idx_b += 1
+        centroids = [features[idx_a][:], features[idx_b][:]]
+
+        labels = [0] * len(features)
+        for iteration in range(15):
+            # Assign
+            for i, vec in enumerate(features):
+                d0 = sum((vec[j] - centroids[0][j])**2 for j in range(7))
+                d1 = sum((vec[j] - centroids[1][j])**2 for j in range(7))
+                labels[i] = 0 if d0 <= d1 else 1
+
+            # Update centroids
+            for k in range(2):
+                members = [features[i] for i in range(len(features)) if labels[i] == k]
+                if members:
+                    centroids[k] = [sum(m[j] for m in members) / len(members) for j in range(7)]
+
+        # Score: between-cluster / within-cluster distance ratio
+        between = sum((centroids[0][j] - centroids[1][j])**2 for j in range(5))  # alleles only
+        within = [0.0, 0.0]
+        counts = [0, 0]
+        for i, vec in enumerate(features):
+            k = labels[i]
+            within[k] += sum((vec[j] - centroids[k][j])**2 for j in range(5))
+            counts[k] += 1
+
+        avg_within = sum(within) / max(1, sum(counts))
+        score = math.sqrt(between) / max(0.001, math.sqrt(avg_within))
+
+        if score > best_score and min(counts) >= 3:
+            best_score = score
+            best_labels = labels[:]
+
+    if best_labels is None or best_score < SUBGROUP_SEPARATION_THRESHOLD:
+        return None
+
+    # Build cluster info
+    cluster_a = [(tiles[i][0], tiles[i][1]) for i in range(len(tiles)) if best_labels[i] == 0]
+    cluster_b = [(tiles[i][0], tiles[i][1]) for i in range(len(tiles)) if best_labels[i] == 1]
+
+    # Population-weighted mean alleles per cluster
+    def cluster_alleles(tile_list):
+        total_p = 0
+        sums = [0.0] * NUM_LOCI
+        for r, c in tile_list:
+            p = grid[r][c]['pops'][VELOTHRIX]
+            for l in range(NUM_LOCI):
+                sums[l] += grid[r][c]['alleles'][l] * p
+            total_p += p
+        if total_p > 0:
+            return [s / total_p for s in sums], total_p
+        return [0.5] * NUM_LOCI, 0
+
+    alleles_a, pop_a = cluster_alleles(cluster_a)
+    alleles_b, pop_b = cluster_alleles(cluster_b)
+
+    return {
+        'cluster_a': cluster_a, 'cluster_b': cluster_b,
+        'alleles_a': alleles_a, 'alleles_b': alleles_b,
+        'pop_a': pop_a, 'pop_b': pop_b,
+        'separation': best_score,
+        'detected_gen': generation,
+    }
+
+
+def _run_buffer_sim(founding_alleles, founding_N, tile_elev, tile_food, season):
+    """Simulate a founding colony for BUFFER_SIM_GENS generations.
+    Returns dict with survival outcome and trajectory."""
+    N = founding_N
+    alleles = founding_alleles[:]
+    trajectory = [(0, N)]
+
+    # Founding mortality based on DISP frequency
+    disp_freq = alleles[LOCUS_DISP]
+    mortality = FOUNDING_MORTALITY_BASE * (1.0 + disp_freq * 0.5)
+    N = max(1, int(N * (1.0 - mortality)))
+
+    suit = habitat_suitability(tile_elev, VELOTHRIX)
+    k = BASE_K[VELOTHRIX] * suit * tile_food * (0.7 + 0.3 * season)
+
+    for gen in range(BUFFER_SIM_GENS):
+        if N <= 0:
+            break
+
+        # Logistic growth
+        growth = GROWTH_RATES[VELOTHRIX] + alleles[LOCUS_CREST] * 0.01
+        dpop = growth * N * (1.0 - N / max(1, k))
+        N = max(0, int(N + dpop + random.uniform(-0.5, 0.5)))
+
+        # Allee effect: tiny populations struggle
+        if 0 < N <= 2 and random.random() < 0.05:
+            N = 0
+            break
+
+        # Drift on alleles
+        Ne = max(1, int(N * NE_RATIO))
+        for locus in range(NUM_LOCI):
+            p = alleles[locus]
+            if Ne > 1 and 0.001 < p < 0.999:
+                drift_var = p * (1 - p) / (2 * Ne)
+                p += random.gauss(0, math.sqrt(max(0, drift_var)))
+            p = p - MU_FORWARD * p + MU_BACK * (1 - p)
+            alleles[locus] = max(0.001, min(0.999, p))
+
+        trajectory.append((gen + 1, N))
+
+    return {
+        'survived': N >= FOUNDING_MIN_N,
+        'final_N': N,
+        'final_alleles': alleles,
+        'trajectory': trajectory,
+    }
+
+
+def _step_pending_subgroup():
+    """Process pending subgroup detection → buffer sim → split card."""
+    global pending_subgroup, split_card_pending
+
+    if pending_subgroup is not None:
+        return  # Already processing one
+    if split_card_pending is not None:
+        return  # Waiting for player decision
+    if len(ghost_populations) >= 3:
+        return  # Cap on active ghost lineages
+
+    if generation % SUBGROUP_CHECK_INTERVAL != 0:
+        return
+
+    result = _detect_subgroups()
+    if result is None:
+        return
+
+    # DISP modulates split probability
+    smaller_cluster = result['cluster_b'] if result['pop_b'] < result['pop_a'] else result['cluster_a']
+    smaller_alleles = result['alleles_b'] if result['pop_b'] < result['pop_a'] else result['alleles_a']
+    smaller_pop = min(result['pop_a'], result['pop_b'])
+    disp_freq = smaller_alleles[LOCUS_DISP]
+
+    split_prob = 0.4 + 0.3 * disp_freq * result['separation'] / 3.0
+    if random.random() > split_prob:
+        return  # No split this time
+
+    # Pick a representative tile for the buffer sim
+    rep_tile = smaller_cluster[len(smaller_cluster) // 2]
+    tile = grid[rep_tile[0]][rep_tile[1]]
+    founding_N = max(FOUNDING_MIN_N, int(smaller_pop * 0.1))
+
+    buf_result = _run_buffer_sim(
+        smaller_alleles, founding_N,
+        tile['elevation'], tile['food'], get_season()
+    )
+
+    if not buf_result['survived']:
+        events_buffer.append({
+            'gen': generation,
+            'text': 'A dispersing Velothrix group failed to establish a viable colony'
+        })
+        return
+
+    # Buffer sim succeeded — prepare split card for JS
+    events_buffer.append({
+        'gen': generation,
+        'text': 'A Velothrix subpopulation has established a viable founding colony!'
+    })
+
+    # Determine names
+    larger_cluster = result['cluster_a'] if result['pop_a'] >= result['pop_b'] else result['cluster_b']
+    larger_alleles = result['alleles_a'] if result['pop_a'] >= result['pop_b'] else result['alleles_b']
+    larger_pop = max(result['pop_a'], result['pop_b'])
+
+    split_card_pending = {
+        'type': 'split_ready',
+        'larger': {
+            'name': 'Velothrix aurantis (ancestral)',
+            'tiles': larger_cluster,
+            'alleles': larger_alleles,
+            'pop': larger_pop,
+        },
+        'smaller': {
+            'name': 'Velothrix divergens (founding)',
+            'tiles': smaller_cluster,
+            'alleles': buf_result['final_alleles'],
+            'pop': buf_result['final_N'],
+            'trajectory': buf_result['trajectory'],
+        },
+        'separation': result['separation'],
+        'gen': generation,
+    }
+
+
+def execute_split(choice):
+    """Execute the split. choice = 'larger' or 'smaller'.
+    The chosen pop stays on the grid; the other becomes a ghost."""
+    global split_card_pending, ghost_populations
+
+    if split_card_pending is None:
+        return
+
+    data = split_card_pending
+    if choice == 'larger':
+        ghost_tiles = data['smaller']['tiles']
+        ghost_alleles = data['smaller']['alleles']
+        ghost_pop = data['smaller']['pop']
+        ghost_name = data['smaller']['name']
+    else:
+        ghost_tiles = data['larger']['tiles']
+        ghost_alleles = data['larger']['alleles']
+        ghost_pop = data['larger']['pop']
+        ghost_name = data['larger']['name']
+
+    # Zero out the ghost's tiles on the main grid
+    for r, c in ghost_tiles:
+        grid[r][c]['pops'][VELOTHRIX] = 0
+
+    # Create ghost population
+    ghost = {
+        'id': f'ghost_{len(ghost_populations)}',
+        'name': ghost_name,
+        'origin_gen': generation,
+        'tiles': ghost_tiles,
+        'N': ghost_pop,
+        'alleles': ghost_alleles[:],
+        'w_bar': 0.8,
+        'fst_vs_main': data['separation'] * 0.1,
+        'last_updated_gen': generation,
+        'alive': True,
+        'fst_sustained': 0,
+        'history': [(generation, ghost_pop, ghost_alleles[:])],
+    }
+    ghost_populations.append(ghost)
+
+    events_buffer.append({
+        'gen': generation,
+        'text': f'Population split! Now following the {"ancestral" if choice == "larger" else "founding"} group. {ghost_name} continues as a ghost lineage ({ghost_pop} individuals).'
+    })
+
+    split_card_pending = None
+
+
+def _step_ghosts():
+    """Update ghost populations at reduced cadence."""
+    global speciation_completed
+    if generation % GHOST_UPDATE_INTERVAL != 0:
+        return
+
+    season = get_season()
+
+    # Get main population mean alleles for FST computation
+    main_total_pop = 0
+    main_sum_alleles = [0.0] * NUM_LOCI
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            p = grid[r][c]['pops'][VELOTHRIX]
+            if p > 0:
+                for l in range(NUM_LOCI):
+                    main_sum_alleles[l] += grid[r][c]['alleles'][l] * p
+                main_total_pop += p
+    if main_total_pop > 0:
+        main_alleles = [s / main_total_pop for s in main_sum_alleles]
+    else:
+        main_alleles = [0.5] * NUM_LOCI
+
+    for ghost in ghost_populations:
+        if not ghost['alive']:
+            continue
+
+        N = ghost['N']
+        alleles = ghost['alleles']
+
+        # Simplified logistic growth
+        k = BASE_K[VELOTHRIX] * 0.6 * len(ghost['tiles'])  # rough K estimate
+        growth = GROWTH_RATES[VELOTHRIX]
+        dpop = growth * N * (1.0 - N / max(1, k))
+        N = max(0, int(N + dpop * GHOST_UPDATE_INTERVAL + random.gauss(0, max(1, math.sqrt(N)))))
+
+        # Stochastic extinction
+        if N < 3:
+            ghost['alive'] = False
+            ghost['N'] = 0
+            events_buffer.append({
+                'gen': generation,
+                'text': f'{ghost["name"]} ghost lineage has gone extinct',
+                'ghost_extinction': True,
+            })
+            continue
+
+        # Allele drift + selection (simplified)
+        Ne = max(1, int(N * NE_RATIO))
+        for locus in range(NUM_LOCI):
+            p = alleles[locus]
+            # Drift
+            if Ne > 1 and 0.001 < p < 0.999:
+                drift_var = p * (1 - p) / (2 * Ne)
+                p += random.gauss(0, math.sqrt(max(0, drift_var))) * math.sqrt(GHOST_UPDATE_INTERVAL)
+            # Selection pressure (simplified directional)
+            if locus == LOCUS_CREST:
+                s_net = SEL_CREST_SEXUAL - SEL_CREST_PREDATION * leviathan_acuity
+                p += p * (1 - p) * s_net * GHOST_UPDATE_INTERVAL * 0.3
+            elif locus == LOCUS_SPINE:
+                s_net = SEL_SPINE_BENEFIT * beetle_pressure - SEL_SPINE_COST
+                p += p * (1 - p) * s_net * GHOST_UPDATE_INTERVAL * 0.3
+            # Mutation
+            p = p - MU_FORWARD * p + MU_BACK * (1 - p)
+            alleles[locus] = max(0.001, min(0.999, p))
+
+        ghost['N'] = N
+        ghost['alleles'] = alleles
+
+        # Mean fitness estimate
+        ghost['w_bar'] = max(0.3, 1.0 - abs(alleles[LOCUS_CREST] - 0.5) * 0.3 - abs(alleles[LOCUS_BODY] - 0.5) * 0.2)
+
+        # FST vs main population
+        if main_total_pop > 0:
+            fst_sum = 0.0
+            for locus in range(NUM_LOCI):
+                p_main = main_alleles[locus]
+                p_ghost = alleles[locus]
+                p_total = (p_main * main_total_pop + p_ghost * N) / (main_total_pop + N)
+                H_T = 2 * p_total * (1 - p_total)
+                H_S = (main_total_pop * 2 * p_main * (1 - p_main) + N * 2 * p_ghost * (1 - p_ghost)) / (main_total_pop + N)
+                if H_T > 0.001:
+                    fst_sum += (H_T - H_S) / H_T
+            ghost['fst_vs_main'] = fst_sum / NUM_LOCI
+        else:
+            ghost['fst_vs_main'] = 0.5
+
+        ghost['last_updated_gen'] = generation
+        ghost['history'].append((generation, N, alleles[:]))
+        # Keep history bounded
+        if len(ghost['history']) > 100:
+            ghost['history'] = ghost['history'][-100:]
+
+        # Speciation completion check
+        if ghost['fst_vs_main'] > FST_SPECIATION_THRESHOLD:
+            ghost['fst_sustained'] += GHOST_UPDATE_INTERVAL
+            if ghost['fst_sustained'] >= SPECIATION_SUSTAINED_GENS:
+                ghost['alive'] = False  # Becomes a separate species
+                events_buffer.append({
+                    'gen': generation,
+                    'text': f'Full speciation! {ghost["name"]} is now reproductively isolated (FST={ghost["fst_vs_main"]:.3f})',
+                    'speciation': True,
+                })
+                # Signal JS for pentagon zero-reset animation
+                speciation_completed = {
+                    'ghost_name': ghost['name'],
+                    'fst': ghost['fst_vs_main'],
+                    'gen': generation,
+                }
+        else:
+            ghost['fst_sustained'] = max(0, ghost['fst_sustained'] - GHOST_UPDATE_INTERVAL // 2)
+
+
+def get_split_card():
+    """Return pending split card data for JS, or empty JSON."""
+    if split_card_pending is not None:
+        return json.dumps(split_card_pending)
+    return json.dumps(None)
+
+def get_speciation_completion():
+    """Return and consume pending speciation completion event."""
+    global speciation_completed
+    if speciation_completed is not None:
+        result = json.dumps(speciation_completed)
+        speciation_completed = None
+        return result
+    return json.dumps(None)
+
+def get_ghost_data():
+    """Return ghost population data for JS rendering."""
+    return json.dumps([{
+        'id': g['id'],
+        'name': g['name'],
+        'N': g['N'],
+        'alleles': {LOCUS_NAMES[i]: round(g['alleles'][i], 4) for i in range(NUM_LOCI)},
+        'fst': round(g['fst_vs_main'], 4),
+        'w_bar': round(g['w_bar'], 4),
+        'alive': g['alive'],
+        'origin_gen': g['origin_gen'],
+    } for g in ghost_populations])
+
 
 # ── API FUNCTIONS (called from JS) ──
 
