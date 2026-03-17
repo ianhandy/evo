@@ -158,6 +158,46 @@ body {
   height: 100%;
 }
 
+/* ── ACTIVE EVENTS BAR ── */
+#active-events-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  min-height: 0;
+  overflow-x: auto;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border);
+  transition: min-height 0.2s, padding 0.2s;
+}
+#active-events-bar:empty {
+  padding: 0 16px;
+  border-bottom: none;
+}
+#active-events-bar:not(:empty) {
+  min-height: 24px;
+  padding: 4px 16px;
+}
+.active-event-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.active-event-pill.bloom { background: rgba(46, 204, 113, 0.15); border-color: rgba(46, 204, 113, 0.3); }
+.active-event-pill.surge { background: rgba(52, 152, 219, 0.15); border-color: rgba(52, 152, 219, 0.3); }
+.active-event-pill.corridor { background: rgba(155, 89, 182, 0.15); border-color: rgba(155, 89, 182, 0.3); }
+.active-event-pill.reef { background: rgba(229, 89, 28, 0.15); border-color: rgba(229, 89, 28, 0.3); }
+.active-event-pill .pill-timer {
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── EVENT FEED OVERLAY ── */
 #event-feed {
   position: absolute;
@@ -536,6 +576,9 @@ body {
     <div id="gen-counter">Gen <span id="gen-num">0</span></div>
   </div>
 
+  <!-- ACTIVE EVENTS BAR -->
+  <div id="active-events-bar"></div>
+
   <!-- MAP -->
   <div id="map-area">
     <canvas id="map-canvas"></canvas>
@@ -910,6 +953,22 @@ function tick() {
   const season = pyodide.runPython('get_season()');
   popHistory.push({ gen, pops: globalPops, traits: globalTraits, season });
   if (popHistory.length > MAX_HISTORY) popHistory.shift();
+
+  // Update active events bar
+  const activeEvJson = pyodide.runPython('get_active_events_info()');
+  const activeEvs = JSON.parse(activeEvJson);
+  const evBar = document.getElementById('active-events-bar');
+  evBar.innerHTML = '';
+  const evIcons = { algal_bloom: '🌿', tidal_surge: '🌊', migration_corridor: '🔀', reef_formation: '🪸' };
+  const evLabels = { algal_bloom: 'Algal Bloom', tidal_surge: 'Tidal Surge', migration_corridor: 'Migration', reef_formation: 'Reef' };
+  const evClasses = { algal_bloom: 'bloom', tidal_surge: 'surge', migration_corridor: 'corridor', reef_formation: 'reef' };
+  activeEvs.forEach(ev => {
+    const pill = document.createElement('span');
+    pill.className = 'active-event-pill ' + (evClasses[ev.type] || '');
+    const pct = ev.type === 'reef_formation' ? ` ${Math.round((ev.progress || 0) * 100)}%` : '';
+    pill.innerHTML = `${evIcons[ev.type] || '⚡'} ${evLabels[ev.type] || ev.type}${pct} <span class="pill-timer">${ev.remaining}g</span>`;
+    evBar.appendChild(pill);
+  });
 
   // Check events
   const eventsJson = pyodide.runPython('get_and_clear_events()');
@@ -1517,7 +1576,7 @@ import math
 import random
 
 # ── CONFIG ──
-GRID_SIZE = 8
+GRID_SIZE = 12
 NUM_SPECIES = 5
 
 # Species indices
@@ -1528,40 +1587,57 @@ CRAB = 3
 WORM = 4
 
 # Carrying capacities per tile
-BASE_K = [50, 30, 42, 38, 50]  # Velothrix, Leviathan, Crawler, Crab, Worm
+BASE_K = [60, 45, 55, 50, 52]  # Velothrix, Leviathan, Crawler, Crab, Worm
+
+# Minimum effective K on any suitable tile (prevents stochastic extinction spirals)
+MIN_K = 15
 
 # Growth rates (per generation, logistic)
-GROWTH_RATES = [0.028, 0.022, 0.026, 0.024, 0.03]
+GROWTH_RATES = [0.08, 0.06, 0.07, 0.065, 0.07]
 
 # Mutation rate and step
-MUTATION_RATE = 0.002
-MUTATION_STEP = 0.01
+MUTATION_RATE = 0.003
+MUTATION_STEP = 0.012
 
 # Drift strength (lower = less drift)
 DRIFT_STRENGTH = 0.005
 
 # Selection strength (how much trait affects fitness)
-SELECTION_STRENGTH = 0.02
+SELECTION_STRENGTH = 0.01
 
 # Predation rates (fraction of prey eaten per predator per gen)
-PREDATION_LEVIATHAN_VELOTHRIX = 0.005
-PREDATION_LEVIATHAN_WORM = 0.004
-PREDATION_VELOTHRIX_WORM = 0.002
+PREDATION_LEVIATHAN_VELOTHRIX = 0.008
+PREDATION_LEVIATHAN_WORM = 0.006
+PREDATION_VELOTHRIX_WORM = 0.003
 
 # Competition coefficients
-COMPETITION_VELOTHRIX_CRAWLER = 0.0006
-COMPETITION_CRAB_SPACE = 0.0008
+COMPETITION_VELOTHRIX_CRAWLER = 0.0002
+COMPETITION_CRAB_SPACE = 0.0002
 
 # Migration rate (fraction that migrates per gen)
-MIGRATION_RATE = 0.01
+MIGRATION_RATE = 0.03
 
-# Event probabilities per gen (very rare)
+# Recolonization base rate (chance per gen per empty suitable tile)
+RECOLONIZATION_BASE = 0.05
+
+# Event probabilities per gen
 DROUGHT_PROB = 0.002
 FLOOD_PROB = 0.002
 DISEASE_PROB = 0.001
+ALGAL_BLOOM_PROB = 0.003
+TIDAL_SURGE_PROB = 0.002
+MIGRATION_CORRIDOR_PROB = 0.0015
+REEF_FORMATION_PROB = 0.001
 
 # Season cycle length
-SEASON_LENGTH = 100
+SEASON_LENGTH = 120
+
+# Environmental event state
+active_events = []  # list of {type, start_gen, duration, data}
+
+# Per-step event flags (set by _check_events, read by _update_tile)
+_bloom_active = False
+_surge_tiles = set()  # set of (r,c) tuples for tiles affected by tidal surge
 
 # Speciation tracking
 SPECIATION_THRESHOLD = 0.3
@@ -1708,63 +1784,14 @@ def get_biome(elev):
 def habitat_suitability(elev, species_idx):
     """Returns 0-1 suitability for species at given elevation/biome."""
     biome = get_biome(elev)
-    if species_idx == VELOTHRIX:
-        # Prime habitat: shallow marsh (0.2-0.4)
-        if biome == 'shallow_marsh':
-            return 1.0
-        elif biome == 'reed_beds':
-            return 0.6
-        elif biome == 'tidal_flats':
-            return 0.3
-        elif biome == 'deep_water':
-            return 0.15
-        else:
-            return 0.1
-    elif species_idx == LEVIATHAN:
-        # Deep water territory (< 0.2)
-        if biome == 'deep_water':
-            return 1.0
-        elif biome == 'shallow_marsh':
-            return 0.55
-        elif biome == 'reed_beds':
-            return 0.15
-        else:
-            return 0.0
-    elif species_idx == CRAWLER:
-        # Reed beds territory (0.3-0.5)
-        if biome == 'reed_beds':
-            return 1.0
-        elif biome == 'shallow_marsh':
-            return 0.65
-        elif biome == 'tidal_flats':
-            return 0.45
-        elif biome == 'deep_water':
-            return 0.1
-        else:
-            return 0.25
-    elif species_idx == CRAB:
-        # Rocky shore territory (0.7+)
-        if biome == 'rocky_shore':
-            return 1.0
-        elif biome == 'tidal_flats':
-            return 0.6
-        elif biome == 'reed_beds':
-            return 0.2
-        else:
-            return 0.05
-    elif species_idx == WORM:
-        # Prefer wet areas, weaker in dry biomes
-        if biome == 'deep_water':
-            return 0.85
-        elif biome == 'shallow_marsh':
-            return 1.0
-        elif biome == 'reed_beds':
-            return 0.5
-        elif biome == 'tidal_flats':
-            return 0.2
-        else:
-            return 0.1
-    return 0.5
+    suits = {
+        VELOTHRIX: {'shallow_marsh': 1.0, 'reed_beds': 0.7, 'tidal_flats': 0.4, 'deep_water': 0.25, 'rocky_shore': 0.15},
+        LEVIATHAN: {'deep_water': 1.0, 'shallow_marsh': 0.7, 'reed_beds': 0.35, 'tidal_flats': 0.1, 'rocky_shore': 0.0},
+        CRAWLER: {'reed_beds': 1.0, 'shallow_marsh': 0.75, 'tidal_flats': 0.55, 'deep_water': 0.2, 'rocky_shore': 0.35},
+        CRAB: {'rocky_shore': 1.0, 'tidal_flats': 0.75, 'reed_beds': 0.35, 'shallow_marsh': 0.15, 'deep_water': 0.05},
+        WORM: {'deep_water': 0.75, 'shallow_marsh': 0.9, 'reed_beds': 0.6, 'tidal_flats': 0.3, 'rocky_shore': 0.1},
+    }
+    return suits.get(species_idx, {}).get(biome, 0.5)
 
 def init_grid():
     global grid
@@ -1787,10 +1814,10 @@ def init_grid():
             # Set initial populations based on biome suitability
             for s in range(NUM_SPECIES):
                 suit = habitat_suitability(elev, s)
-                if suit > 0.5:
+                if suit > 0.4:
                     tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.4, 0.7))
                 elif suit > 0.1:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.1, 0.3))
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.15, 0.35))
                 else:
                     tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.0, 0.1))
 
@@ -1839,49 +1866,269 @@ def step():
         _check_speciation()
 
 def _check_events(season):
-    """Check for random environmental events."""
+    """Check for random environmental events and manage active persistent events."""
+    global active_events, _bloom_active, _surge_tiles
+    names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
+
+    # Reset per-step flags
+    _bloom_active = False
+    _surge_tiles = set()
+
+    # ── Process active persistent events ──
+    still_active = []
+    for ev in active_events:
+        remaining = ev['start_gen'] + ev['duration'] - generation
+        if remaining <= 0:
+            # Event ending
+            if ev['type'] == 'algal_bloom':
+                events_buffer.append({'gen': generation, 'text': f'Algal bloom subsiding — visibility returning to normal'})
+            elif ev['type'] == 'tidal_surge':
+                # Restore original elevations
+                for pos, orig_elev in ev['data']['original_elevations']:
+                    r, c = pos
+                    if 0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE:
+                        grid[r][c]['elevation'] = orig_elev
+                events_buffer.append({'gen': generation, 'text': f'Tidal surge receding — deep water boundaries contracting'})
+            elif ev['type'] == 'migration_corridor':
+                events_buffer.append({'gen': generation, 'text': f'Migration corridor closing as seasonal currents shift'})
+            elif ev['type'] == 'reef_formation':
+                r, c = ev['data']['tile']
+                final_elev = ev['data']['target_elevation']
+                if 0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE:
+                    grid[r][c]['elevation'] = final_elev
+                    biome = get_biome(final_elev)
+                    events_buffer.append({'gen': generation, 'text': f'🪸 Reef at ({r},{c}) fully formed — tile is now {biome.replace("_"," ")}'})
+            continue
+        still_active.append(ev)
+
+        if ev['type'] == 'algal_bloom':
+            _bloom_active = True
+            # Boost food in wet biomes
+            for r in range(GRID_SIZE):
+                for c in range(GRID_SIZE):
+                    biome = get_biome(grid[r][c]['elevation'])
+                    if biome in ('deep_water', 'shallow_marsh', 'reed_beds'):
+                        grid[r][c]['food'] = min(1.0, grid[r][c]['food'] + 0.015)
+
+        elif ev['type'] == 'tidal_surge':
+            # Track affected tiles so _update_tile can boost Leviathan/Worm K
+            for pos, _ in ev['data']['original_elevations']:
+                _surge_tiles.add(pos)
+
+        elif ev['type'] == 'migration_corridor':
+            # Enhanced bidirectional migration along corridor
+            path = ev['data']['path']
+            for i in range(len(path) - 1):
+                r1, c1 = path[i]
+                r2, c2 = path[i + 1]
+                if not (0 <= r1 < GRID_SIZE and 0 <= c1 < GRID_SIZE): continue
+                if not (0 <= r2 < GRID_SIZE and 0 <= c2 < GRID_SIZE): continue
+                for s in range(NUM_SPECIES):
+                    pop1 = grid[r1][c1]['pops'][s]
+                    pop2 = grid[r2][c2]['pops'][s]
+                    diff = pop1 - pop2
+                    # Flow from high to low, proportional to difference
+                    if abs(diff) > 3:
+                        transfer = max(1, int(abs(diff) * 0.1))
+                        if diff > 0:
+                            grid[r1][c1]['pops'][s] = max(0, pop1 - transfer)
+                            grid[r2][c2]['pops'][s] += transfer
+                        else:
+                            grid[r2][c2]['pops'][s] = max(0, pop2 - transfer)
+                            grid[r1][c1]['pops'][s] += transfer
+
+        elif ev['type'] == 'reef_formation':
+            # Gradually shift elevation toward rocky_shore
+            r, c = ev['data']['tile']
+            if 0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE:
+                progress = (generation - ev['start_gen']) / ev['duration']
+                orig = ev['data']['original_elevation']
+                target = ev['data']['target_elevation']
+                grid[r][c]['elevation'] = orig + (target - orig) * progress
+
+    active_events = still_active
+
+    # ── Instantaneous events ──
     if random.random() < DROUGHT_PROB:
-        # Drought affects a region
         cr = random.randint(0, GRID_SIZE-1)
         cc = random.randint(0, GRID_SIZE-1)
-        radius = random.randint(1, 2)
+        radius = random.randint(1, 3)
+        affected_count = 0
         for r in range(max(0,cr-radius), min(GRID_SIZE,cr+radius+1)):
             for c in range(max(0,cc-radius), min(GRID_SIZE,cc+radius+1)):
-                grid[r][c]['food'] *= 0.4
-                grid[r][c]['water'] *= 0.5
+                grid[r][c]['food'] *= 0.5
+                grid[r][c]['water'] *= 0.6
+                affected_count += 1
         region = "eastern" if cc > GRID_SIZE//2 else "western"
         events_buffer.append({
             'gen': generation,
-            'text': f'Drought in {region} marsh — food and water levels dropping'
+            'text': f'☀️ Drought in {region} marsh — {affected_count} tiles affected, food and water dropping'
         })
 
     if random.random() < FLOOD_PROB:
         cr = random.randint(0, GRID_SIZE-1)
         cc = random.randint(0, GRID_SIZE-1)
-        radius = random.randint(1, 2)
+        radius = random.randint(1, 3)
+        affected_count = 0
         for r in range(max(0,cr-radius), min(GRID_SIZE,cr+radius+1)):
             for c in range(max(0,cc-radius), min(GRID_SIZE,cc+radius+1)):
                 grid[r][c]['water'] = min(1.0, grid[r][c]['water'] + 0.3)
-                # Flooding hurts land species
-                grid[r][c]['pops'][CRAB] = int(grid[r][c]['pops'][CRAB] * 0.7)
-                grid[r][c]['pops'][CRAWLER] = int(grid[r][c]['pops'][CRAWLER] * 0.8)
+                grid[r][c]['pops'][CRAB] = int(grid[r][c]['pops'][CRAB] * 0.75)
+                grid[r][c]['pops'][CRAWLER] = int(grid[r][c]['pops'][CRAWLER] * 0.85)
+                affected_count += 1
         region = "northern" if cr < GRID_SIZE//2 else "southern"
         events_buffer.append({
             'gen': generation,
-            'text': f'Flooding in {region} tidal flats — water levels surging'
+            'text': f'🌧️ Flooding in {region} tidal flats — {affected_count} tiles submerged'
         })
 
+    # ── Density-dependent disease ──
     if random.random() < DISEASE_PROB:
-        target = random.randint(0, NUM_SPECIES-1)
-        names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
-        # Disease affects all tiles but mildly
+        # Target the currently most populous species (density-dependent)
+        global_pops = [0] * NUM_SPECIES
         for r in range(GRID_SIZE):
             for c in range(GRID_SIZE):
-                grid[r][c]['pops'][target] = int(grid[r][c]['pops'][target] * 0.85)
-        events_buffer.append({
-            'gen': generation,
-            'text': f'Disease outbreak affecting {names[target]} population'
-        })
+                for s in range(NUM_SPECIES):
+                    global_pops[s] += grid[r][c]['pops'][s]
+        total_all = sum(global_pops)
+        if total_all > 0:
+            # Weight selection toward dominant species
+            weights = [p * p for p in global_pops]  # square for stronger density bias
+            total_w = sum(weights)
+            if total_w > 0:
+                roll = random.random() * total_w
+                target = 0
+                cumulative = 0
+                for s in range(NUM_SPECIES):
+                    cumulative += weights[s]
+                    if roll < cumulative:
+                        target = s
+                        break
+            else:
+                target = random.randint(0, NUM_SPECIES - 1)
+            # Severity: dominant species hit harder (lower survival)
+            dominance = global_pops[target] / max(1, total_all)
+            severity = 0.75 + 0.2 * (1.0 - dominance)  # 0.75-0.95 survival
+            # Disease spreads from epicenter — tiles near center hit harder
+            epicenter_r = random.randint(0, GRID_SIZE - 1)
+            epicenter_c = random.randint(0, GRID_SIZE - 1)
+            for r in range(GRID_SIZE):
+                for c in range(GRID_SIZE):
+                    dist = abs(r - epicenter_r) + abs(c - epicenter_c)
+                    local_severity = severity + 0.1 * min(1.0, dist / GRID_SIZE)  # farther = milder
+                    local_severity = min(1.0, local_severity)
+                    grid[r][c]['pops'][target] = int(grid[r][c]['pops'][target] * local_severity)
+            mortality_pct = int((1 - severity) * 100)
+            events_buffer.append({
+                'gen': generation,
+                'text': f'🦠 Disease outbreak targeting {names[target]} — epicenter ({epicenter_r},{epicenter_c}), ~{mortality_pct}% peak mortality'
+            })
+
+    # ── Algal bloom (persistent: 40-100 gens) ──
+    if random.random() < ALGAL_BLOOM_PROB:
+        if not any(e['type'] == 'algal_bloom' for e in active_events):
+            duration = random.randint(40, 100)
+            active_events.append({
+                'type': 'algal_bloom',
+                'start_gen': generation,
+                'duration': duration,
+                'data': {}
+            })
+            events_buffer.append({
+                'gen': generation,
+                'text': f'🌿 Algal bloom spreading across wetlands — Worm/Velothrix food surging, Leviathan hunting impaired (duration: {duration} gens)'
+            })
+
+    # ── Tidal surge (persistent: 25-60 gens) ──
+    if random.random() < TIDAL_SURGE_PROB:
+        if not any(e['type'] == 'tidal_surge' for e in active_events):
+            # Temporarily lower elevation of tiles adjacent to deep water
+            affected = []
+            for r in range(GRID_SIZE):
+                for c in range(GRID_SIZE):
+                    elev = grid[r][c]['elevation']
+                    if get_biome(elev) in ('shallow_marsh', 'reed_beds'):
+                        for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                            nr, nc = r+dr, c+dc
+                            if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
+                                if get_biome(grid[nr][nc]['elevation']) == 'deep_water':
+                                    # Lower elevation to push tile toward deep water biome
+                                    new_elev = max(0.05, elev - 0.15)
+                                    affected.append(((r, c), elev))
+                                    grid[r][c]['elevation'] = new_elev
+                                    break
+            duration = random.randint(25, 60)
+            active_events.append({
+                'type': 'tidal_surge',
+                'start_gen': generation,
+                'duration': duration,
+                'data': {'original_elevations': affected}
+            })
+            events_buffer.append({
+                'gen': generation,
+                'text': f'🌊 Tidal surge — deep water expanding into {len(affected)} coastal tiles (duration: {duration} gens)'
+            })
+
+    # ── Migration corridor (persistent: 20-50 gens) ──
+    if random.random() < MIGRATION_CORRIDOR_PROB:
+        if not any(e['type'] == 'migration_corridor' for e in active_events):
+            # Create a winding path connecting two edges
+            if random.random() < 0.5:
+                row = random.randint(1, GRID_SIZE - 2)
+                path = []
+                for c in range(GRID_SIZE):
+                    # Slight wander for organic feel
+                    r_offset = random.choice([-1, 0, 0, 0, 1])
+                    actual_r = max(0, min(GRID_SIZE - 1, row + r_offset))
+                    path.append((actual_r, c))
+                direction = "east-west"
+            else:
+                col = random.randint(1, GRID_SIZE - 2)
+                path = []
+                for r in range(GRID_SIZE):
+                    c_offset = random.choice([-1, 0, 0, 0, 1])
+                    actual_c = max(0, min(GRID_SIZE - 1, col + c_offset))
+                    path.append((r, actual_c))
+                direction = "north-south"
+            duration = random.randint(20, 50)
+            active_events.append({
+                'type': 'migration_corridor',
+                'start_gen': generation,
+                'duration': duration,
+                'data': {'path': path}
+            })
+            events_buffer.append({
+                'gen': generation,
+                'text': f'🔀 Seasonal migration corridor opening {direction} — species flowing between isolated biomes (duration: {duration} gens)'
+            })
+
+    # ── Reef formation (persistent: 150-300 gens, permanent terrain change) ──
+    if random.random() < REEF_FORMATION_PROB:
+        if not any(e['type'] == 'reef_formation' for e in active_events):
+            # Pick a tidal_flats or shallow_marsh tile to develop into rocky_shore
+            candidates = []
+            for r in range(GRID_SIZE):
+                for c in range(GRID_SIZE):
+                    biome = get_biome(grid[r][c]['elevation'])
+                    if biome in ('tidal_flats', 'shallow_marsh'):
+                        candidates.append((r, c))
+            if candidates:
+                tile_pos = random.choice(candidates)
+                r, c = tile_pos
+                orig_elev = grid[r][c]['elevation']
+                # Target elevation in rocky_shore range (0.75-0.85)
+                target_elev = 0.75 + random.random() * 0.1
+                duration = random.randint(150, 300)
+                active_events.append({
+                    'type': 'reef_formation',
+                    'start_gen': generation,
+                    'duration': duration,
+                    'data': {'tile': tile_pos, 'original_elevation': orig_elev, 'target_elevation': target_elev}
+                })
+                events_buffer.append({
+                    'gen': generation,
+                    'text': f'🪸 Reef forming at ({r},{c}) — elevation rising, new Crab habitat developing over {duration} generations'
+                })
 
 def _update_tile(r, c, season):
     """Update populations and traits for one tile."""
@@ -1891,10 +2138,24 @@ def _update_tile(r, c, season):
     for s in range(NUM_SPECIES):
         pop = tile['pops'][s]
         if pop <= 0:
-            # Small chance of recolonization
-            if random.random() < 0.001 * habitat_suitability(elev, s):
-                tile['pops'][s] = 1
-                tile['traits'][s] = 0.5 + random.uniform(-0.1, 0.1)
+            # Recolonization from nearby populations or seed bank
+            suit = habitat_suitability(elev, s)
+            if suit > 0.05 and random.random() < RECOLONIZATION_BASE * suit:
+                # Check if species exists on any adjacent tile (local dispersal)
+                has_neighbor = False
+                for dr, dc in [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)]:
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
+                        if grid[nr][nc]['pops'][s] > 3:
+                            has_neighbor = True
+                            break
+                if has_neighbor:
+                    tile['pops'][s] = max(2, int(MIN_K * suit * 0.3))
+                    tile['traits'][s] = 0.5 + random.uniform(-0.1, 0.1)
+                elif random.random() < 0.005 * suit:
+                    # Rare long-distance dispersal / seed bank
+                    tile['pops'][s] = 1
+                    tile['traits'][s] = 0.5 + random.uniform(-0.1, 0.1)
             continue
 
         trait = tile['traits'][s]
@@ -1902,13 +2163,26 @@ def _update_tile(r, c, season):
 
         # Effective carrying capacity depends on habitat and food
         suit = habitat_suitability(elev, s)
-        k = BASE_K[s] * suit * tile['food'] * (0.7 + 0.3 * season)
+        k = BASE_K[s] * suit * (0.7 + 0.3 * tile['food']) * (0.85 + 0.15 * season)
+        # Tidal surge: boost K for water species on affected tiles
+        if (r, c) in _surge_tiles and s in (LEVIATHAN, WORM):
+            k *= 1.3
+        # Algal bloom: boost K for Worm and Velothrix (food abundance)
+        if _bloom_active and s in (WORM, VELOTHRIX):
+            k *= 1.15
+        # Enforce minimum K on suitable tiles to prevent stochastic extinction spirals
+        if suit > 0.15:
+            k = max(MIN_K, k)
 
         # ── SPECIES INTERACTIONS ──
         if s == VELOTHRIX:
             # Predation by Leviathans (brighter = more visible)
             lev_pop = tile['pops'][LEVIATHAN]
-            predation_loss = lev_pop * PREDATION_LEVIATHAN_VELOTHRIX * (0.5 + trait * 0.5)
+            pred_rate = PREDATION_LEVIATHAN_VELOTHRIX
+            # Algal bloom reduces Leviathan hunting efficiency
+            if _bloom_active:
+                pred_rate *= 0.5
+            predation_loss = lev_pop * pred_rate * (0.5 + trait * 0.5)
             # Competition with crawlers
             craw_pop = tile['pops'][CRAWLER]
             comp_loss = craw_pop * COMPETITION_VELOTHRIX_CRAWLER
@@ -1929,6 +2203,10 @@ def _update_tile(r, c, season):
             # Hunting range: wider = more prey but more energy cost
             hunt_bonus = trait * 0.005 * prey_available / max(1, BASE_K[VELOTHRIX])
             energy_cost = trait * trait * 0.01
+            # Algal bloom impairs hunting — energy cost increases
+            if _bloom_active:
+                energy_cost *= 1.5
+                hunt_bonus *= 0.6
             growth = GROWTH_RATES[s] + hunt_bonus - energy_cost
             k = max(1, k * (0.6 + 0.4 * prey_available / max(1, BASE_K[VELOTHRIX] + BASE_K[WORM])))
             sel_pressure = 0
@@ -1969,7 +2247,9 @@ def _update_tile(r, c, season):
             # Glow: brighter = more mates but more predators
             vel_pop = tile['pops'][VELOTHRIX]
             lev_pop = tile['pops'][LEVIATHAN]
-            predation_loss = (vel_pop * PREDATION_VELOTHRIX_WORM + lev_pop * PREDATION_LEVIATHAN_WORM) * (0.3 + trait * 0.7)
+            # Algal bloom reduces predation on worms (predators can't see through algae)
+            bloom_pred_mod = 0.5 if _bloom_active else 1.0
+            predation_loss = (vel_pop * PREDATION_VELOTHRIX_WORM + lev_pop * PREDATION_LEVIATHAN_WORM) * (0.3 + trait * 0.7) * bloom_pred_mod
             # Sexual selection for brightness
             sex_sel_bonus = trait * 0.01
             growth = GROWTH_RATES[s] + sex_sel_bonus
@@ -1979,17 +2259,28 @@ def _update_tile(r, c, season):
                 sel_pressure -= SELECTION_STRENGTH * 0.3 * (predator_count / max(1, BASE_K[VELOTHRIX] + BASE_K[LEVIATHAN]))
 
         # ── POPULATION DYNAMICS (logistic) ──
-        if s != LEVIATHAN:
-            # Apply predation
-            pop = max(0, pop - int(predation_loss * pop))
-
         if k <= 0:
             k = 1
-        dpop = growth * pop * (1.0 - pop / k)
-        new_pop = max(0, int(pop + dpop + random.uniform(-0.5, 0.5)))
 
-        # Stochastic extinction for very small populations
-        if 0 < new_pop <= 2 and random.random() < 0.05:
+        # Apply predation as survival fraction (not before growth)
+        if s != LEVIATHAN:
+            survival = max(0.0, 1.0 - predation_loss)
+            pop_after_pred = pop * survival
+        else:
+            pop_after_pred = float(pop)
+
+        # Logistic growth on surviving population
+        dpop = growth * pop_after_pred * (1.0 - pop_after_pred / k)
+        raw_pop = pop_after_pred + dpop
+
+        # Probabilistic rounding: preserves fractional growth
+        floor_pop = int(raw_pop)
+        frac = raw_pop - floor_pop
+        new_pop = floor_pop + (1 if random.random() < frac else 0)
+        new_pop = max(0, new_pop)
+
+        # Stochastic extinction only for truly tiny isolated populations
+        if new_pop == 1 and random.random() < 0.02:
             new_pop = 0
 
         tile['pops'][s] = min(new_pop, int(k * 1.5))  # hard cap
@@ -2300,6 +2591,22 @@ def get_scatter_spatial():
                 'temp': round(t['temp'], 4),
             })
     return json.dumps(tiles)
+
+def get_active_events_info():
+    """Return info about currently active persistent events."""
+    result = []
+    for ev in active_events:
+        remaining = ev['start_gen'] + ev['duration'] - generation
+        info = {'type': ev['type'], 'remaining': remaining, 'duration': ev['duration']}
+        if ev['type'] == 'tidal_surge':
+            info['affected_count'] = len(ev['data']['original_elevations'])
+        elif ev['type'] == 'reef_formation':
+            info['tile'] = list(ev['data']['tile'])
+            info['progress'] = (generation - ev['start_gen']) / ev['duration']
+        elif ev['type'] == 'migration_corridor':
+            info['path_length'] = len(ev['data']['path'])
+        result.append(info)
+    return json.dumps(result)
 
 def get_and_clear_events():
     global events_buffer
