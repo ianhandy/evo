@@ -2228,11 +2228,11 @@ CRAWLER = 2
 CRAB = 3
 WORM = 4
 
-# Carrying capacities per tile (increased for long-term stability)
-BASE_K = [100, 30, 60, 50, 120]
+# Carrying capacities per tile (tuned for 8x8 grid long-term stability)
+BASE_K = [100, 70, 80, 70, 120]
 
 # Growth rates (per generation, logistic)
-GROWTH_RATES = [0.05, 0.03, 0.04, 0.035, 0.06]
+GROWTH_RATES = [0.05, 0.05, 0.05, 0.045, 0.06]
 
 # ── VELOTHRIX ALLELE-FREQUENCY GENETICS ──
 # Locus indices
@@ -2277,16 +2277,16 @@ DRIFT_STRENGTH = 0.005
 SELECTION_STRENGTH = 0.02
 
 # Predation rates
-PREDATION_LEVIATHAN_VELOTHRIX = 0.003
-PREDATION_LEVIATHAN_WORM = 0.002
-PREDATION_VELOTHRIX_WORM = 0.001
+PREDATION_LEVIATHAN_VELOTHRIX = 0.002
+PREDATION_LEVIATHAN_WORM = 0.001
+PREDATION_VELOTHRIX_WORM = 0.0005
 
 # Competition coefficients
-COMPETITION_VELOTHRIX_CRAWLER = 0.001
-COMPETITION_CRAB_SPACE = 0.0005
+COMPETITION_VELOTHRIX_CRAWLER = 0.0005
+COMPETITION_CRAB_SPACE = 0.0002
 
 # Migration rate (non-Velothrix species)
-MIGRATION_RATE = 0.01
+MIGRATION_RATE = 0.015
 
 # ── COEVOLUTION ──
 ACUITY_RESPONSE_RATE = 0.005   # Leviathan visual acuity tracks p(crest)
@@ -2484,35 +2484,41 @@ def habitat_suitability(elev, species_idx):
         else:
             return 0.1
     elif species_idx == LEVIATHAN:
-        # Deep water territory (< 0.2)
+        # Deep water + shallow marsh territory
         if biome == 'deep_water':
             return 1.0
         elif biome == 'shallow_marsh':
-            return 0.4
+            return 0.7
         elif biome == 'reed_beds':
+            return 0.25
+        elif biome == 'tidal_flats':
             return 0.1
         else:
-            return 0.0
+            return 0.05
     elif species_idx == CRAWLER:
-        # Reed beds territory (0.3-0.5)
+        # Reed beds + adjacent zones
         if biome == 'reed_beds':
             return 1.0
         elif biome == 'shallow_marsh':
-            return 0.5
+            return 0.6
         elif biome == 'tidal_flats':
-            return 0.4
+            return 0.5
+        elif biome == 'rocky_shore':
+            return 0.3
         elif biome == 'deep_water':
-            return 0.05
+            return 0.1
         else:
             return 0.2
     elif species_idx == CRAB:
-        # Rocky shore territory (0.7+)
+        # Rocky shore + tidal flats + reed beds
         if biome == 'rocky_shore':
             return 1.0
         elif biome == 'tidal_flats':
-            return 0.6
+            return 0.8
         elif biome == 'reed_beds':
-            return 0.2
+            return 0.4
+        elif biome == 'shallow_marsh':
+            return 0.15
         else:
             return 0.05
     elif species_idx == WORM:
@@ -2576,11 +2582,13 @@ def init_grid():
             for s in range(NUM_SPECIES):
                 suit = habitat_suitability(elev, s)
                 if suit > 0.5:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.4, 0.7))
-                elif suit > 0.1:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.1, 0.3))
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.5, 0.8))
+                elif suit > 0.2:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.2, 0.4))
+                elif suit > 0.05:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.05, 0.15))
                 else:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.0, 0.1))
+                    tile['pops'][s] = 0
 
             # Initial trait values with slight spatial variation
             for s in range(NUM_SPECIES):
@@ -2848,9 +2856,9 @@ def _update_tile(r, c, season):
                 if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
                     neighbor_pop += grid[nr][nc]['pops'][s]
             # Higher recolonization chance if neighbors have the species
-            recol_rate = 0.005 * habitat_suitability(elev, s)
-            if neighbor_pop > 5:
-                recol_rate += 0.02 * min(1.0, neighbor_pop / 20.0)
+            recol_rate = 0.01 * habitat_suitability(elev, s)
+            if neighbor_pop > 3:
+                recol_rate += 0.03 * min(1.0, neighbor_pop / 15.0)
             if random.random() < recol_rate:
                 tile['pops'][s] = max(1, int(neighbor_pop * 0.05)) if neighbor_pop > 0 else 1
                 tile['traits'][s] = 0.5 + random.uniform(-0.1, 0.1)
@@ -2897,7 +2905,7 @@ def _update_tile(r, c, season):
             dpop = growth * pop * (1.0 - pop / k)
             new_pop = max(0, int(pop + dpop + random.uniform(-0.5, 0.5)))
 
-            if 0 < new_pop <= 1 and random.random() < 0.02:
+            if 0 < new_pop <= 1 and random.random() < 0.01:
                 new_pop = 0
             tile['pops'][s] = min(new_pop, int(k * 1.5))
 
@@ -2941,15 +2949,18 @@ def _update_tile(r, c, season):
                 vel_pop = tile['pops'][VELOTHRIX]
                 worm_pop = tile['pops'][WORM]
                 prey_available = vel_pop + worm_pop * 0.5
-                hunt_bonus = trait * 0.005 * prey_available / max(1, BASE_K[VELOTHRIX])
-                energy_cost = trait * trait * 0.01
-                growth = GROWTH_RATES[s] + hunt_bonus - energy_cost
-                k = max(1, k * (0.5 + prey_available / max(1, BASE_K[VELOTHRIX] + BASE_K[WORM])))
+                hunt_bonus = trait * 0.004 * prey_available / max(1, BASE_K[VELOTHRIX])
+                energy_cost = trait * trait * 0.001
+                growth = max(0.02, GROWTH_RATES[s] + hunt_bonus - energy_cost)
+                # Prey boosts K above baseline, but baseline K is always available
+                # Apex predators have territory-based carrying capacity
+                prey_bonus = 0.3 * min(1.0, prey_available / max(1, BASE_K[VELOTHRIX] * 0.5))
+                k = k * (1.0 + prey_bonus)  # prey ADDS to K, never reduces below habitat K
                 sel_pressure = 0
                 if prey_available > BASE_K[VELOTHRIX] * 0.3:
                     sel_pressure = SELECTION_STRENGTH * 0.2
                 else:
-                    sel_pressure = -SELECTION_STRENGTH * 0.2
+                    sel_pressure = -SELECTION_STRENGTH * 0.1
                 predation_loss = 0
             elif s == CRAWLER:
                 safety = trait * 0.8
@@ -2959,18 +2970,18 @@ def _update_tile(r, c, season):
                 growth = GROWTH_RATES[s] * food_access
                 vel_pop = tile['pops'][VELOTHRIX]
                 comp_loss = vel_pop * COMPETITION_VELOTHRIX_CRAWLER
-                k = max(1, k * food_access - comp_loss * 5)
+                k = max(5, k * food_access - comp_loss * 3)
                 sel_pressure = 0
                 if lev_pop > BASE_K[LEVIATHAN] * 0.3:
                     sel_pressure = SELECTION_STRENGTH * 0.2
                 else:
                     sel_pressure = -SELECTION_STRENGTH * 0.1
             elif s == CRAB:
-                mobility = 1.0 - trait * 0.3
+                mobility = 1.0 - trait * 0.2
                 growth = GROWTH_RATES[s] * mobility
                 total_pop = sum(tile['pops'])
                 space_pressure = total_pop * COMPETITION_CRAB_SPACE
-                k = max(1, k - space_pressure * 5)
+                k = max(5, k - space_pressure * 3)
                 predation_loss = 0
                 sel_pressure = SELECTION_STRENGTH * (0.5 - trait) * 0.1
                 if total_pop > sum(BASE_K) * 0.5:
@@ -2992,8 +3003,12 @@ def _update_tile(r, c, season):
             if k <= 0:
                 k = 1
             dpop = growth * pop * (1.0 - pop / k)
+            # Allee effect: small populations get a recovery boost
+            if 0 < pop <= 5 and k > 5:
+                dpop = max(dpop, growth * 2)  # guaranteed minimum growth
             new_pop = max(0, int(pop + dpop + random.uniform(-0.5, 0.5)))
-            if 0 < new_pop <= 1 and random.random() < 0.02:
+            # Stochastic extinction only at pop=1 with low chance
+            if new_pop == 1 and random.random() < 0.008:
                 new_pop = 0
             tile['pops'][s] = min(new_pop, int(k * 1.5))
 
