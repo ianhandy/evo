@@ -353,4 +353,164 @@ When population is near K, selection favors survival and competitive ability. At
 
 ---
 
-*Last updated: March 2026. Sources: Grant & Grant (finches), Kitano et al. (stickleback), Mackay (Drosophila bristles), Reznick et al. (guppies), Tinbergen & Sanz (great tit), Endler (sexual selection models).*
+## 12. River Geomorphology & Terrain Dynamics
+
+### Hydrostatic Equilibrium (Standing Water Level Rule)
+Connected bodies of standing water settle to the same elevation. In a grid simulation this is enforced as a constraint: after any elevation modification, flood-fill from the lowest connected water tile to normalise all reachable sub-water-table tiles to a single level.
+
+```
+For all tiles T in connected water body W:
+  elevation(T) = min(elevation(T) for T in W)
+```
+
+Rivers are exempt — they are flowing water with a directional gradient, not standing bodies.
+
+---
+
+### River as Directed-Path Overlay
+In grid-based terrain, rivers cannot be modeled as water tiles without violating the standing water constraint (a river descends; standing water is level). The solution is to treat rivers as a **graph overlay** — an ordered sequence of tile coordinates from source to mouth, stored separately from the elevation grid.
+
+Each tile along the path receives a `has_river` flag. The tile's terrain elevation is unchanged by the river's presence. The river follows the existing elevation gradient.
+
+**Data structure:**
+```
+river = {
+    path: [(r₀, c₀), (r₁, c₁), ...],  # source → mouth
+    age: int,                             # generations since spawn
+    width: int                            # tiles at widest meander
+}
+```
+
+---
+
+### Stream Power Law (Erosion Rate)
+The rate at which a river erodes its channel is proportional to upstream drainage area and local slope:
+
+```
+E = K · A^m · S^n
+```
+- `E` = erosion rate (elevation change per unit time)
+- `A` = upstream drainage area (proxy: number of tiles upstream in the path)
+- `S` = local slope (elevation difference between adjacent path tiles)
+- `K` = erodibility constant (material-dependent)
+- `m ≈ 0.5`, `n ≈ 1.0` (empirical exponents, Whipple & Tucker 1999)
+
+**Simulation note:** On a coarse grid, E is used to set the river advance rate (tiles per geological tick), not per-tick elevation change. The river overlay does not modify elevation; the stream power law governs how quickly the path extends toward the coast.
+
+---
+
+### Meander Migration — Lateral Channel Shift
+River meanders form because flow velocity is asymmetric at bends:
+- **Outside of bend**: faster flow → more erosion → bank retreats
+- **Inside of bend**: slower flow → deposition → point bar forms
+
+The lateral migration rate of a meander bend:
+
+```
+dξ/dt = E₀ · (R_c / w)^(-α)
+```
+- `ξ` = lateral position of the channel centerline
+- `E₀` = baseline erosion rate
+- `R_c` = radius of curvature of the bend
+- `w` = channel width
+- `α ≈ 1` (tighter bends migrate faster, up to a cutoff)
+
+**Grid simplification:** At each geological tick, for each bend point in the path (where direction changes), compute the "outside" tile perpendicular to the bend direction. With probability `p_meander` (tunable), shift the bend outward by adding the outside tile to the path and removing the corresponding inside tile. The inside tile reverts to dry land.
+
+**Constraint:** The path must remain contiguous and maintain an overall downhill gradient. The path cannot cross itself — when it nearly does, an oxbow cutoff is triggered.
+
+*Reference: Howard & Knutson (1984), "Sufficient conditions for river meandering." Ikeda, Parker & Sawai (1981), "Bend theory of river meanders."*
+
+---
+
+### Oxbow Lake Formation (Meander Cutoff)
+When a meander loop curves far enough that two non-adjacent segments of the river path occupy adjacent tiles, the river **cuts through the neck** — the shorter, straighter path is energetically favoured.
+
+The severed loop becomes an isolated body of standing water — an **oxbow lake**. It obeys the standing water level rule (all tiles in the oxbow share one elevation, disconnected from the river).
+
+**Detection algorithm (grid):**
+1. For each tile in the river path, check whether any *non-adjacent-in-path* river tile is a grid neighbour.
+2. If found, the path between the two tiles (the longer arc) is severed.
+3. Severed tiles: `has_river = False`, reclassified as standing water at local ground elevation.
+4. The main river path is updated to the shorter arc.
+
+**Biological significance:** Oxbow lakes create isolated microhabitats. Populations within the former loop may experience temporary genetic isolation, analogous to a small-scale founder event. Over geological time, oxbow lakes can infill via sedimentation (elevation slowly rises until they become dry land again).
+
+*Reference: Gagliano & Howard (1984), "Meander cutoff mechanics." Constantine & Dunne (2008), "Meander cutoff and the controls on the production of oxbow lakes."*
+
+---
+
+### Sinuosity Ratio
+A measure of how meandered a river is:
+
+```
+σ = L_channel / L_valley
+```
+- `L_channel` = actual path length (number of tiles in the river path)
+- `L_valley` = straight-line distance from source to mouth
+
+A straight channel has σ = 1. Rivers with σ > 1.5 are considered meandering. σ > 2.5 is highly sinuous (common in low-gradient floodplains). Oxbow cutoffs reduce σ abruptly.
+
+**Simulation use:** Track sinuosity as a diagnostic. When σ exceeds a threshold, oxbow formation probability increases. Can be exposed in Lab mode charts as a terrain metric.
+
+---
+
+### River as Biogeographic Barrier
+Rivers are among the most important drivers of allopatric speciation in terrestrial and semi-aquatic organisms.
+
+**Riverine barrier hypothesis** (Wallace 1852): large rivers reduce gene flow between populations on opposite banks, leading to genetic divergence and eventually speciation.
+
+Empirical support:
+- Amazon tributaries serve as species boundaries for primates, birds, and butterflies (Ayres & Clutton-Brock 1992; Hayes & Sewlal 2004)
+- Width of the river correlates with degree of genetic differentiation: wider channels → higher FST (Gascon et al. 2000)
+- The barrier effect is **asymmetric** — strong for poor dispersers, weak for volant species
+
+**Simulation model:**
+```
+m_effective = m_baseline × barrier_factor(river)
+barrier_factor = 1 / (1 + k · width · age)
+```
+- `m_baseline` = gene flow rate without the river
+- `width` = number of tiles spanned by the river at the crossing point
+- `age` = generations since the river reached this point (older rivers are more established barriers)
+- `k` = scaling constant (tuning required)
+
+As `barrier_factor` approaches 0, gene flow between opposite banks approaches 0 — full isolation. FST then rises under drift and differential selection on each side, feeding into the existing speciation mechanic.
+
+*Reference: Wallace (1852), "On the monkeys of the Amazon." Gascon et al. (2000), "Riverine barriers and the geographic distribution of Amazonian species." Burney & Brumfield (2009), "Ecology predicts levels of genetic differentiation across Amazonian rivers."*
+
+---
+
+### Terrain Erosion — Background Process
+Erosion in the absence of rivers is modeled as a slow, continuous reduction in elevation for high-elevation tiles:
+
+```
+Δelev(r,c) = -ε · max(0, elev(r,c) - elev_mean)
+```
+- `ε` = erosion rate constant (very small; tune so a full biome transition takes hundreds of generations)
+- `elev_mean` = mean elevation of the grid (or a fixed reference)
+
+This creates a long-term trend toward flatter terrain and expanding shallow-marsh habitat. It is a background process with no event card — the player observes it through slowly changing biome proportions in Lab mode charts.
+
+After each erosion step, the standing water level rule is re-enforced: if any tile has eroded below `water_table`, it joins the nearest standing water body and all connected tiles normalise to the same level.
+
+---
+
+### Volcanic Terrain Events — Instantaneous Transform
+Volcanic events are modeled as single-generation terrain mutations:
+
+```
+For selected tile (r, c) and radius R:
+  elev(r, c) += Δ_volcano          # new high-elevation substrate
+  For all tiles within R of (r, c):
+    temp(r', c') *= temp_spike      # multiplicative temperature shock
+    food(r', c') *= food_crash      # multiplicative food reduction
+```
+
+The entire event resolves in 1 generation — faster than one Velothrix breeding cycle. There is no cooling phase. The new high-elevation substrate is immediately available for colonisation (governed by DISP allele frequency at time of eruption). Erosion (§ above) applies to the new substrate from the next tick onward, slowly wearing it down over hundreds of generations.
+
+After the volcanic elevation change, the standing water level rule is re-enforced in case the eruption displaced a coastal tile above or below `water_table`.
+
+---
+
+*Last updated: March 2026. Sources: Grant & Grant (finches), Kitano et al. (stickleback), Mackay (Drosophila bristles), Reznick et al. (guppies), Tinbergen & Sanz (great tit), Endler (sexual selection models), Howard & Knutson (meandering), Ikeda et al. (bend theory), Constantine & Dunne (oxbow lakes), Whipple & Tucker (stream power), Wallace / Gascon et al. / Burney & Brumfield (riverine barriers).*
