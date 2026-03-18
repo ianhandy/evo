@@ -398,6 +398,148 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
 
+/* ── SETUP SCREEN ── */
+#setup-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: none; /* shown by JS after Pyodide loads */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  gap: 20px;
+  padding: 24px;
+}
+#setup-screen h1 {
+  font-family: var(--sans);
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+#setup-screen .setup-subtitle {
+  color: var(--dim);
+  font-size: 13px;
+  margin-top: -12px;
+}
+.setup-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 340px;
+}
+.setup-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.setup-row label {
+  font-size: 10px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  min-width: 50px;
+}
+#seed-input {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--gold-light);
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+#seed-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.setup-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.setup-btn:hover {
+  background: var(--card-hover);
+  border-color: var(--gold);
+}
+.size-options {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.size-option {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 0;
+  cursor: pointer;
+  border-radius: 3px;
+  text-align: center;
+  transition: all 0.15s;
+}
+.size-option:hover {
+  color: var(--text);
+  border-color: var(--gold);
+}
+.size-option.active {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--gold);
+  font-weight: 700;
+}
+#preview-canvas {
+  width: 100%;
+  max-width: 480px;
+  height: 320px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-dark);
+}
+.setup-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 340px;
+}
+.setup-actions .setup-btn {
+  flex: 1;
+}
+#btn-begin {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--gold);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 3px;
+  letter-spacing: 1px;
+  transition: background 0.15s, transform 0.1s;
+  width: 100%;
+  max-width: 340px;
+}
+#btn-begin:hover {
+  background: var(--gold-light);
+  transform: translateY(-1px);
+}
+#btn-begin:active {
+  transform: translateY(0);
+}
+
 /* ── FOLDER TAB (hidden on desktop) ── */
 .tray-tab { display: none; }
 
@@ -559,6 +701,32 @@ body {
   <p id="loader-hint" style="color:#5a4a30;font-size:11px;margin-top:8px;display:none">First load downloads ~10 MB — may take a moment on mobile</p>
 </div>
 <script>setTimeout(function(){ var h = document.getElementById('loader-hint'); if (h) h.style.display = 'block'; }, 3000);</script>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <h1>VELOTHRIX</h1>
+  <p class="setup-subtitle">Configure your observation</p>
+  <div class="setup-controls">
+    <div class="setup-row">
+      <label>Seed</label>
+      <input type="text" id="seed-input" maxlength="6" spellcheck="false" autocomplete="off">
+      <button class="setup-btn" onclick="randomiseSeed()">Randomise</button>
+    </div>
+    <div class="setup-row">
+      <label>Size</label>
+      <div class="size-options">
+        <button class="size-option" data-size="8" onclick="selectMapSize(8)">Small 8&times;8</button>
+        <button class="size-option active" data-size="12" onclick="selectMapSize(12)">Medium 12&times;12</button>
+        <button class="size-option" data-size="16" onclick="selectMapSize(16)">Large 16&times;16</button>
+      </div>
+    </div>
+  </div>
+  <canvas id="preview-canvas"></canvas>
+  <div class="setup-actions">
+    <button class="setup-btn" onclick="generateMapPreview()">Generate</button>
+  </div>
+  <button id="btn-begin" onclick="beginObservation()">Begin Observation</button>
+</div>
 
 <!-- APP -->
 <div id="app">
@@ -1676,6 +1844,8 @@ grid = []
 
 TERRAIN_SEED = None  # Set to an int for reproducible maps, None for random
 
+WATER_TABLE = 0.2  # tiles below this are standing water
+
 # Biome thresholds
 BIOME_DEEP_WATER = 0.2
 BIOME_SHALLOW_MARSH = 0.4
@@ -1719,15 +1889,18 @@ def _octave_noise(x, y, seed, octaves=4, lacunarity=2.0, persistence=0.5):
         frequency *= lacunarity
     return total / max_val
 
-def generate_elevation():
+def generate_elevation(seed=None, grid_size=None):
     """Multi-octave value noise terrain with water bodies and ridges."""
-    seed = TERRAIN_SEED if TERRAIN_SEED is not None else random.randint(0, 999999)
-    elev = [[0.0]*GRID_SIZE for _ in range(GRID_SIZE)]
+    if seed is None:
+        seed = TERRAIN_SEED if TERRAIN_SEED is not None else random.randint(0, 999999)
+    if grid_size is None:
+        grid_size = GRID_SIZE
+    elev = [[0.0]*grid_size for _ in range(grid_size)]
     scale = 0.35  # Controls feature size relative to grid
 
     # Generate raw noise
-    for r in range(GRID_SIZE):
-        for c in range(GRID_SIZE):
+    for r in range(grid_size):
+        for c in range(grid_size):
             nx = c * scale
             ny = r * scale
             # Base terrain: multi-octave noise
@@ -1739,37 +1912,66 @@ def generate_elevation():
             # Combine: base terrain + subtle ridge influence
             combined = base * 0.7 + ridge * 0.3
             # Basin effect: lower center to create water body
-            cx, cy = GRID_SIZE / 2.0, GRID_SIZE / 2.0
-            dist = math.sqrt((r - cy)**2 + (c - cx)**2) / (GRID_SIZE * 0.6)
+            cx, cy = grid_size / 2.0, grid_size / 2.0
+            dist = math.sqrt((r - cy)**2 + (c - cx)**2) / (grid_size * 0.6)
             basin = max(0, 1.0 - dist * dist) * 0.25
             combined = combined - basin
             elev[r][c] = combined
 
     # Normalize to 0-1
-    flat = [elev[r][c] for r in range(GRID_SIZE) for c in range(GRID_SIZE)]
+    flat = [elev[r][c] for r in range(grid_size) for c in range(grid_size)]
     lo, hi = min(flat), max(flat)
     span = hi - lo if hi > lo else 1.0
-    for r in range(GRID_SIZE):
-        for c in range(GRID_SIZE):
+    for r in range(grid_size):
+        for c in range(grid_size):
             elev[r][c] = (elev[r][c] - lo) / span
 
     # Flood-fill to connect low regions into water bodies
     # Push lowest 20% of tiles further down to form coherent water
     threshold = sorted(flat)[max(1, len(flat) // 5)]
     threshold_norm = (threshold - lo) / span
-    for r in range(GRID_SIZE):
-        for c in range(GRID_SIZE):
+    for r in range(grid_size):
+        for c in range(grid_size):
             if elev[r][c] < threshold_norm:
                 elev[r][c] = elev[r][c] * 0.7  # Deepen low areas
 
     # Re-normalize after deepening
-    flat2 = [elev[r][c] for r in range(GRID_SIZE) for c in range(GRID_SIZE)]
+    flat2 = [elev[r][c] for r in range(grid_size) for c in range(grid_size)]
     lo2, hi2 = min(flat2), max(flat2)
     span2 = hi2 - lo2 if hi2 > lo2 else 1.0
-    for r in range(GRID_SIZE):
-        for c in range(GRID_SIZE):
+    for r in range(grid_size):
+        for c in range(grid_size):
             elev[r][c] = (elev[r][c] - lo2) / span2
 
+    # Enforce standing water levels
+    elev = enforce_water_level(elev, grid_size)
+
+    return elev
+
+def enforce_water_level(elev, grid_size):
+    """Flood-fill: connected tiles below WATER_TABLE get normalized to the same elevation."""
+    visited = [[False]*grid_size for _ in range(grid_size)]
+    for r in range(grid_size):
+        for c in range(grid_size):
+            if not visited[r][c] and elev[r][c] < WATER_TABLE:
+                # BFS to find connected water body
+                body = []
+                queue = [(r, c)]
+                visited[r][c] = True
+                while queue:
+                    cr, cc = queue.pop(0)
+                    body.append((cr, cc))
+                    for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                        nr, nc = cr+dr, cc+dc
+                        if 0 <= nr < grid_size and 0 <= nc < grid_size:
+                            if not visited[nr][nc] and elev[nr][nc] < WATER_TABLE:
+                                visited[nr][nc] = True
+                                queue.append((nr, nc))
+                # All tiles in this body get the minimum elevation
+                if body:
+                    min_elev = min(elev[br][bc] for br, bc in body)
+                    for br, bc in body:
+                        elev[br][bc] = min_elev
     return elev
 
 def get_biome(elev):
