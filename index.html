@@ -733,6 +733,291 @@ body {
   transform: translateY(0);
 }
 
+/* ── GAME OUTCOME OVERLAY ── */
+#outcome-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10,5,0,0.85);
+  z-index: 200;
+  justify-content: center;
+  align-items: center;
+}
+.outcome-card {
+  background: var(--card);
+  border: 2px solid var(--gold);
+  border-radius: 6px;
+  padding: 32px 40px;
+  max-width: 460px;
+  text-align: center;
+}
+.outcome-icon { font-size: 48px; margin-bottom: 12px; }
+.outcome-title {
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.outcome-gen {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 16px;
+}
+.outcome-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.outcome-actions { display: flex; gap: 8px; justify-content: center; }
+.outcome-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+.outcome-btn:hover { background: var(--card); }
+.outcome-btn-alt {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--gold);
+  font-weight: 600;
+}
+.outcome-btn-alt:hover { background: var(--gold-light); }
+.outcome-loss .outcome-title { color: #C0392B; }
+.outcome-loss { border-color: #C0392B; }
+
+/* ── POST-MORTEM OVERLAY ── */
+#postmortem-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10,5,0,0.9);
+  z-index: 300;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+.postmortem-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 24px;
+  max-width: 600px;
+  width: 100%;
+}
+.postmortem-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.postmortem-header h2 {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--gold);
+}
+.postmortem-close {
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-size: 24px;
+  cursor: pointer;
+}
+.postmortem-summary {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+.postmortem-charts h3 {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+  margin: 12px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── LAB MODE TABS ── */
+.lab-tabs {
+  display: none;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+.lab-tabs.visible { display: flex; }
+.lab-tab {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 4px 2px;
+  cursor: pointer;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background 0.15s, color 0.15s;
+}
+.lab-tab:hover { color: var(--gold-light); }
+.lab-tab.active {
+  background: var(--card);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.lab-tab-content { display: none; }
+.lab-tab-content.active { display: block; }
+
+/* ── GHOST PENTAGON ── */
+.pentagon-wrap { position: relative; }
+.pentagon-ghost-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  opacity: 0.25;
+}
+
+/* ── CUSTOM PENTAGON ── */
+#custom-pentagon-section {
+  display: none;
+}
+.custom-pentagon-axes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.custom-pentagon-axes select {
+  flex: 1;
+  min-width: 60px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* ── COMPARISON TOOL ── */
+#comparison-tool {
+  display: none;
+}
+.comparison-axes {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.comparison-axes label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--dim);
+  font-size: 9px;
+}
+.comparison-axes select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* ── LAB CHART CONTROLS ── */
+.lab-chart-section {
+  margin-bottom: 10px;
+}
+.lab-chart-section h4 {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.lab-chart-canvas {
+  width: 100%;
+  height: 120px;
+  display: block;
+}
+
+/* ── SCIENTIFIC REFERENCE PANEL ── */
+#reference-panel .ref-equation {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px;
+  margin-bottom: 6px;
+}
+#reference-panel .ref-name {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+#reference-panel .ref-formula {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+#reference-panel .ref-desc {
+  font-size: 9px;
+  color: var(--dim);
+  line-height: 1.4;
+}
+.ref-tooltip {
+  display: inline-block;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--dim);
+  font-size: 8px;
+  text-align: center;
+  line-height: 13px;
+  cursor: help;
+  position: relative;
+}
+.ref-tooltip:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 18px; top: -4px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 9px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  white-space: normal;
+  width: 200px;
+  z-index: 100;
+  pointer-events: none;
+}
+
 /* ── FOLDER TAB (hidden on desktop) ── */
 .tray-tab { display: none; }
 
@@ -961,52 +1246,137 @@ body {
 
   <!-- RIGHT PANEL -->
   <div id="panel">
-    <!-- PENTAGONS (Field mode) -->
+    <!-- LAB MODE TABS -->
+    <div class="lab-tabs" id="lab-tabs">
+      <button class="lab-tab active" onclick="setLabTab('overview')">Overview</button>
+      <button class="lab-tab" onclick="setLabTab('selection')">Selection</button>
+      <button class="lab-tab" onclick="setLabTab('lifehistory')">Life History</button>
+      <button class="lab-tab" onclick="setLabTab('stats')">Stats</button>
+    </div>
+
+    <!-- PENTAGONS (always visible) -->
     <div class="panel-section" id="pentagon-section">
       <div class="pentagon-container">
         <div class="pentagon-wrap">
           <h4>Traits</h4>
           <canvas class="pentagon-canvas" id="trait-pentagon"></canvas>
+          <canvas class="pentagon-canvas pentagon-ghost-canvas" id="trait-pentagon-ghost"></canvas>
         </div>
         <div class="pentagon-wrap">
           <h4>Status</h4>
           <canvas class="pentagon-canvas" id="status-pentagon"></canvas>
+          <canvas class="pentagon-canvas pentagon-ghost-canvas" id="status-pentagon-ghost"></canvas>
         </div>
       </div>
     </div>
 
-    <div class="panel-section">
-      <h3 id="panel-title">Global Overview</h3>
-      <div class="panel-toggle">
-        <button class="active" onclick="setPanelMode('global')">Global</button>
-        <button onclick="setPanelMode('tile')">Selected Tile</button>
+    <!-- CUSTOM PENTAGON (Lab only) -->
+    <div class="panel-section" id="custom-pentagon-section">
+      <h3>Custom Pentagon</h3>
+      <div class="custom-pentagon-axes" id="custom-axes">
+        <select id="custom-axis-0" onchange="updateCustomPentagon()"><option value="">Axis 1</option></select>
+        <select id="custom-axis-1" onchange="updateCustomPentagon()"><option value="">Axis 2</option></select>
+        <select id="custom-axis-2" onchange="updateCustomPentagon()"><option value="">Axis 3</option></select>
+        <select id="custom-axis-3" onchange="updateCustomPentagon()"><option value="">Axis 4</option></select>
+        <select id="custom-axis-4" onchange="updateCustomPentagon()"><option value="">Axis 5</option></select>
       </div>
-      <div id="species-list"></div>
-    </div>
-
-    <div class="panel-section">
-      <h3>Population Trends</h3>
-      <canvas class="chart-canvas tall" id="pop-chart"></canvas>
-    </div>
-
-    <div class="panel-section" id="trait-chart-section">
-      <h3 id="trait-title">Trait Distribution</h3>
-      <canvas class="chart-canvas" id="trait-chart"></canvas>
-    </div>
-
-    <div class="panel-section" id="scatter-section">
-      <h3>Scatter Plot</h3>
-      <div class="scatter-controls">
-        <div class="scatter-mode-toggle">
-          <button class="active" onclick="setScatterMode('spatial')">Spatial</button>
-          <button onclick="setScatterMode('temporal')">Temporal</button>
-        </div>
-        <div class="scatter-axes">
-          <label>X <select id="scatter-x"></select></label>
-          <label>Y <select id="scatter-y"></select></label>
-        </div>
+      <div style="display:flex;justify-content:center;">
+        <canvas class="pentagon-canvas" id="custom-pentagon"></canvas>
       </div>
-      <canvas class="chart-canvas tall" id="scatter-chart"></canvas>
+    </div>
+
+    <!-- ═══ OVERVIEW TAB ═══ -->
+    <div class="lab-tab-content active" id="tab-overview">
+      <div class="panel-section">
+        <h3 id="panel-title">Global Overview</h3>
+        <div class="panel-toggle">
+          <button class="active" onclick="setPanelMode('global')">Global</button>
+          <button onclick="setPanelMode('tile')">Selected Tile</button>
+        </div>
+        <div id="species-list"></div>
+      </div>
+
+      <div class="panel-section">
+        <h3>Population Trends</h3>
+        <canvas class="chart-canvas tall" id="pop-chart"></canvas>
+      </div>
+
+      <div class="panel-section" id="trait-chart-section">
+        <h3 id="trait-title">Trait Distribution</h3>
+        <canvas class="chart-canvas" id="trait-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- ═══ SELECTION TAB ═══ -->
+    <div class="lab-tab-content" id="tab-selection">
+      <div class="panel-section">
+        <h3>Allele Frequencies</h3>
+        <canvas class="lab-chart-canvas" id="chart-alleles"></canvas>
+      </div>
+      <div class="panel-section">
+        <h3>Antagonist Tracking</h3>
+        <canvas class="lab-chart-canvas" id="chart-antagonists"></canvas>
+      </div>
+      <div class="panel-section">
+        <h3>Mean Fitness &amp; Stress</h3>
+        <canvas class="lab-chart-canvas" id="chart-fitness"></canvas>
+      </div>
+      <div class="panel-section">
+        <h3>Environmental Trends</h3>
+        <canvas class="lab-chart-canvas" id="chart-env-trends"></canvas>
+      </div>
+    </div>
+
+    <!-- ═══ LIFE HISTORY TAB ═══ -->
+    <div class="lab-tab-content" id="tab-lifehistory">
+      <div class="panel-section">
+        <h3>LONG Allele &amp; Lifespan</h3>
+        <canvas class="lab-chart-canvas" id="chart-long"></canvas>
+      </div>
+      <div class="panel-section">
+        <h3>Generation Time (T)</h3>
+        <canvas class="lab-chart-canvas" id="chart-gentime"></canvas>
+      </div>
+      <div class="panel-section">
+        <h3>Survival Curve l(x)</h3>
+        <canvas class="lab-chart-canvas" id="chart-survival"></canvas>
+      </div>
+      <div class="panel-section">
+        <h3>Net Reproductive Rate (R&#8320;)</h3>
+        <canvas class="lab-chart-canvas" id="chart-r0"></canvas>
+      </div>
+    </div>
+
+    <!-- ═══ STATS TAB ═══ -->
+    <div class="lab-tab-content" id="tab-stats">
+      <div class="panel-section" id="scatter-section">
+        <h3>Scatter Plot</h3>
+        <div class="scatter-controls">
+          <div class="scatter-mode-toggle">
+            <button class="active" onclick="setScatterMode('spatial')">Spatial</button>
+            <button onclick="setScatterMode('temporal')">Temporal</button>
+          </div>
+          <div class="scatter-axes">
+            <label>X <select id="scatter-x"></select></label>
+            <label>Y <select id="scatter-y"></select></label>
+          </div>
+        </div>
+        <canvas class="chart-canvas tall" id="scatter-chart"></canvas>
+      </div>
+
+      <div class="panel-section" id="comparison-tool">
+        <h3>Comparison Tool</h3>
+        <div class="comparison-axes">
+          <label>X <select id="compare-x" onchange="renderComparisonPlot()"></select></label>
+          <label>Y <select id="compare-y" onchange="renderComparisonPlot()"></select></label>
+        </div>
+        <canvas class="lab-chart-canvas" id="chart-comparison" style="height:160px;"></canvas>
+      </div>
+
+      <!-- SCIENTIFIC REFERENCE PANEL -->
+      <div class="panel-section" id="reference-panel">
+        <h3>Scientific Reference</h3>
+      </div>
     </div>
   </div>
 
@@ -1027,6 +1397,41 @@ body {
       </div>
       <div class="event-card-body" id="card-body">Description</div>
       <div class="event-card-choices" id="card-choices"></div>
+    </div>
+  </div>
+
+  <!-- GAME OUTCOME OVERLAY -->
+  <div id="outcome-overlay">
+    <div class="outcome-card">
+      <div class="outcome-icon" id="outcome-icon"></div>
+      <h2 class="outcome-title" id="outcome-title"></h2>
+      <div class="outcome-gen" id="outcome-gen"></div>
+      <p class="outcome-text" id="outcome-text"></p>
+      <div class="outcome-actions">
+        <button class="outcome-btn" onclick="dismissOutcome()">Continue Observing</button>
+        <button class="outcome-btn outcome-btn-alt" onclick="showPostMortem()">View Field Notes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POST-MORTEM OVERLAY -->
+  <div id="postmortem-overlay">
+    <div class="postmortem-panel">
+      <div class="postmortem-header">
+        <h2>Field Research Record</h2>
+        <button class="postmortem-close" onclick="closePostMortem()">&times;</button>
+      </div>
+      <div class="postmortem-summary" id="postmortem-summary"></div>
+      <div class="postmortem-charts" id="postmortem-charts">
+        <h3>Allele Frequency History</h3>
+        <canvas class="lab-chart-canvas" id="pm-chart-alleles" style="height:140px;"></canvas>
+        <h3>Fitness &amp; Stress History</h3>
+        <canvas class="lab-chart-canvas" id="pm-chart-fitness" style="height:140px;"></canvas>
+        <h3>FST / Lineage Divergence</h3>
+        <canvas class="lab-chart-canvas" id="pm-chart-fst" style="height:140px;"></canvas>
+        <h3>Life History</h3>
+        <canvas class="lab-chart-canvas" id="pm-chart-life" style="height:140px;"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -1538,15 +1943,719 @@ function setSpeed(s) {
 
 // ── FIELD / LAB MODE ──
 let viewMode = 'field';
+let currentLabTab = 'overview';
+
 function setViewMode(mode) {
   viewMode = mode;
   document.getElementById('btn-field').classList.toggle('active', mode === 'field');
   document.getElementById('btn-lab').classList.toggle('active', mode === 'lab');
-  // In field mode: hide scatter, trait chart sections (Lab only)
-  const scatterEl = document.getElementById('scatter-section');
-  const traitChartEl = document.getElementById('trait-chart-section');
-  if (scatterEl) scatterEl.style.display = mode === 'lab' ? '' : 'none';
-  if (traitChartEl) traitChartEl.style.display = mode === 'lab' ? '' : 'none';
+
+  // Lab tabs bar visibility
+  const labTabs = document.getElementById('lab-tabs');
+  if (labTabs) labTabs.classList.toggle('visible', mode === 'lab');
+
+  // Custom pentagon only in Lab
+  const customPent = document.getElementById('custom-pentagon-section');
+  if (customPent) customPent.style.display = mode === 'lab' ? 'block' : 'none';
+
+  // In field mode: show overview content only (no tabs)
+  if (mode === 'field') {
+    document.querySelectorAll('.lab-tab-content').forEach(el => el.style.display = 'none');
+    const overview = document.getElementById('tab-overview');
+    if (overview) overview.style.display = 'block';
+    // Hide trait chart and scatter in field
+    const traitChartEl = document.getElementById('trait-chart-section');
+    if (traitChartEl) traitChartEl.style.display = 'none';
+  } else {
+    setLabTab(currentLabTab);
+    // Populate custom pentagon dropdowns on first Lab switch
+    populateCustomPentagonAxes();
+    populateComparisonAxes();
+    renderLabCharts();
+    buildReferencePanel();
+  }
+}
+
+function setLabTab(tab) {
+  currentLabTab = tab;
+  const tabMap = { 'overview': 'Overview', 'selection': 'Selection', 'lifehistory': 'Life History', 'stats': 'Stats' };
+  document.querySelectorAll('.lab-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === tabMap[tab]);
+  });
+  document.querySelectorAll('.lab-tab-content').forEach(el => {
+    el.classList.remove('active');
+    el.style.display = 'none';
+  });
+  const content = document.getElementById('tab-' + tab);
+  if (content) {
+    content.classList.add('active');
+    content.style.display = 'block';
+  }
+
+  // Show comparison tool in stats tab
+  const compTool = document.getElementById('comparison-tool');
+  if (compTool) compTool.style.display = tab === 'stats' ? 'block' : 'none';
+
+  // Render tab-specific charts
+  if (tab === 'overview') {
+    renderAll();
+  } else if (tab === 'selection' || tab === 'lifehistory') {
+    renderLabCharts();
+  } else if (tab === 'stats') {
+    renderScatterPlot();
+    renderComparisonPlot();
+  }
+}
+
+// ── CUSTOM PENTAGON ──
+const CUSTOM_AXIS_OPTIONS = [
+  { value: '', label: '— select —' },
+  { value: 'CREST', label: 'CREST' },
+  { value: 'SPINE', label: 'SPINE' },
+  { value: 'BODY', label: 'BODY' },
+  { value: 'LITTER', label: 'LITTER' },
+  { value: 'DISP', label: 'DISP' },
+  { value: 'LONG', label: 'LONG' },
+  { value: 'mean_H', label: 'Diversity' },
+  { value: 'leviathan_acuity', label: 'Leviathan' },
+  { value: 'beetle_pressure', label: 'Beetle' },
+  { value: 'caterpillar_C_star', label: 'Caterpillar' },
+  { value: 'w_bar', label: 'Fitness' },
+  { value: 'fst', label: 'FST' },
+];
+let customAxesPopulated = false;
+
+function populateCustomPentagonAxes() {
+  if (customAxesPopulated) return;
+  customAxesPopulated = true;
+  for (let i = 0; i < 5; i++) {
+    const sel = document.getElementById('custom-axis-' + i);
+    sel.innerHTML = '';
+    CUSTOM_AXIS_OPTIONS.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.label;
+      sel.appendChild(o);
+    });
+  }
+}
+
+function updateCustomPentagon() {
+  try {
+    const allelesJson = pyodide.runPython('get_velothrix_alleles()');
+    const alleles = JSON.parse(allelesJson);
+    const fstJson = pyodide.runPython('get_fst_data()');
+    const fst = JSON.parse(fstJson);
+
+    const dataMap = {
+      CREST: alleles.CREST, SPINE: alleles.SPINE, BODY: alleles.BODY,
+      LITTER: alleles.LITTER, DISP: alleles.DISP, LONG: alleles.LONG,
+      mean_H: alleles.mean_H,
+      leviathan_acuity: alleles.leviathan_acuity,
+      beetle_pressure: alleles.beetle_pressure,
+      caterpillar_C_star: alleles.caterpillar_C_star,
+      w_bar: 0.5 + 0.5 * alleles.mean_H,
+      fst: fst.mean,
+    };
+
+    const labels = [];
+    const values = [];
+    let configured = 0;
+    for (let i = 0; i < 5; i++) {
+      const sel = document.getElementById('custom-axis-' + i);
+      const v = sel.value;
+      if (v && dataMap[v] !== undefined) {
+        labels.push(CUSTOM_AXIS_OPTIONS.find(o => o.value === v).label);
+        values.push(dataMap[v]);
+        configured++;
+      }
+    }
+    if (configured >= 3) {
+      drawPentagonN('custom-pentagon', labels, values, '#7CB9A8', null);
+    }
+  } catch(e) { /* ignore during init */ }
+}
+
+function drawPentagonN(canvasId, labels, values, color, thresholdRing) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const size = 140;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, size, size);
+
+  const cx = size / 2, cy = size / 2, r = size * 0.38;
+  const n = labels.length;
+  if (n < 3) return;
+
+  // Background rings
+  ctx.strokeStyle = 'rgba(61,42,16,0.5)';
+  ctx.lineWidth = 0.5;
+  for (let ring = 0.25; ring <= 1.0; ring += 0.25) {
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const x = cx + Math.cos(angle) * r * ring;
+      const y = cy + Math.sin(angle) * r * ring;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // Axis lines
+  ctx.strokeStyle = 'rgba(61,42,16,0.8)';
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+    ctx.stroke();
+  }
+
+  // Threshold ring
+  if (thresholdRing) {
+    ctx.strokeStyle = 'rgba(229,89,28,0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const x = cx + Math.cos(angle) * r * thresholdRing;
+      const y = cy + Math.sin(angle) * r * thresholdRing;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Data polygon
+  ctx.fillStyle = color + '33';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const idx = i % n;
+    const angle = (Math.PI * 2 * idx / n) - Math.PI / 2;
+    const v = Math.max(0, Math.min(1, values[idx]));
+    const x = cx + Math.cos(angle) * r * v;
+    const y = cy + Math.sin(angle) * r * v;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.fill();
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#8a7560';
+  ctx.font = '8px "Space Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const lx = cx + Math.cos(angle) * (r + 14);
+    const ly = cy + Math.sin(angle) * (r + 14);
+    ctx.fillText(labels[i], lx, ly);
+  }
+}
+
+// ── GHOST PENTAGON ──
+let ghostPentagonData = null; // saved at speciation events
+
+function drawGhostPentagon(canvasId, labels, values, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !values) return;
+  const dpr = window.devicePixelRatio || 1;
+  const size = 140;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, size, size);
+
+  const cx = size / 2, cy = size / 2, r = size * 0.38;
+  const n = labels.length;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const idx = i % n;
+    const angle = (Math.PI * 2 * idx / n) - Math.PI / 2;
+    const v = Math.max(0, Math.min(1, values[idx]));
+    const x = cx + Math.cos(angle) * r * v;
+    const y = cy + Math.sin(angle) * r * v;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function updateGhostPentagons() {
+  if (!ghostPentagonData) return;
+  if (viewMode !== 'lab') return;
+  drawGhostPentagon('trait-pentagon-ghost',
+    ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP'],
+    ghostPentagonData.traits, 'rgba(221,193,101,0.35)');
+  drawGhostPentagon('status-pentagon-ghost',
+    ['w\u0304', 'VIAB', 'DIV', 'STRESS', 'DIVERG'],
+    ghostPentagonData.status, 'rgba(229,89,28,0.35)');
+}
+
+// ── COMPARISON TOOL ──
+let comparisonAxesPopulated = false;
+const COMPARISON_VARS = [
+  { value: 'CREST', label: 'CREST freq' },
+  { value: 'SPINE', label: 'SPINE freq' },
+  { value: 'BODY', label: 'BODY freq' },
+  { value: 'LITTER', label: 'LITTER freq' },
+  { value: 'DISP', label: 'DISP freq' },
+  { value: 'LONG', label: 'LONG freq' },
+  { value: 'mean_H', label: 'Mean H' },
+  { value: 'leviathan', label: 'Leviathan acuity' },
+  { value: 'beetle', label: 'Beetle pressure' },
+  { value: 'caterpillar', label: 'Caterpillar C*' },
+  { value: 'w_bar', label: 'Mean fitness' },
+  { value: 'stress', label: 'Env stress' },
+  { value: 'viability', label: 'Viability' },
+  { value: 'fst', label: 'FST' },
+  { value: 'p_long', label: 'LONG freq' },
+  { value: 'mean_lifespan', label: 'Mean lifespan' },
+  { value: 'generation_time', label: 'Gen time T' },
+  { value: 'R0', label: 'R\u2080' },
+];
+
+function populateComparisonAxes() {
+  if (comparisonAxesPopulated) return;
+  comparisonAxesPopulated = true;
+  ['compare-x', 'compare-y'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">— select —</option>';
+    COMPARISON_VARS.forEach(v => {
+      const o = document.createElement('option');
+      o.value = v.value;
+      o.textContent = v.label;
+      sel.appendChild(o);
+    });
+  });
+}
+
+function renderComparisonPlot() {
+  const canvas = document.getElementById('chart-comparison');
+  if (!canvas) return;
+  const xVar = document.getElementById('compare-x').value;
+  const yVar = document.getElementById('compare-y').value;
+  if (!xVar || !yVar) return;
+
+  try {
+    const labJson = pyodide.runPython('get_lab_history()');
+    const lab = JSON.parse(labJson);
+
+    // Build data points from history
+    const points = [];
+    const allSources = { ...buildVarLookup(lab) };
+    const xData = getVarSeries(xVar, lab);
+    const yData = getVarSeries(yVar, lab);
+    if (!xData || !yData) return;
+
+    const len = Math.min(xData.length, yData.length);
+    for (let i = 0; i < len; i++) {
+      points.push({ x: xData[i], y: yData[i] });
+    }
+
+    drawScatterChart(canvas, points,
+      COMPARISON_VARS.find(v => v.value === xVar).label,
+      COMPARISON_VARS.find(v => v.value === yVar).label,
+      '#7CB9A8');
+  } catch(e) { /* ignore */ }
+}
+
+function getVarSeries(varName, lab) {
+  // Map variable name to the right history array + field
+  const alleleVars = ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP', 'LONG', 'mean_H'];
+  const antVars = { leviathan: 'leviathan', beetle: 'beetle', caterpillar: 'caterpillar' };
+  const fitVars = { w_bar: 'w_bar', stress: 'stress', viability: 'viability' };
+  const lifeVars = { p_long: 'p_long', mean_lifespan: 'mean_lifespan', generation_time: 'generation_time', R0: 'R0' };
+
+  if (alleleVars.includes(varName)) return lab.alleles.map(d => d[varName]);
+  if (antVars[varName]) return lab.antagonists.map(d => d[antVars[varName]]);
+  if (fitVars[varName]) return lab.fitness.map(d => d[fitVars[varName]]);
+  if (lifeVars[varName]) return lab.life.map(d => d[lifeVars[varName]]);
+  if (varName === 'fst') return lab.fst.map(d => d.mean || d);
+  return null;
+}
+
+function buildVarLookup(lab) { return lab; } // placeholder
+
+function drawScatterChart(canvas, points, xLabel, yLabel, color) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#1A0D00';
+  ctx.fillRect(0, 0, w, h);
+
+  if (points.length === 0) return;
+
+  const padL = 35, padR = 10, padT = 10, padB = 22;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  points.forEach(p => {
+    if (p.x < xMin) xMin = p.x;
+    if (p.x > xMax) xMax = p.x;
+    if (p.y < yMin) yMin = p.y;
+    if (p.y > yMax) yMax = p.y;
+  });
+  const xRange = xMax - xMin || 1;
+  const yRange = yMax - yMin || 1;
+
+  // Axis labels
+  ctx.fillStyle = '#8a7560';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(xLabel, padL + plotW / 2, h - 3);
+  ctx.save();
+  ctx.translate(8, padT + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+
+  // Points
+  const rgb = hexToRgb(color);
+  points.forEach((p, i) => {
+    const age = i / points.length;
+    const x = padL + ((p.x - xMin) / xRange) * plotW;
+    const y = padT + plotH - ((p.y - yMin) / yRange) * plotH;
+    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${0.2 + 0.6 * age})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+// ── LAB CHARTS ──
+function renderLabCharts() {
+  if (viewMode !== 'lab') return;
+  try {
+    const labJson = pyodide.runPython('get_lab_history()');
+    const lab = JSON.parse(labJson);
+
+    if (currentLabTab === 'selection') {
+      renderTimeSeriesMulti('chart-alleles', lab.alleles, ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP', 'LONG'],
+        ['#DDC165', '#E5591C', '#7CB9A8', '#D4A574', '#8B6F47', '#A0522D']);
+      renderTimeSeriesMulti('chart-antagonists', lab.antagonists, ['leviathan', 'beetle', 'caterpillar'],
+        ['#E5591C', '#8B6F47', '#D4A574']);
+      renderTimeSeriesMulti('chart-fitness', lab.fitness, ['w_bar', 'stress'],
+        ['#DDC165', '#E5591C']);
+      if (lab.env_trends.length > 0) {
+        // Convert env trend data to chart-friendly format
+        const envData = lab.env_trends.map(([gen, vals]) => ({
+          gen, roughness: vals.roughness, moisture: vals.moisture,
+          temperature: vals.temperature, productivity: vals.productivity,
+        }));
+        renderTimeSeriesMulti('chart-env-trends', envData, ['roughness', 'moisture', 'temperature', 'productivity'],
+          ['#8B6F47', '#4682B4', '#E5591C', '#7CB9A8']);
+      }
+    } else if (currentLabTab === 'lifehistory') {
+      // LONG allele + lifespan (dual axis)
+      renderTimeSeriesMulti('chart-long', lab.life, ['p_long', 'mean_lifespan'],
+        ['#A0522D', '#DDC165'], { normalizePerSeries: true });
+      renderTimeSeriesMulti('chart-gentime', lab.life, ['generation_time'],
+        ['#7CB9A8']);
+      renderTimeSeriesMulti('chart-r0', lab.life, ['R0'],
+        ['#E5591C']);
+      // Survival curve (not time series — snapshot)
+      renderSurvivalCurve();
+    }
+  } catch(e) { /* ignore during init */ }
+}
+
+function renderTimeSeriesMulti(canvasId, data, keys, colors, opts) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !data || data.length < 2) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#1A0D00';
+  ctx.fillRect(0, 0, w, h);
+
+  const padL = 30, padR = 5, padT = 5, padB = 15;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  // Compute global or per-series min/max
+  const normalize = opts && opts.normalizePerSeries;
+  let globalMax = 0;
+  if (!normalize) {
+    data.forEach(d => keys.forEach(k => { if (d[k] > globalMax) globalMax = d[k]; }));
+    if (globalMax === 0) globalMax = 1;
+  }
+
+  // X axis
+  ctx.strokeStyle = '#3d2a10';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(padL, h - padB);
+  ctx.lineTo(w - padR, h - padB);
+  ctx.stroke();
+
+  // Gen labels
+  ctx.fillStyle = '#5a6a50';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'center';
+  const genStart = data[0].gen;
+  const genEnd = data[data.length - 1].gen;
+  ctx.fillText(genStart, padL, h - 3);
+  ctx.fillText(genEnd, w - padR, h - 3);
+
+  keys.forEach((key, ki) => {
+    let seriesMax = globalMax;
+    if (normalize) {
+      seriesMax = 0;
+      data.forEach(d => { if (d[key] > seriesMax) seriesMax = d[key]; });
+      if (seriesMax === 0) seriesMax = 1;
+    }
+
+    ctx.strokeStyle = colors[ki] || '#DDC165';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const x = padL + (i / (data.length - 1)) * plotW;
+      const y = padT + plotH - (data[i][key] / seriesMax) * plotH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  });
+
+  // Legend (small, top-right)
+  ctx.font = '7px monospace';
+  ctx.textAlign = 'right';
+  keys.forEach((key, ki) => {
+    ctx.fillStyle = colors[ki] || '#DDC165';
+    ctx.fillText(key, w - padR - 2, padT + 8 + ki * 10);
+  });
+}
+
+function renderSurvivalCurve() {
+  try {
+    const curveJson = pyodide.runPython('get_survival_curve()');
+    const curve = JSON.parse(curveJson);
+    const canvas = document.getElementById('chart-survival');
+    if (!canvas || curve.length < 2) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.fillStyle = '#1A0D00';
+    ctx.fillRect(0, 0, w, h);
+
+    const padL = 30, padR = 5, padT = 5, padB = 18;
+    const plotW = w - padL - padR;
+    const plotH = h - padT - padB;
+
+    // Axes
+    ctx.strokeStyle = '#3d2a10';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(padL, h - padB);
+    ctx.lineTo(w - padR, h - padB);
+    ctx.stroke();
+
+    ctx.fillStyle = '#5a6a50';
+    ctx.font = '8px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('1.0', padL - 3, padT + 8);
+    ctx.fillText('0', padL - 3, h - padB);
+    ctx.textAlign = 'center';
+    ctx.fillText('age (gens)', padL + plotW / 2, h - 2);
+
+    // Curve
+    ctx.strokeStyle = '#DDC165';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < curve.length; i++) {
+      const x = padL + (i / (curve.length - 1)) * plotW;
+      const y = padT + plotH - curve[i].lx * plotH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  } catch(e) {}
+}
+
+// ── SCIENTIFIC REFERENCE PANEL ──
+let referencePanelBuilt = false;
+
+function buildReferencePanel() {
+  if (referencePanelBuilt) return;
+  referencePanelBuilt = true;
+  const panel = document.getElementById('reference-panel');
+  if (!panel) return;
+
+  const equations = [
+    { name: 'Hardy-Weinberg Equilibrium',
+      formula: 'p\u00b2 + 2pq + q\u00b2 = 1',
+      desc: 'Allele and genotype frequencies remain constant absent selection, drift, mutation, migration, and non-random mating.',
+      tip: 'Foundation of population genetics. Deviations indicate evolutionary forces acting on the population.' },
+    { name: 'Selection (Dominance)',
+      formula: '\u0394p = p\u00b7q\u00b7[p\u00b7h\u00b7s + q\u00b7s] / w\u0304',
+      desc: 'Change in allele frequency per generation under selection. h = dominance coefficient, s = selection coefficient.',
+      tip: 'h=0.5 is codominant. h=0 means deleterious allele is fully recessive.' },
+    { name: 'Mean Fitness (w\u0304)',
+      formula: 'w\u0304 = p\u00b2\u00b7w_AA + 2pq\u00b7w_Aa + q\u00b2\u00b7w_aa',
+      desc: 'Population mean fitness — average reproductive success weighted by genotype frequencies.',
+      tip: 'Fisher\'s Fundamental Theorem: w\u0304 tends to increase under natural selection.' },
+    { name: 'Genetic Drift Variance',
+      formula: 'Var(\u0394p) = p(1-p) / (2N\u2091)',
+      desc: 'Random fluctuation in allele frequency inversely proportional to effective population size.',
+      tip: 'N\u2091 = N \u00d7 T where T is mean generation time. LONG locus modulates this via lifespan.' },
+    { name: 'Gene Flow (Island Model)',
+      formula: 'p\' = (1-m)\u00b7p + m\u00b7p_m',
+      desc: 'Allele frequency after migration. m = migration rate, p_m = migrant pool frequency.',
+      tip: 'Rivers reduce effective m between tiles on opposite banks.' },
+    { name: 'Kimura Fixation Probability',
+      formula: 'u = (1-e^(-4Ns\u00b7p)) / (1-e^(-4Ns))',
+      desc: 'Probability a new allele reaches fixation given selection coefficient s and population size N.',
+      tip: 'When |4Ns| \u226a 1, fixation is nearly neutral (u \u2248 1/2N).' },
+    { name: 'Gaussian Stabilising Selection',
+      formula: 'w = exp(-(z - \u03b8)\u00b2 / 2\u03c3\u00b2)',
+      desc: 'Fitness peaks at optimum trait value \u03b8. BODY locus is under this selection mode.',
+      tip: '\u03c3 controls the width of the fitness peak — narrow = strong stabilising selection.' },
+    { name: 'Lack Clutch Size',
+      formula: 'Optimal C* = argmax[C \u00b7 s(C)]',
+      desc: 'Optimal litter size balances offspring number against per-offspring survival. LITTER tracks caterpillar timing C*.',
+      tip: 'Named after David Lack. Larger litters have diminishing returns due to competition.' },
+    { name: 'Euler-Lotka Equation',
+      formula: 'r \u2248 ln(R\u2080) / T',
+      desc: 'Intrinsic rate of increase. R\u2080 = \u03a3 l(x)\u00b7m(x), T = \u03a3 x\u00b7l(x)\u00b7m(x) / R\u2080. LONG locus couples l(x) and m(x).',
+      tip: 'High LONG raises l(x) but lowers m(x) — longer-lived individuals have fewer offspring per generation.' },
+    { name: 'FST (Lineage Divergence)',
+      formula: 'F_ST = (H_T - H_S) / H_T',
+      desc: 'Proportion of genetic variance between subpopulations. Approaches 1.0 as populations diverge toward speciation.',
+      tip: 'FST > 0.25 is often considered very large differentiation in natural populations.' },
+    { name: 'Mutation-Selection Balance',
+      formula: 'q\u0302 = \u03bc / s (dominant) or q\u0302 = \u221a(\u03bc/s) (recessive)',
+      desc: 'Equilibrium frequency of a deleterious allele maintained by recurrent mutation.',
+      tip: 'Recessive alleles persist at higher frequencies because selection only acts against homozygotes.' },
+    { name: 'Logistic Growth',
+      formula: 'dN/dt = r\u00b7N\u00b7(1 - N/K)',
+      desc: 'Population growth slows as N approaches carrying capacity K. All 5 species follow this model per tile.',
+      tip: 'K is determined by biome type, elevation, and habitat suitability.' },
+  ];
+
+  let html = '';
+  equations.forEach(eq => {
+    html += `<div class="ref-equation">
+      <div class="ref-name">${eq.name} <span class="ref-tooltip" data-tip="${eq.tip}">?</span></div>
+      <div class="ref-formula">${eq.formula}</div>
+      <div class="ref-desc">${eq.desc}</div>
+    </div>`;
+  });
+  panel.innerHTML = '<h3>Scientific Reference</h3>' + html;
+}
+
+// ── GAME OUTCOME ──
+function showGameOutcome(outcome) {
+  if (playing) togglePlay(); // Pause sim
+
+  const overlay = document.getElementById('outcome-overlay');
+  const card = overlay.querySelector('.outcome-card');
+  const isLoss = outcome.type === 'loss';
+
+  card.classList.toggle('outcome-loss', isLoss);
+  document.getElementById('outcome-icon').textContent = isLoss ? '\u2620' : '\u2728';
+  document.getElementById('outcome-title').textContent = isLoss
+    ? 'EXTINCTION'
+    : outcome.condition === 'speciation' ? 'SPECIATION'
+    : outcome.condition === 'predator_outlasting' ? 'PREDATOR OUTLASTING'
+    : 'RESILIENCE';
+  document.getElementById('outcome-gen').textContent = 'Generation ' + outcome.gen;
+  document.getElementById('outcome-text').textContent = outcome.text;
+  overlay.style.display = 'flex';
+}
+
+function dismissOutcome() {
+  document.getElementById('outcome-overlay').style.display = 'none';
+  // Game continues — player can keep observing
+}
+
+function showPostMortem() {
+  document.getElementById('outcome-overlay').style.display = 'none';
+  const overlay = document.getElementById('postmortem-overlay');
+  overlay.style.display = 'flex';
+
+  try {
+    const pmJson = pyodide.runPython('get_postmortem_data()');
+    const pm = JSON.parse(pmJson);
+
+    // Summary
+    const summary = document.getElementById('postmortem-summary');
+    let html = `<strong>Observation concluded at Generation ${pm.generation}</strong><br>`;
+    if (pm.outcome) {
+      html += `Outcome: ${pm.outcome.condition.replace('_', ' ').toUpperCase()}<br>`;
+      html += pm.outcome.text + '<br><br>';
+    }
+    html += `Total allele records: ${pm.allele_history.length}<br>`;
+    html += `Speciation events: ${Object.keys(pm.speciation_events).length}<br>`;
+    html += `Ghost lineages tracked: ${pm.ghost_populations.length}`;
+    if (pm.ghost_populations.length > 0) {
+      html += '<br><br><strong>Ghost Lineages:</strong><br>';
+      pm.ghost_populations.forEach(g => {
+        html += `&bull; Pop #${g.id}: ${g.status}, N=${g.pop}, FST=${g.fst.toFixed(3)}<br>`;
+      });
+    }
+    summary.innerHTML = html;
+
+    // Charts
+    if (pm.allele_history.length > 2) {
+      renderTimeSeriesMulti('pm-chart-alleles', pm.allele_history,
+        ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP', 'LONG'],
+        ['#DDC165', '#E5591C', '#7CB9A8', '#D4A574', '#8B6F47', '#A0522D']);
+    }
+    if (pm.fitness_history.length > 2) {
+      renderTimeSeriesMulti('pm-chart-fitness', pm.fitness_history,
+        ['w_bar', 'stress'],
+        ['#DDC165', '#E5591C']);
+    }
+    if (pm.fst_history.length > 2) {
+      // FST history format may vary — normalize
+      const fstData = pm.fst_history.map((d, i) => ({
+        gen: d.gen || i * 10,
+        mean: typeof d === 'number' ? d : (d.mean || 0),
+      }));
+      renderTimeSeriesMulti('pm-chart-fst', fstData, ['mean'], ['#DDC165']);
+    }
+    if (pm.life_history.length > 2) {
+      renderTimeSeriesMulti('pm-chart-life', pm.life_history,
+        ['p_long', 'mean_lifespan'],
+        ['#A0522D', '#DDC165'], { normalizePerSeries: true });
+    }
+  } catch(e) {
+    document.getElementById('postmortem-summary').textContent = 'Error loading post-mortem data: ' + e.message;
+  }
+}
+
+function closePostMortem() {
+  document.getElementById('postmortem-overlay').style.display = 'none';
 }
 
 // ── KPI STRIP ──
@@ -1861,6 +2970,13 @@ function tick() {
 
     // Process event cards (volcanic, split, early warning)
     processEventCards(events, gen);
+
+    // Check for game outcome events
+    events.forEach(ev => {
+      if (ev.game_win || ev.game_over) {
+        showGameOutcome(ev.outcome);
+      }
+    });
   }
 
   // Update KPI strip and pentagons
@@ -1882,8 +2998,11 @@ function renderAll() {
   renderSpeciesList();
   renderPopChart();
   if (viewMode === 'lab') {
-    renderTraitChart();
-    renderScatterPlot();
+    if (currentLabTab === 'overview') renderTraitChart();
+    if (currentLabTab === 'stats') renderScatterPlot();
+    renderLabCharts();
+    updateCustomPentagon();
+    updateGhostPentagons();
   }
 }
 
@@ -1965,26 +3084,30 @@ function renderMap() {
       const sx = offsetX + ix;
       const sy = offsetY + iy - iz;
 
-      // Pillar height — taller columns for higher elevation
-      const pillarH = Math.max(3, iz * 0.2 * (camTilt / 0.5) + 3);
+      // Pillar height — all sides extend down to a common baseline (elevation = -1)
+      // The baseline is where elevation = 0 would be, minus a small offset
+      const baselineY = offsetY + (c + r) * (tileH * 0.5) + tileH * 0.5;
+      const pillarH = baselineY - (sy + tileH * 0.5);
 
-      // Right side face (darker)
+      if (pillarH > 0) {
+      // Right side face (darker) — from bottom-right edge of top diamond
       ctx.fillStyle = `rgb(${tr * shade * 0.45 | 0},${tg * shade * 0.45 | 0},${tb * shade * 0.45 | 0})`;
       ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(sx + tileW * 0.5, sy + tileH * 0.5);
-      ctx.lineTo(sx + tileW * 0.5, sy + tileH * 0.5 + pillarH);
-      ctx.lineTo(sx, sy + pillarH);
+      ctx.moveTo(sx + tileW * 0.5, sy);              // right point of diamond
+      ctx.lineTo(sx, sy + tileH * 0.5);              // bottom point of diamond
+      ctx.lineTo(sx, sy + tileH * 0.5 + pillarH);    // bottom point + pillar
+      ctx.lineTo(sx + tileW * 0.5, sy + pillarH);    // right point + pillar
       ctx.fill();
 
-      // Left side face (darkest)
+      // Left side face (darkest) — from bottom-left edge of top diamond
       ctx.fillStyle = `rgb(${tr * shade * 0.3 | 0},${tg * shade * 0.3 | 0},${tb * shade * 0.3 | 0})`;
       ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(sx - tileW * 0.5, sy + tileH * 0.5);
-      ctx.lineTo(sx - tileW * 0.5, sy + tileH * 0.5 + pillarH);
-      ctx.lineTo(sx, sy + pillarH);
+      ctx.moveTo(sx - tileW * 0.5, sy);              // left point of diamond
+      ctx.lineTo(sx, sy + tileH * 0.5);              // bottom point of diamond
+      ctx.lineTo(sx, sy + tileH * 0.5 + pillarH);    // bottom point + pillar
+      ctx.lineTo(sx - tileW * 0.5, sy + pillarH);    // left point + pillar
       ctx.fill();
+      }
 
       // Top face
       ctx.fillStyle = `rgb(${tr * shade | 0},${tg * shade | 0},${tb * shade | 0})`;
@@ -2689,17 +3812,29 @@ EROSION_RATE = 0.0003  # elevation loss per gen for high tiles (hundreds of gens
 # River overlay: geological timescale
 RIVER_GEOLOGICAL_TICK = 200  # generations between river advance steps
 RIVER_SPAWN_PROB = 0.003     # probability per gen of spawning a new river at a high-elevation tile
-RIVER_MEANDER_PROB = 0.3     # p_meander per bend per geological tick
 RIVER_STALL_GENS = 500       # generations before a stalled river dries up
 RIVER_BARRIER_K = 0.01       # gene flow barrier scaling: m_eff = m / (1 + k * width * age)
 
-# Volcanic: instantaneous
-VOLCANIC_PROB = 0.0005  # probability per generation of a volcanic event
+# River erosion-deposition (drives emergent meandering)
+RIVER_EROSION_RATE = 0.008   # how much a river erodes its outer-bank neighbor per geo tick
+RIVER_DEPOSITION_RATE = 0.004 # how much sediment deposits on inner-bank neighbor per geo tick
+RIVER_REROUTE_INTERVAL = 3   # re-path river every N geological ticks (path follows terrain)
+
+# Plate tectonics
+NUM_PLATES = 3
+TECTONIC_TICK = 100          # gens between tectonic updates
+PLATE_DRIFT_SPEED = 0.0002   # drift velocity magnitude
+STRESS_ACCUMULATION = 0.08   # stress gained per tick at convergent boundaries
+STRESS_RELEASE_THRESHOLD = 0.6  # stress level triggering volcanic/seismic event
+UPLIFT_RATE = 0.005          # elevation gain per tick at convergent boundaries
+RIFT_RATE = 0.003            # elevation loss per tick at divergent boundaries
+VOLCANIC_FALLBACK_PROB = 0.0002  # small random volcanic prob if no tectonic trigger
 
 # State
 rivers = []        # list of river objects
 oxbow_lakes = []   # list of {tiles: [(r,c),...], age: int, elevation: float}
 next_river_id = 0
+tectonic_plates = []  # list of plate dicts: {id, tiles, drift_r, drift_c, stress}
 
 # Biome thresholds
 BIOME_DEEP_WATER = 0.2
@@ -2896,10 +4031,11 @@ def init_grid(seed_str=None):
     fst_mean = 0.0
     fst_history = []
     # Reset terrain change state
-    global rivers, oxbow_lakes, next_river_id
+    global rivers, oxbow_lakes, next_river_id, tectonic_plates
     rivers = []
     oxbow_lakes = []
     next_river_id = 0
+    tectonic_plates = _init_tectonic_plates()
     # Reset population splitting state
     global followed_population, ghost_populations, early_warnings, pending_splits, next_pop_id, split_history
     followed_population = None  # None = following whole grid (no split yet)
@@ -2908,6 +4044,15 @@ def init_grid(seed_str=None):
     pending_splits = []
     next_pop_id = 1
     split_history = []
+    # Reset game outcome
+    global game_outcome
+    game_outcome = None
+    # Reset Lab mode history tracking
+    global allele_history, life_history, antagonist_history, fitness_history
+    allele_history = []       # [{gen, CREST, SPINE, BODY, LITTER, DISP, LONG, mean_H}, ...]
+    life_history = []         # [{gen, mean_lifespan, generation_time, R0, p_long}, ...]
+    antagonist_history = []   # [{gen, leviathan, beetle, caterpillar}, ...]
+    fitness_history = []      # [{gen, w_bar, viability, stress}, ...]
     seed = _string_to_seed(seed_str) if seed_str else random.randint(0, 999999)
     elevations = generate_elevation(seed=seed, grid_size=GRID_SIZE)
     grid = []
@@ -3061,6 +4206,169 @@ def step():
     # 10. Speciation check (every 50 gens)
     if generation % 50 == 0:
         _check_speciation()
+
+    # 11. Record Lab mode history (every 5 gens to limit memory)
+    if generation % 5 == 0:
+        _record_lab_history()
+
+    # 12. Win/loss condition checks (every 10 gens)
+    if generation % 10 == 0:
+        _check_win_loss_conditions()
+
+def _check_win_loss_conditions():
+    """Check for win and loss conditions."""
+    global game_outcome
+    if game_outcome is not None:
+        return  # Already resolved
+
+    # --- LOSS: Velothrix extinction ---
+    velothrix_pop = sum(grid[r][c]['pops'][VELOTHRIX] for r in range(GRID_SIZE) for c in range(GRID_SIZE))
+    if velothrix_pop <= 1:
+        game_outcome = {
+            'type': 'loss',
+            'condition': 'extinction',
+            'gen': generation,
+            'text': 'The last Velothrix has perished. Your field notes are all that remain of this lineage.',
+        }
+        events_buffer.append({
+            'gen': generation,
+            'text': 'EXTINCTION — The followed Velothrix population has collapsed.',
+            'game_over': True,
+            'outcome': game_outcome,
+        })
+        return
+
+    # --- WIN: Speciation (Velothrix FST crosses reproductive isolation) ---
+    if VELOTHRIX in speciation_events and fst_mean >= REPRODUCTIVE_ISOLATION_FST:
+        game_outcome = {
+            'type': 'win',
+            'condition': 'speciation',
+            'gen': generation,
+            'text': 'Full reproductive isolation achieved. A new species has emerged from your observed lineage.',
+        }
+        events_buffer.append({
+            'gen': generation,
+            'text': 'SPECIATION COMPLETE — Reproductive isolation confirmed. A new species walks the shore.',
+            'game_win': True,
+            'outcome': game_outcome,
+        })
+        return
+
+    # --- WIN: Predator Outlasting (all antagonists below threat threshold) ---
+    if leviathan_acuity < 0.1 and beetle_pressure < 0.1:
+        game_outcome = {
+            'type': 'win',
+            'condition': 'predator_outlasting',
+            'gen': generation,
+            'text': 'All major antagonists have declined to non-threatening levels. The colony thrives unchallenged.',
+        }
+        events_buffer.append({
+            'gen': generation,
+            'text': 'PREDATOR OUTLASTING — Antagonist pressure has collapsed. The colony is ascendant.',
+            'game_win': True,
+            'outcome': game_outcome,
+        })
+        return
+
+    # --- WIN: Resilience (survive crisis with high heterozygosity) ---
+    # Check if a crisis event is active and population + diversity are healthy
+    crisis_active = any(ev['type'] in ('drought', 'volcanic') for ev in active_events)
+    if crisis_active and velothrix_pop > 300:
+        # Compute mean H
+        alleles = {}
+        total_pop = 0
+        for locus in LOCI:
+            tp_sum = 0.0
+            tp_n = 0
+            for r in range(GRID_SIZE):
+                for c in range(GRID_SIZE):
+                    p = grid[r][c]['pops'][VELOTHRIX]
+                    if p > 0:
+                        tp_sum += grid[r][c]['alleles'][locus] * p
+                        tp_n += p
+            alleles[locus] = tp_sum / max(1, tp_n)
+            total_pop = max(total_pop, tp_n)
+        mean_H = sum(2 * alleles[l] * (1 - alleles[l]) for l in LOCI) / NUM_LOCI
+        if mean_H > 0.35:
+            game_outcome = {
+                'type': 'win',
+                'condition': 'resilience',
+                'gen': generation,
+                'text': f'The colony weathered the crisis with genetic diversity intact (H = {mean_H:.3f}). A robust lineage endures.',
+            }
+            events_buffer.append({
+                'gen': generation,
+                'text': f'RESILIENCE — Colony survived crisis with heterozygosity {mean_H:.3f}. The lineage endures.',
+                'game_win': True,
+                'outcome': game_outcome,
+            })
+            return
+
+def _record_lab_history():
+    """Record allele, life history, antagonist, and fitness data for Lab mode charts."""
+    # Compute population-weighted allele frequencies
+    alleles = {}
+    total_pop = 0
+    for locus in LOCI:
+        total_p = 0.0
+        tp = 0
+        for r in range(GRID_SIZE):
+            for c in range(GRID_SIZE):
+                p = grid[r][c]['pops'][VELOTHRIX]
+                if p > 0:
+                    total_p += grid[r][c]['alleles'][locus] * p
+                    tp += p
+        alleles[locus] = total_p / max(1, tp)
+        total_pop = max(total_pop, tp)
+    total_pop_actual = sum(grid[r][c]['pops'][VELOTHRIX] for r in range(GRID_SIZE) for c in range(GRID_SIZE))
+    mean_H = sum(2 * alleles[l] * (1 - alleles[l]) for l in LOCI) / NUM_LOCI
+
+    # Allele history
+    rec = {'gen': generation, 'mean_H': round(mean_H, 4)}
+    for l in LOCI:
+        rec[l] = round(alleles[l], 4)
+    allele_history.append(rec)
+
+    # Life history
+    p_long = alleles['LONG']
+    mean_ls = 5 + 10 * p_long
+    gen_time = mean_ls / 3.0
+    # Approximate R0 from current pop growth
+    R0 = max(0, 1.0 + 0.1 * (mean_H - 0.3) + 0.05 * (0.5 - abs(alleles['LITTER'] - caterpillar_C_star)))
+    life_history.append({
+        'gen': generation,
+        'mean_lifespan': round(mean_ls, 2),
+        'generation_time': round(gen_time, 2),
+        'R0': round(R0, 3),
+        'p_long': round(p_long, 4),
+    })
+
+    # Antagonist history
+    antagonist_history.append({
+        'gen': generation,
+        'leviathan': round(leviathan_acuity, 4),
+        'beetle': round(beetle_pressure, 4),
+        'caterpillar': round(caterpillar_C_star, 4),
+    })
+
+    # Fitness history
+    w_bar = 0.5 + 0.5 * mean_H
+    viability = min(1.0, total_pop_actual / 500.0)
+    stress = abs(alleles['CREST'] - 0.5) * leviathan_acuity + abs(alleles['SPINE'] - 0.5) * beetle_pressure
+    fitness_history.append({
+        'gen': generation,
+        'w_bar': round(w_bar, 4),
+        'viability': round(viability, 4),
+        'stress': round(stress, 4),
+    })
+
+    # Trim histories to prevent unbounded growth
+    max_hist = 2000
+    if len(allele_history) > max_hist:
+        allele_history[:] = allele_history[-1500:]
+        life_history[:] = life_history[-1500:]
+        antagonist_history[:] = antagonist_history[-1500:]
+        fitness_history[:] = fitness_history[-1500:]
 
 def _check_events(season):
     """Check for random environmental events and manage active persistent events."""
@@ -3877,37 +5185,39 @@ def _deactivate_river(river):
         'text': f'A waterway has dried up near ({river["path"][0][0]},{river["path"][0][1]})'
     })
 
-def _meander_river(river):
-    """Meander bends in the river path."""
+def _river_erode_deposit(river):
+    """Erosion-deposition feedback along river path.
+    Outer-bank neighbors at bends get eroded (lowered).
+    Inner-bank neighbors get sediment deposited (raised).
+    This differential reshapes terrain so that when the river
+    re-routes along steepest descent, meandering emerges naturally."""
     if not river['active'] or len(river['path']) < 3:
         return
 
-    new_path = list(river['path'])
-    changed = False
+    for i in range(1, len(river['path']) - 1):
+        r0, c0 = river['path'][i-1]
+        r1, c1 = river['path'][i]
+        r2, c2 = river['path'][i+1]
 
-    for i in range(1, len(new_path) - 1):
-        if random.random() > RIVER_MEANDER_PROB:
-            continue
-
-        r0, c0 = new_path[i-1]
-        r1, c1 = new_path[i]
-        r2, c2 = new_path[i+1]
-
-        # Direction of path at this point
+        # Flow direction vectors
         dr_in = r1 - r0
         dc_in = c1 - c0
         dr_out = r2 - r1
         dc_out = c2 - c1
 
-        # Is this a bend? (direction changes)
+        # At bends (direction changes), compute outer/inner bank
         if dr_in == dr_out and dc_in == dc_out:
-            continue  # straight segment, skip
+            # Straight segment — mild symmetric erosion (channel deepening)
+            grid[r1][c1]['elevation'] = max(
+                WATER_TABLE * 0.5,
+                grid[r1][c1]['elevation'] - RIVER_EROSION_RATE * 0.2
+            )
+            continue
 
-        # Outside of bend: perpendicular away from center of curvature
-        # Approximate: add the perpendicular offset
+        # Outer bank: perpendicular away from center of curvature
+        # Cross product of (in, out) gives curvature direction
         perp_r = -(dc_in + dc_out)
         perp_c = (dr_in + dr_out)
-        # Normalize to unit step
         if perp_r != 0:
             perp_r = 1 if perp_r > 0 else -1
         if perp_c != 0:
@@ -3915,32 +5225,85 @@ def _meander_river(river):
         if perp_r == 0 and perp_c == 0:
             continue
 
-        new_r = r1 + perp_r
-        new_c = c1 + perp_c
-        if not (0 <= new_r < GRID_SIZE and 0 <= new_c < GRID_SIZE):
-            continue
-        if (new_r, new_c) in river['path_set']:
-            continue  # would cross itself
+        # Outer bank tile (gets eroded)
+        outer_r, outer_c = r1 + perp_r, c1 + perp_c
+        if 0 <= outer_r < GRID_SIZE and 0 <= outer_c < GRID_SIZE:
+            grid[outer_r][outer_c]['elevation'] = max(
+                WATER_TABLE * 0.5,
+                grid[outer_r][outer_c]['elevation'] - RIVER_EROSION_RATE
+            )
 
-        # Check gradient: new tile shouldn't be higher than current
-        if grid[new_r][new_c]['elevation'] > grid[r1][c1]['elevation'] + 0.05:
-            continue
+        # Inner bank tile (gets deposition)
+        inner_r, inner_c = r1 - perp_r, c1 - perp_c
+        if 0 <= inner_r < GRID_SIZE and 0 <= inner_c < GRID_SIZE:
+            grid[inner_r][inner_c]['elevation'] = min(
+                1.0,
+                grid[inner_r][inner_c]['elevation'] + RIVER_DEPOSITION_RATE
+            )
 
-        # Shift the bend outward
-        old_r, old_c = r1, c1
-        new_path[i] = (new_r, new_c)
-        river['path_set'].discard((old_r, old_c))
-        river['path_set'].add((new_r, new_c))
-        grid[new_r][new_c]['has_river'] = True
-        # Remove old tile (if no other part of river uses it)
-        if (old_r, old_c) not in set(new_path):
-            grid[old_r][old_c]['has_river'] = False
-        changed = True
+def _reroute_river(river):
+    """Re-trace the river's path from source following steepest descent.
+    After erosion-deposition has reshaped terrain, the optimal path
+    may have shifted — this is how meandering emerges."""
+    if not river['active'] or len(river['path']) < 2:
+        return
 
-    if changed:
-        river['path'] = new_path
-        # Check for oxbow: if any two non-adjacent path nodes are adjacent on the grid
-        _check_oxbow(river)
+    source = river['path'][0]
+    # Clear old has_river flags
+    for r, c in river['path']:
+        other_rivers = any((r, c) in rv['path_set'] for rv in rivers
+                          if rv['active'] and rv['id'] != river['id'])
+        if not other_rivers:
+            grid[r][c]['has_river'] = False
+
+    # Re-trace from source
+    new_path = [source]
+    new_set = {source}
+    grid[source[0]][source[1]]['has_river'] = True
+    max_steps = GRID_SIZE * GRID_SIZE  # prevent infinite loops
+
+    for _ in range(max_steps):
+        hr, hc = new_path[-1]
+        head_elev = grid[hr][hc]['elevation']
+
+        # Find lowest adjacent tile not already in path
+        best = None
+        best_elev = head_elev + 0.01  # slight tolerance for flat terrain
+        candidates = []
+        for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+            nr, nc = hr+dr, hc+dc
+            if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
+                if (nr, nc) not in new_set:
+                    ne = grid[nr][nc]['elevation']
+                    if ne < best_elev:
+                        candidates = [(nr, nc, ne)]
+                        best_elev = ne
+                    elif abs(ne - best_elev) < 0.001:
+                        candidates.append((nr, nc, ne))
+
+        if not candidates:
+            break  # stalled
+
+        # Among equally-low candidates, pick randomly (adds natural variation)
+        if len(candidates) > 1:
+            nr, nc, _ = random.choice(candidates)
+        else:
+            nr, nc, _ = candidates[0]
+
+        new_path.append((nr, nc))
+        new_set.add((nr, nc))
+        grid[nr][nc]['has_river'] = True
+
+        # Reached coast?
+        if grid[nr][nc]['elevation'] < WATER_TABLE:
+            river['complete'] = True
+            break
+
+    river['path'] = new_path
+    river['path_set'] = new_set
+
+    # Check for oxbow formation
+    _check_oxbow(river)
 
 def _check_oxbow(river):
     """Check if a meander loop has nearly closed, forming an oxbow lake."""
@@ -3981,6 +5344,162 @@ def _check_oxbow(river):
                 })
                 return  # only one oxbow per tick
 
+def _init_tectonic_plates():
+    """Initialize tectonic plates by partitioning the grid using Voronoi-like regions.
+    Each plate gets a random drift vector. Boundaries emerge from adjacency."""
+    plates = []
+    # Pick NUM_PLATES random seed points
+    seeds = []
+    attempts = 0
+    while len(seeds) < NUM_PLATES and attempts < 100:
+        r = random.randint(0, GRID_SIZE - 1)
+        c = random.randint(0, GRID_SIZE - 1)
+        # Ensure seeds aren't too close
+        too_close = any(abs(r - sr) + abs(c - sc) < GRID_SIZE // NUM_PLATES for sr, sc in seeds)
+        if not too_close:
+            seeds.append((r, c))
+        attempts += 1
+
+    # Fallback: evenly spaced if random failed
+    if len(seeds) < NUM_PLATES:
+        seeds = []
+        step = GRID_SIZE // NUM_PLATES
+        for i in range(NUM_PLATES):
+            seeds.append((step // 2 + i * step, GRID_SIZE // 2))
+
+    # Assign each tile to nearest seed (Voronoi partition)
+    plate_map = [[0]*GRID_SIZE for _ in range(GRID_SIZE)]
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            best_plate = 0
+            best_dist = 9999
+            for pi, (sr, sc) in enumerate(seeds):
+                d = abs(r - sr) + abs(c - sc)
+                if d < best_dist:
+                    best_dist = d
+                    best_plate = pi
+            plate_map[r][c] = best_plate
+
+    # Build plate objects
+    for pi in range(NUM_PLATES):
+        tiles = [(r, c) for r in range(GRID_SIZE) for c in range(GRID_SIZE) if plate_map[r][c] == pi]
+        # Random drift direction (unit-ish vector)
+        angle = random.uniform(0, 2 * 3.14159)
+        drift_r = PLATE_DRIFT_SPEED * (1 if random.random() > 0.5 else -1)
+        drift_c = PLATE_DRIFT_SPEED * (1 if random.random() > 0.5 else -1)
+        plates.append({
+            'id': pi,
+            'tiles': tiles,
+            'tile_set': set(tiles),
+            'seed': seeds[pi],
+            'drift_r': drift_r,
+            'drift_c': drift_c,
+            'stress': 0.0,
+        })
+
+    return plates
+
+def _get_plate_boundaries():
+    """Find tiles at plate boundaries (adjacent to a different plate)."""
+    if not tectonic_plates:
+        return []
+
+    # Build plate lookup
+    plate_of = {}
+    for plate in tectonic_plates:
+        for (r, c) in plate['tiles']:
+            plate_of[(r, c)] = plate['id']
+
+    boundaries = []
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            my_plate = plate_of.get((r, c), -1)
+            for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                nr, nc = r+dr, c+dc
+                if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
+                    neighbor_plate = plate_of.get((nr, nc), -1)
+                    if neighbor_plate != my_plate:
+                        boundaries.append((r, c, my_plate, neighbor_plate))
+                        break
+    return boundaries
+
+def _update_tectonics():
+    """Tectonic tick: compute boundary interactions, apply uplift/rifting, accumulate stress."""
+    if not tectonic_plates:
+        return
+
+    boundaries = _get_plate_boundaries()
+
+    # Build plate lookup for drift comparison
+    plate_dict = {p['id']: p for p in tectonic_plates}
+
+    # Track per-plate stress gain this tick (capped)
+    stress_gain = {p['id']: 0.0 for p in tectonic_plates}
+
+    for (r, c, pid_a, pid_b) in boundaries:
+        pa = plate_dict[pid_a]
+        pb = plate_dict[pid_b]
+
+        # Relative motion: are plates converging or diverging at this boundary?
+        # Direction from A to B center
+        dr_ab = pb['seed'][0] - pa['seed'][0]
+        dc_ab = pb['seed'][1] - pa['seed'][1]
+        dist = max(1, abs(dr_ab) + abs(dc_ab))
+        nr_ab = dr_ab / dist
+        nc_ab = dc_ab / dist
+
+        # Relative velocity component along A→B axis
+        rel_r = pa['drift_r'] - pb['drift_r']
+        rel_c = pa['drift_c'] - pb['drift_c']
+        convergence = rel_r * nr_ab + rel_c * nc_ab  # positive = converging
+
+        if convergence > 0:
+            # CONVERGENT boundary → uplift + stress accumulation
+            grid[r][c]['elevation'] = min(1.0, grid[r][c]['elevation'] + UPLIFT_RATE * convergence / PLATE_DRIFT_SPEED)
+            stress_gain[pid_a] += STRESS_ACCUMULATION * 0.5
+            stress_gain[pid_b] += STRESS_ACCUMULATION * 0.5
+        else:
+            # DIVERGENT boundary → rifting (lowering)
+            grid[r][c]['elevation'] = max(0.0, grid[r][c]['elevation'] + RIFT_RATE * convergence / PLATE_DRIFT_SPEED)
+
+    # Apply capped stress gain (prevents runaway from many boundary tiles)
+    MAX_STRESS_GAIN_PER_TICK = 0.12
+    for plate in tectonic_plates:
+        plate['stress'] += min(stress_gain[plate['id']], MAX_STRESS_GAIN_PER_TICK)
+
+    # Check stress release → volcanic/seismic events (max 1 per tick)
+    erupted = False
+    for plate in tectonic_plates:
+        if plate['stress'] >= STRESS_RELEASE_THRESHOLD and not erupted:
+            # Stress release: volcanic event at a boundary tile of this plate
+            plate_boundaries = [(r, c) for (r, c, pid_a, pid_b) in boundaries
+                               if pid_a == plate['id'] or pid_b == plate['id']]
+            if plate_boundaries:
+                vr, vc = random.choice(plate_boundaries)
+                _volcanic_event_at(vr, vc)
+                erupted = True
+            # Release most of the accumulated stress
+            plate['stress'] *= 0.15
+
+        # Slow stress decay (partial relaxation between ticks)
+        plate['stress'] *= 0.85
+
+    # Slowly evolve drift directions (plates don't move in straight lines forever)
+    for plate in tectonic_plates:
+        plate['drift_r'] += random.gauss(0, PLATE_DRIFT_SPEED * 0.1)
+        plate['drift_c'] += random.gauss(0, PLATE_DRIFT_SPEED * 0.1)
+        # Clamp drift speed
+        max_drift = PLATE_DRIFT_SPEED * 3
+        plate['drift_r'] = max(-max_drift, min(max_drift, plate['drift_r']))
+        plate['drift_c'] = max(-max_drift, min(max_drift, plate['drift_c']))
+
+    # Re-enforce standing water level rule after tectonic changes
+    elev_grid = [[grid[r][c]['elevation'] for c in range(GRID_SIZE)] for r in range(GRID_SIZE)]
+    elev_grid = enforce_water_level(elev_grid, GRID_SIZE)
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            grid[r][c]['elevation'] = elev_grid[r][c]
+
 def _update_terrain():
     """Master terrain update function called each generation."""
     # 1. Erosion (every generation, small delta)
@@ -3990,12 +5509,17 @@ def _update_terrain():
     if random.random() < RIVER_SPAWN_PROB:
         _spawn_river()
 
-    # 3. River geological tick (advance + meander)
+    # 3. River geological tick (advance + erode/deposit + reroute)
     if generation % RIVER_GEOLOGICAL_TICK == 0 and generation > 0:
+        geo_tick_num = generation // RIVER_GEOLOGICAL_TICK
         for river in rivers:
             if river['active']:
                 _advance_river(river)
-                _meander_river(river)
+                # Erosion-deposition feedback (drives emergent meandering)
+                _river_erode_deposit(river)
+                # Periodically reroute along new terrain (path follows gradient)
+                if geo_tick_num % RIVER_REROUTE_INTERVAL == 0:
+                    _reroute_river(river)
                 river['age'] += RIVER_GEOLOGICAL_TICK
                 # Widen old rivers
                 if river['age'] > RIVER_GEOLOGICAL_TICK * 3:
@@ -4005,9 +5529,18 @@ def _update_terrain():
     for lake in oxbow_lakes:
         lake['age'] += 1
 
-    # 5. Volcanic events (stochastic, instantaneous)
-    if random.random() < VOLCANIC_PROB:
+    # 5. Plate tectonics (geological timescale)
+    if generation % TECTONIC_TICK == 0 and generation > 0:
+        _update_tectonics()
+
+    # 6. Volcanic events — primarily driven by tectonic stress release,
+    #    with small random fallback for rare events
+    if random.random() < VOLCANIC_FALLBACK_PROB:
         _volcanic_event()
+
+def _volcanic_event_at(center_r, center_c):
+    """Tectonic-triggered volcanic event at a specific location."""
+    _do_volcanic_event(center_r, center_c, tectonic=True)
 
 def _volcanic_event():
     """Instantaneous volcanic terrain transform. Resolves entirely within 1 generation."""
@@ -4024,6 +5557,9 @@ def _volcanic_event():
         return
 
     center_r, center_c = random.choice(candidates)
+    _do_volcanic_event(center_r, center_c, tectonic=False)
+
+def _do_volcanic_event(center_r, center_c, tectonic=False):
 
     # Uplift: raise center tile and immediate neighbors
     grid[center_r][center_c]['elevation'] = min(1.0, grid[center_r][center_c]['elevation'] + 0.3)
@@ -4049,9 +5585,10 @@ def _volcanic_event():
         for c in range(GRID_SIZE):
             grid[r][c]['elevation'] = elev_grid[r][c]
 
+    cause = 'Tectonic stress released — a' if tectonic else 'A'
     events_buffer.append({
         'gen': generation,
-        'text': f'A volcanic eruption has reshaped the terrain near ({center_r},{center_c}) — new high-elevation substrate has formed. Temperature spiked and food resources collapsed across {len(affected_tiles)} tiles.',
+        'text': f'{cause} volcanic eruption has reshaped the terrain near ({center_r},{center_c}) — new high-elevation substrate has formed. Temperature spiked and food resources collapsed across {len(affected_tiles)} tiles.',
         'volcanic': True
     })
 
@@ -4636,7 +6173,20 @@ def get_terrain_data():
             'tiles': lake['tiles'],
             'age': lake['age'],
         })
-    return json.dumps({'rivers': river_data, 'oxbow_lakes': oxbow_data})
+    plate_data = []
+    for plate in tectonic_plates:
+        plate_data.append({
+            'id': plate['id'],
+            'tile_count': len(plate['tiles']),
+            'seed': plate['seed'],
+            'drift': [plate['drift_r'], plate['drift_c']],
+            'stress': plate['stress'],
+        })
+    return json.dumps({
+        'rivers': river_data,
+        'oxbow_lakes': oxbow_data,
+        'plates': plate_data,
+    })
 
 def get_fst_data():
     """Return current FST values and history for charting."""
@@ -4708,11 +6258,60 @@ def get_active_events_info():
         result.append(info)
     return json.dumps(result)
 
+def get_game_outcome():
+    """Return current game outcome (win/loss) or null."""
+    return json.dumps(game_outcome)
+
+def get_postmortem_data():
+    """Return full history data for post-mortem analysis."""
+    return json.dumps({
+        'generation': generation,
+        'outcome': game_outcome,
+        'allele_history': allele_history,
+        'life_history': life_history,
+        'antagonist_history': antagonist_history,
+        'fitness_history': fitness_history,
+        'fst_history': fst_history,
+        'ghost_populations': [{'id': g.get('id'), 'status': g.get('status', 'unknown'), 'pop': g.get('pop', 0), 'fst': g.get('fst_vs_followed', 0)} for g in ghost_populations],
+        'speciation_events': {str(k): v for k, v in speciation_events.items()},
+    })
+
 def get_and_clear_events():
     global events_buffer
     out = json.dumps(events_buffer)
     events_buffer = []
     return out
+
+def get_lab_history():
+    """Return all history arrays for Lab mode charts."""
+    return json.dumps({
+        'alleles': allele_history[-400:],
+        'life': life_history[-400:],
+        'antagonists': antagonist_history[-400:],
+        'fitness': fitness_history[-400:],
+        'fst': fst_history[-400:],
+        'env_trends': [(g, d) for g, d in env_trend_history[-400:]],
+    })
+
+def get_survival_curve():
+    """Return survival curve l(x) based on current LONG allele mean."""
+    # Compute pop-weighted LONG frequency
+    total_p = 0.0
+    total_pop = 0
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            p = grid[r][c]['pops'][VELOTHRIX]
+            if p > 0:
+                total_p += grid[r][c]['alleles']['LONG'] * p
+                total_pop += p
+    p_long = total_p / max(1, total_pop)
+    mean_ls = 5 + 10 * p_long  # lifespan in generations
+    # Generate survival curve l(x) = exp(-x / (mean_ls * 0.7))
+    curve = []
+    for x in range(int(mean_ls * 2) + 1):
+        lx = math.exp(-x / (mean_ls * 0.7))
+        curve.append({'x': x, 'lx': round(lx, 4)})
+    return json.dumps(curve)
 `;
 
 // ── BOOT ──
