@@ -74,7 +74,7 @@ body {
   display: none;
   height: 100vh;
   grid-template-columns: 1fr 340px;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
 }
 
 /* ── HEADER ── */
@@ -158,64 +158,32 @@ body {
   height: 100%;
 }
 
-/* ── ACTIVE EVENTS BAR ── */
-#active-events-bar {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 8px;
-  padding: 0 16px;
-  min-height: 0;
-  overflow-x: auto;
-  background: var(--bg-dark);
-  border-bottom: 1px solid var(--border);
-  transition: min-height 0.2s, padding 0.2s;
-}
-#active-events-bar:empty {
-  padding: 0 16px;
-  border-bottom: none;
-}
-#active-events-bar:not(:empty) {
-  min-height: 24px;
-  padding: 4px 16px;
-}
-.active-event-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 3px;
-  font-size: 10px;
-  white-space: nowrap;
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-.active-event-pill.bloom { background: rgba(46, 204, 113, 0.15); border-color: rgba(46, 204, 113, 0.3); }
-.active-event-pill.surge { background: rgba(52, 152, 219, 0.15); border-color: rgba(52, 152, 219, 0.3); }
-.active-event-pill.corridor { background: rgba(155, 89, 182, 0.15); border-color: rgba(155, 89, 182, 0.3); }
-.active-event-pill.reef { background: rgba(229, 89, 28, 0.15); border-color: rgba(229, 89, 28, 0.3); }
-.active-event-pill .pill-timer {
-  color: var(--dim);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── EVENT FEED OVERLAY ── */
+/* ── EVENT FEED OVERLAY (single notification) ── */
 #event-feed {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  max-height: 120px;
-  overflow-y: auto;
-  background: linear-gradient(transparent, rgba(26,13,0,0.95));
-  padding: 40px 12px 8px;
+  bottom: 12px; left: 12px; right: 12px;
   pointer-events: none;
+  text-align: center;
 }
-#event-feed div {
-  font-size: 10px;
-  color: var(--dim);
-  padding: 2px 0;
-  pointer-events: auto;
+#event-feed .feed-notif {
+  display: inline-block;
+  background: rgba(26,13,0,0.9);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text);
+  opacity: 0;
+  transition: opacity 0.4s;
+  max-width: 90%;
 }
-#event-feed div .ev-gen { color: var(--gold); }
-#event-feed div .ev-text { color: var(--text); }
+#event-feed .feed-notif.visible { opacity: 1; }
+#event-feed .feed-notif.speciation {
+  border-color: var(--gold);
+  color: var(--gold-light);
+  background: rgba(42,24,0,0.95);
+}
 
 /* ── RIGHT PANEL ── */
 #panel {
@@ -392,6 +360,253 @@ body {
 #event-log .log-entry.speciation-event .ev-gen { color: #FFE9A3; font-weight: 700; }
 #event-log .log-entry.speciation-event .ev-text { color: var(--gold-light); }
 
+/* ── MODE TOGGLE ── */
+.mode-toggle {
+  display: flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+.mode-toggle button {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 3px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.mode-toggle button:hover { color: var(--text); }
+.mode-toggle button.active {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--gold);
+  font-weight: 700;
+}
+
+/* ── KPI STRIP ── */
+#kpi-strip {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 6px 16px;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border);
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.kpi-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+.kpi-label {
+  font-size: 8px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.kpi-value {
+  font-size: 14px;
+  color: var(--gold-light);
+  font-weight: 700;
+  font-family: var(--sans);
+}
+.kpi-value.warn { color: var(--orange); }
+.kpi-value.crit { color: #C0392B; }
+
+/* ── PENTAGON (RADAR) CHARTS ── */
+.pentagon-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 280px;
+  margin: 0 auto;
+}
+.pentagon-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── SPECIMEN VIEWER ── */
+#specimen-viewer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 280px;
+  margin: 0 auto;
+}
+#specimen-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── SPLIT CARD OVERLAY ── */
+#split-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 500;
+  justify-content: center;
+  align-items: center;
+}
+#split-overlay.active { display: flex; }
+.split-card {
+  background: var(--card);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 600px;
+  width: 90%;
+  color: var(--text);
+}
+.split-card h2 {
+  font-family: var(--sans);
+  font-size: 18px;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.split-card .split-subtitle {
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 16px;
+}
+.split-pentagons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.split-pop-info {
+  text-align: center;
+  margin-bottom: 8px;
+}
+.split-pop-info .pop-name {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold-light);
+}
+.split-pop-info .pop-stats {
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: 2px;
+}
+.split-sparkline {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 12px;
+}
+.split-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.split-buttons button {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.split-buttons button:hover {
+  background: var(--card-hover);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── GHOST PANEL ── */
+#ghost-panel {
+  display: none;
+}
+#ghost-panel.has-ghosts {
+  display: block;
+}
+.ghost-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  opacity: 0.7;
+}
+.ghost-entry:last-child { border-bottom: none; }
+.ghost-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+}
+.ghost-dot.alive { background: var(--gold); opacity: 0.5; }
+.ghost-name {
+  flex: 1;
+  font-size: 10px;
+  font-style: italic;
+  color: var(--dim);
+}
+.ghost-stat {
+  font-size: 10px;
+  color: var(--dim);
+  min-width: 35px;
+  text-align: right;
+}
+
+/* ── FIELD MODE CENTERPIECE ── */
+.field-centerpiece {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.field-centerpiece .panel-section {
+  margin: 0;
+}
+
+/* ── FIELD CHARTS ── */
+.field-chart-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.field-chart-row .panel-section {
+  margin: 0;
+}
+
+/* ── NOTIFICATION BANNER ── */
+.notif-banner {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(229,89,28,0.95);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 8px 24px;
+  border-radius: 4px;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s;
+  text-align: center;
+  max-width: 90vw;
+}
+.notif-banner.show { opacity: 1; }
+.notif-banner.speciation-notif {
+  background: rgba(221,193,101,0.95);
+  color: var(--bg);
+}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-dark); }
@@ -466,6 +681,24 @@ body {
   }
   .chart-canvas.tall {
     height: 130px;
+  }
+
+  #kpi-strip {
+    padding: 4px 8px;
+    gap: 2px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+  .kpi-item { min-width: 60px; }
+  .kpi-label { font-size: 7px; }
+  .kpi-value { font-size: 12px; }
+
+  .field-centerpiece {
+    grid-template-columns: 1fr;
+  }
+  .field-chart-row {
+    grid-template-columns: 1fr;
   }
 
   #event-log {
@@ -565,6 +798,10 @@ body {
   <!-- HEADER -->
   <div id="header">
     <h1>VELOTHRIX</h1>
+    <div class="mode-toggle">
+      <button class="active" onclick="setViewMode('field')">Field</button>
+      <button onclick="setViewMode('lab')">Lab</button>
+    </div>
     <div class="species-tabs" id="species-tabs"></div>
     <div class="header-controls">
       <button id="btn-play" onclick="togglePlay()">&#9654; Play</button>
@@ -576,8 +813,46 @@ body {
     <div id="gen-counter">Gen <span id="gen-num">0</span></div>
   </div>
 
-  <!-- ACTIVE EVENTS BAR -->
-  <div id="active-events-bar"></div>
+  <!-- KPI STRIP -->
+  <div id="kpi-strip">
+    <div class="kpi-item"><span class="kpi-label">Mean Fitness</span><span class="kpi-value" id="kpi-wbar">—</span></div>
+    <div class="kpi-item"><span class="kpi-label">Population</span><span class="kpi-value" id="kpi-pop">—</span></div>
+    <div class="kpi-item"><span class="kpi-label">Diversity</span><span class="kpi-value" id="kpi-div">—</span></div>
+    <div class="kpi-item"><span class="kpi-label">Env. Stress</span><span class="kpi-value" id="kpi-stress">—</span></div>
+    <div class="kpi-item"><span class="kpi-label">Divergence</span><span class="kpi-value" id="kpi-diverg">—</span></div>
+  </div>
+
+  <!-- NOTIFICATION BANNER -->
+  <div class="notif-banner" id="notif-banner"></div>
+
+  <!-- SPLIT CARD OVERLAY -->
+  <div id="split-overlay">
+    <div class="split-card">
+      <h2>Population Split Detected</h2>
+      <div class="split-subtitle" id="split-subtitle"></div>
+      <canvas class="split-sparkline" id="split-sparkline"></canvas>
+      <div class="split-pentagons">
+        <div>
+          <div class="split-pop-info">
+            <div class="pop-name" id="split-name-a"></div>
+            <div class="pop-stats" id="split-stats-a"></div>
+          </div>
+          <canvas class="pentagon-canvas" id="split-pent-a" width="200" height="200"></canvas>
+        </div>
+        <div>
+          <div class="split-pop-info">
+            <div class="pop-name" id="split-name-b"></div>
+            <div class="pop-stats" id="split-stats-b"></div>
+          </div>
+          <canvas class="pentagon-canvas" id="split-pent-b" width="200" height="200"></canvas>
+        </div>
+      </div>
+      <div class="split-buttons">
+        <button onclick="chooseSplit('larger')">Follow Ancestral</button>
+        <button onclick="chooseSplit('smaller')">Follow Founding</button>
+      </div>
+    </div>
+  </div>
 
   <!-- MAP -->
   <div id="map-area">
@@ -587,38 +862,86 @@ body {
 
   <!-- RIGHT PANEL -->
   <div id="panel">
-    <div class="panel-section">
-      <h3 id="panel-title">Global Overview</h3>
-      <div class="panel-toggle">
-        <button class="active" onclick="setPanelMode('global')">Global</button>
-        <button onclick="setPanelMode('tile')">Selected Tile</button>
-      </div>
-      <div id="species-list"></div>
-    </div>
-
-    <div class="panel-section">
-      <h3>Population Trends</h3>
-      <canvas class="chart-canvas tall" id="pop-chart"></canvas>
-    </div>
-
-    <div class="panel-section">
-      <h3 id="trait-title">Trait Distribution</h3>
-      <canvas class="chart-canvas" id="trait-chart"></canvas>
-    </div>
-
-    <div class="panel-section">
-      <h3>Scatter Plot</h3>
-      <div class="scatter-controls">
-        <div class="scatter-mode-toggle">
-          <button class="active" onclick="setScatterMode('spatial')">Spatial</button>
-          <button onclick="setScatterMode('temporal')">Temporal</button>
+    <!-- FIELD MODE content -->
+    <div id="field-panel">
+      <div class="field-centerpiece">
+        <div class="panel-section">
+          <h3>Trait Profile</h3>
+          <div class="pentagon-container">
+            <canvas class="pentagon-canvas" id="trait-pentagon"></canvas>
+          </div>
         </div>
-        <div class="scatter-axes">
-          <label>X <select id="scatter-x"></select></label>
-          <label>Y <select id="scatter-y"></select></label>
+        <div class="panel-section">
+          <h3>Specimen</h3>
+          <div id="specimen-viewer">
+            <canvas id="specimen-canvas"></canvas>
+          </div>
         </div>
       </div>
-      <canvas class="chart-canvas tall" id="scatter-chart"></canvas>
+
+      <div class="panel-section">
+        <h3>Status</h3>
+        <div class="pentagon-container">
+          <canvas class="pentagon-canvas" id="status-pentagon"></canvas>
+        </div>
+      </div>
+
+      <div class="field-chart-row">
+        <div class="panel-section">
+          <h3>Crest vs Predator</h3>
+          <canvas class="chart-canvas" id="field-chart-crest"></canvas>
+        </div>
+        <div class="panel-section">
+          <h3>Population</h3>
+          <canvas class="chart-canvas" id="field-chart-pop"></canvas>
+        </div>
+        <div class="panel-section">
+          <h3>Fitness</h3>
+          <canvas class="chart-canvas" id="field-chart-fitness"></canvas>
+        </div>
+      </div>
+
+      <div class="panel-section" id="ghost-panel">
+        <h3>Ghost Lineages</h3>
+        <div id="ghost-list"></div>
+      </div>
+    </div>
+
+    <!-- LAB MODE content (hidden by default) -->
+    <div id="lab-panel" style="display:none;">
+      <div class="panel-section">
+        <h3 id="panel-title">Global Overview</h3>
+        <div class="panel-toggle">
+          <button class="active" onclick="setPanelMode('global')">Global</button>
+          <button onclick="setPanelMode('tile')">Selected Tile</button>
+        </div>
+        <div id="species-list"></div>
+      </div>
+
+      <div class="panel-section">
+        <h3>Population Trends</h3>
+        <canvas class="chart-canvas tall" id="pop-chart"></canvas>
+      </div>
+
+      <div class="panel-section">
+        <h3 id="trait-title">Trait Distribution</h3>
+        <canvas class="chart-canvas" id="trait-chart"></canvas>
+      </div>
+
+      <div class="panel-section">
+        <h3>Scatter Plot</h3>
+        <div class="scatter-controls">
+          <div class="scatter-mode-toggle">
+            <button class="active" onclick="setScatterMode('spatial')">Spatial</button>
+            <button onclick="setScatterMode('temporal')">Temporal</button>
+          </div>
+          <div class="scatter-axes">
+            <label>X <select id="scatter-x"></select></label>
+            <label>Y <select id="scatter-y"></select></label>
+          </div>
+        </div>
+        <canvas class="chart-canvas tall" id="scatter-chart"></canvas>
+      </div>
     </div>
   </div>
 
@@ -637,6 +960,7 @@ let selectedSpecies = 0; // index into SPECIES
 let panelMode = 'global';
 let selectedTile = null; // {r, c} or null
 let popHistory = []; // [{gen, pops: [5 numbers]}]
+let fieldHistory = []; // [{gen, crest, acuity, pop, wbar}]
 let mapCanvas, mapCtx;
 let popCanvas, popCtx;
 let traitCanvas, traitCtx;
@@ -644,6 +968,16 @@ let scatterCanvas, scatterCtx;
 let scatterMode = 'spatial'; // 'spatial' or 'temporal'
 let animFrame = null;
 let stepsPerFrame = 1;
+let tickDelay = 2000; // ms between ticks at 1x
+let viewMode = 'field'; // 'field' or 'lab'
+
+// Field mode canvases
+let traitPentCanvas, traitPentCtx;
+let statusPentCanvas, statusPentCtx;
+let specimenCanvas, specimenCtx;
+let fieldCrestCanvas, fieldCrestCtx;
+let fieldPopCanvas, fieldPopCtx;
+let fieldFitnessCanvas, fieldFitnessCtx;
 
 // ── ISOMETRIC CAMERA ──
 let camTilt = 0.5;    // 0.25 = nearly flat, 0.75 = steep
@@ -720,8 +1054,25 @@ function setupUI() {
   scatterCanvas = document.getElementById('scatter-chart');
   scatterCtx = scatterCanvas.getContext('2d');
 
+  // Field mode canvases
+  traitPentCanvas = document.getElementById('trait-pentagon');
+  traitPentCtx = traitPentCanvas.getContext('2d');
+  statusPentCanvas = document.getElementById('status-pentagon');
+  statusPentCtx = statusPentCanvas.getContext('2d');
+  specimenCanvas = document.getElementById('specimen-canvas');
+  specimenCtx = specimenCanvas.getContext('2d');
+  fieldCrestCanvas = document.getElementById('field-chart-crest');
+  fieldCrestCtx = fieldCrestCanvas.getContext('2d');
+  fieldPopCanvas = document.getElementById('field-chart-pop');
+  fieldPopCtx = fieldPopCanvas.getContext('2d');
+  fieldFitnessCanvas = document.getElementById('field-chart-fitness');
+  fieldFitnessCtx = fieldFitnessCanvas.getContext('2d');
+
   // Populate scatter dropdowns
   populateScatterDropdowns();
+
+  // Apply initial view mode (hide species tabs in field mode)
+  setViewMode('field');
 
   // ── Map camera controls ──
   // Click to select tile (only if not dragging)
@@ -822,17 +1173,28 @@ function setupUI() {
 }
 
 function resizeCanvases() {
-  const dpr = window.devicePixelRatio || 1;
-
   const mapArea = document.getElementById('map-area');
-  mapCanvas.width = mapArea.clientWidth * dpr;
-  mapCanvas.height = mapArea.clientHeight * dpr;
-  mapCtx.scale(dpr, dpr);
+  mapCanvas.width = mapArea.clientWidth;
+  mapCanvas.height = mapArea.clientHeight;
 
-  for (const c of [popCanvas, traitCanvas, scatterCanvas]) {
-    c.width = c.clientWidth * dpr;
-    c.height = c.clientHeight * dpr;
-    c.getContext('2d').scale(dpr, dpr);
+  const dpr = window.devicePixelRatio || 1;
+  const allCanvases = [popCanvas, traitCanvas, scatterCanvas,
+    fieldCrestCanvas, fieldPopCanvas, fieldFitnessCanvas];
+  for (const c of allCanvases) {
+    if (c && c.clientWidth > 0) {
+      c.width = c.clientWidth * dpr;
+      c.height = c.clientHeight * dpr;
+      c.getContext('2d').scale(dpr, dpr);
+    }
+  }
+  // Pentagon and specimen canvases (square, use container size)
+  for (const c of [traitPentCanvas, statusPentCanvas, specimenCanvas]) {
+    if (c && c.parentElement) {
+      const size = c.parentElement.clientWidth || 200;
+      c.width = size * dpr;
+      c.height = size * dpr;
+      c.getContext('2d').scale(dpr, dpr);
+    }
   }
 }
 
@@ -845,6 +1207,19 @@ function selectSpecies(i) {
   });
   document.getElementById('trait-title').textContent = SPECIES[i].trait + ' Distribution';
   renderAll();
+}
+
+// ── VIEW MODE (Field / Lab) ──
+function setViewMode(mode) {
+  viewMode = mode;
+  document.querySelectorAll('.mode-toggle button').forEach((btn, idx) => {
+    btn.classList.toggle('active', (mode === 'field' && idx === 0) || (mode === 'lab' && idx === 1));
+  });
+  document.getElementById('field-panel').style.display = mode === 'field' ? '' : 'none';
+  document.getElementById('lab-panel').style.display = mode === 'lab' ? '' : 'none';
+  // Species tabs hidden in field mode (Velothrix-focused)
+  document.getElementById('species-tabs').style.display = mode === 'field' ? 'none' : 'flex';
+  setTimeout(() => { resizeCanvases(); renderAll(); }, 50);
 }
 
 // ── PANEL MODE ──
@@ -869,9 +1244,8 @@ function onMapClick(e) {
   const sy = e.clientY - rect.top;
 
   const gs = pyodide.runPython('GRID_SIZE');
-  const dpr = window.devicePixelRatio || 1;
-  const w = mapCanvas.width / dpr;
-  const h = mapCanvas.height / dpr;
+  const w = mapCanvas.width;
+  const h = mapCanvas.height;
   const baseTileW = (w / gs) * 0.9 * camZoom;
   const tileW = baseTileW;
   const tileH = tileW * camTilt;
@@ -880,16 +1254,22 @@ function onMapClick(e) {
   const offsetX = w / 2 + camPanX;
   const offsetY = (h - totalIsoH + heightScale) / 2 + camPanY;
 
+  // Get elevation data for accurate hit testing
+  const dataJson = pyodide.runPython(`get_map_data(${selectedSpecies})`);
+  const data = JSON.parse(dataJson);
+
   // Brute force: find which tile's diamond contains the click point
   // Check front-to-back so topmost tile wins
   let bestR = -1, bestC = -1, bestSy = -Infinity;
   for (let r = 0; r < gs; r++) {
     for (let c = 0; c < gs; c++) {
+      const elev = data.elevations[r][c];
       const ix = (c - r) * (tileW * 0.5);
       const iy = (c + r) * (tileH * 0.5);
+      const iz = elev * heightScale;
       const cx = offsetX + ix;
-      const cy = offsetY + iy;
-      // Diamond hit test
+      const cy = offsetY + iy - iz;  // account for elevation offset
+      // Diamond hit test on top face
       const dx = Math.abs(sx - cx) / (tileW * 0.5);
       const dy = Math.abs(sy - cy) / (tileH * 0.5);
       if (dx + dy <= 1.0) {
@@ -924,7 +1304,11 @@ function togglePlay() {
 
 function setSpeed(s) {
   speed = s;
-  stepsPerFrame = s >= 20 ? s / 5 : 1;
+  // 1x = 1 gen every 2s, 5x = 1 gen per 400ms, 20x = 4 steps per 50ms, 100x = 20 steps per 16ms
+  if (s <= 1) { stepsPerFrame = 1; tickDelay = 2000; }
+  else if (s <= 5) { stepsPerFrame = 1; tickDelay = 400; }
+  else if (s <= 20) { stepsPerFrame = 4; tickDelay = 50; }
+  else { stepsPerFrame = 20; tickDelay = 16; }
   document.querySelectorAll('.speed-btn').forEach(btn => {
     btn.classList.toggle('active', parseInt(btn.dataset.speed) === s);
   });
@@ -957,21 +1341,16 @@ function tick() {
   popHistory.push({ gen, pops: globalPops, traits: globalTraits, season });
   if (popHistory.length > MAX_HISTORY) popHistory.shift();
 
-  // Update active events bar
-  const activeEvJson = pyodide.runPython('get_active_events_info()');
-  const activeEvs = JSON.parse(activeEvJson);
-  const evBar = document.getElementById('active-events-bar');
-  evBar.innerHTML = '';
-  const evIcons = { algal_bloom: '🌿', tidal_surge: '🌊', migration_corridor: '🔀', reef_formation: '🪸' };
-  const evLabels = { algal_bloom: 'Algal Bloom', tidal_surge: 'Tidal Surge', migration_corridor: 'Migration', reef_formation: 'Reef' };
-  const evClasses = { algal_bloom: 'bloom', tidal_surge: 'surge', migration_corridor: 'corridor', reef_formation: 'reef' };
-  activeEvs.forEach(ev => {
-    const pill = document.createElement('span');
-    pill.className = 'active-event-pill ' + (evClasses[ev.type] || '');
-    const pct = ev.type === 'reef_formation' ? ` ${Math.round((ev.progress || 0) * 100)}%` : '';
-    pill.innerHTML = `${evIcons[ev.type] || '⚡'} ${evLabels[ev.type] || ev.type}${pct} <span class="pill-timer">${ev.remaining}g</span>`;
-    evBar.appendChild(pill);
-  });
+  // Collect field history for charts
+  try {
+    const genJson = pyodide.runPython('get_velothrix_genetics()');
+    const genData = JSON.parse(genJson);
+    fieldHistory.push({
+      gen, crest: genData.alleles.crest, acuity: genData.leviathan_acuity,
+      pop: genData.population, wbar: genData.w_bar
+    });
+    if (fieldHistory.length > MAX_HISTORY) fieldHistory.shift();
+  } catch(e) {}
 
   // Check events
   const eventsJson = pyodide.runPython('get_and_clear_events()');
@@ -979,48 +1358,54 @@ function tick() {
   if (events.length > 0) {
     const feed = document.getElementById('event-feed');
     const log = document.getElementById('event-log');
+    // Show only the latest event on the map overlay (1 at a time, auto-dismiss)
+    const lastEv = events[events.length - 1];
+    showMapNotification(lastEv.text, lastEv.speciation === true);
+
+    // All events go to the persistent log
     events.forEach(ev => {
       const isSpeciation = ev.speciation === true;
-      const feedDiv = document.createElement('div');
-      feedDiv.innerHTML = `<span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text">${ev.text}</span>`;
-      if (isSpeciation) feedDiv.style.color = 'var(--gold-light)';
-      feed.appendChild(feedDiv);
-
       const logDiv = document.createElement('div');
       logDiv.className = 'log-entry' + (isSpeciation ? ' speciation-event' : '');
-      logDiv.innerHTML = feedDiv.innerHTML;
+      logDiv.innerHTML = `<span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text">${ev.text}</span>`;
       log.appendChild(logDiv);
     });
-    // Keep feed short
-    while (feed.children.length > 20) feed.removeChild(feed.firstChild);
     log.scrollTop = log.scrollHeight;
-    feed.scrollTop = feed.scrollHeight;
   }
+
+  // Check for pending split card
+  checkSplitCard();
+  // Check for speciation completion (pentagon reset animation)
+  checkSpeciationCompletion();
 
   renderAll();
 
-  if (speed <= 5) {
-    animFrame = requestAnimationFrame(tick);
-  } else {
-    animFrame = setTimeout(tick, 16);
-  }
+  animFrame = setTimeout(tick, tickDelay);
 }
 
 // ── RENDER ALL ──
 function renderAll() {
   renderMap();
-  renderSpeciesList();
-  renderPopChart();
-  renderTraitChart();
-  renderScatterPlot();
+  updateKPI();
+  if (viewMode === 'field') {
+    renderTraitPentagon();
+    renderStatusPentagon();
+    renderSpecimen();
+    renderFieldCharts();
+    renderGhostPanel();
+  } else {
+    renderSpeciesList();
+    renderPopChart();
+    renderTraitChart();
+    renderScatterPlot();
+  }
 }
 
 // ── RENDER MAP (Isometric 3D) ──
 function renderMap() {
   const gs = pyodide.runPython('GRID_SIZE');
-  const dpr = window.devicePixelRatio || 1;
-  const w = mapCanvas.width / dpr;
-  const h = mapCanvas.height / dpr;
+  const w = mapCanvas.width;
+  const h = mapCanvas.height;
   const ctx = mapCtx;
 
   ctx.fillStyle = '#1A0D00';
@@ -1093,25 +1478,43 @@ function renderMap() {
       const sx = offsetX + ix;
       const sy = offsetY + iy - iz;
 
-      // Pillar height — taller columns for higher elevation
-      const pillarH = Math.max(3, iz * 0.2 * (camTilt / 0.5) + 3);
+      // Pillar extends to common base plane — higher tiles get shorter pillars
+      const pillarH = Math.max(10, (1.0 - elev) * heightScale + tileH * 1.5);
 
-      // Right side face (darker)
-      ctx.fillStyle = `rgb(${tr * shade * 0.45 | 0},${tg * shade * 0.45 | 0},${tb * shade * 0.45 | 0})`;
+      // Back-right face: Top → Right, extruded down (usually occluded)
+      ctx.fillStyle = `rgb(${tr * shade * 0.2 | 0},${tg * shade * 0.2 | 0},${tb * shade * 0.2 | 0})`;
       ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(sx + tileW * 0.5, sy + tileH * 0.5);
-      ctx.lineTo(sx + tileW * 0.5, sy + tileH * 0.5 + pillarH);
-      ctx.lineTo(sx, sy + pillarH);
+      ctx.moveTo(sx, sy - tileH * 0.5);                        // Top vertex
+      ctx.lineTo(sx + tileW * 0.5, sy);                        // Right vertex
+      ctx.lineTo(sx + tileW * 0.5, sy + pillarH);              // Right + pillar
+      ctx.lineTo(sx, sy - tileH * 0.5 + pillarH);              // Top + pillar
       ctx.fill();
 
-      // Left side face (darkest)
-      ctx.fillStyle = `rgb(${tr * shade * 0.3 | 0},${tg * shade * 0.3 | 0},${tb * shade * 0.3 | 0})`;
+      // Back-left face: Left → Top, extruded down (usually occluded)
+      ctx.fillStyle = `rgb(${tr * shade * 0.15 | 0},${tg * shade * 0.15 | 0},${tb * shade * 0.15 | 0})`;
       ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(sx - tileW * 0.5, sy + tileH * 0.5);
-      ctx.lineTo(sx - tileW * 0.5, sy + tileH * 0.5 + pillarH);
-      ctx.lineTo(sx, sy + pillarH);
+      ctx.moveTo(sx - tileW * 0.5, sy);                        // Left vertex
+      ctx.lineTo(sx, sy - tileH * 0.5);                        // Top vertex
+      ctx.lineTo(sx, sy - tileH * 0.5 + pillarH);              // Top + pillar
+      ctx.lineTo(sx - tileW * 0.5, sy + pillarH);              // Left + pillar
+      ctx.fill();
+
+      // Right face: Right → Bottom, extruded down
+      ctx.fillStyle = `rgb(${tr * shade * 0.4 | 0},${tg * shade * 0.4 | 0},${tb * shade * 0.4 | 0})`;
+      ctx.beginPath();
+      ctx.moveTo(sx + tileW * 0.5, sy);                        // Right vertex
+      ctx.lineTo(sx, sy + tileH * 0.5);                        // Bottom vertex
+      ctx.lineTo(sx, sy + tileH * 0.5 + pillarH);              // Bottom + pillar
+      ctx.lineTo(sx + tileW * 0.5, sy + pillarH);              // Right + pillar
+      ctx.fill();
+
+      // Left face: Bottom → Left, extruded down
+      ctx.fillStyle = `rgb(${tr * shade * 0.25 | 0},${tg * shade * 0.25 | 0},${tb * shade * 0.25 | 0})`;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy + tileH * 0.5);                        // Bottom vertex
+      ctx.lineTo(sx - tileW * 0.5, sy);                        // Left vertex
+      ctx.lineTo(sx - tileW * 0.5, sy + pillarH);              // Left + pillar
+      ctx.lineTo(sx, sy + tileH * 0.5 + pillarH);              // Bottom + pillar
       ctx.fill();
 
       // Top face
@@ -1573,6 +1976,618 @@ function formatAxisVal(v) {
   return v.toFixed(2);
 }
 
+// ── NOTIFICATION BANNER ──
+let notifTimeout = null;
+function showNotification(text, isSpeciation) {
+  const banner = document.getElementById('notif-banner');
+  banner.textContent = text;
+  banner.className = 'notif-banner show' + (isSpeciation ? ' speciation-notif' : '');
+  if (notifTimeout) clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(() => { banner.classList.remove('show'); }, 4000);
+}
+
+// ── MAP EVENT NOTIFICATION (single, auto-dismiss) ──
+let feedTimeout = null;
+function showMapNotification(text, isSpeciation) {
+  const feed = document.getElementById('event-feed');
+  // Replace content with a single notification
+  feed.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'feed-notif' + (isSpeciation ? ' speciation' : '');
+  div.textContent = text;
+  feed.appendChild(div);
+  // Trigger fade-in
+  requestAnimationFrame(() => div.classList.add('visible'));
+  // Auto-dismiss after 4 seconds
+  if (feedTimeout) clearTimeout(feedTimeout);
+  feedTimeout = setTimeout(() => { div.classList.remove('visible'); }, 4000);
+}
+
+// ── KPI STRIP ──
+function updateKPI() {
+  try {
+    const genJson = pyodide.runPython('get_velothrix_genetics()');
+    const d = JSON.parse(genJson);
+    const kpiWbar = document.getElementById('kpi-wbar');
+    const kpiPop = document.getElementById('kpi-pop');
+    const kpiDiv = document.getElementById('kpi-div');
+    const kpiStress = document.getElementById('kpi-stress');
+    const kpiDiverg = document.getElementById('kpi-diverg');
+
+    kpiWbar.textContent = d.w_bar.toFixed(3);
+    kpiWbar.className = 'kpi-value' + (d.w_bar < 0.5 ? ' crit' : d.w_bar < 0.7 ? ' warn' : '');
+
+    kpiPop.textContent = d.population.toLocaleString();
+    kpiPop.className = 'kpi-value' + (d.population < 50 ? ' crit' : d.population < 200 ? ' warn' : '');
+
+    kpiDiv.textContent = d.mean_H.toFixed(3);
+    kpiDiv.className = 'kpi-value' + (d.mean_H < 0.1 ? ' crit' : d.mean_H < 0.2 ? ' warn' : '');
+
+    // Env stress: mismatch between trait state and antagonist state
+    const crestMismatch = Math.abs(d.alleles.crest - 0.5);
+    const stress = (d.leviathan_acuity * crestMismatch + d.beetle_pressure * 0.3 + Math.abs(d.alleles.body - 0.5) * 0.3);
+    const stressNorm = Math.min(1, stress * 2);
+    kpiStress.textContent = (stressNorm * 100).toFixed(0) + '%';
+    kpiStress.className = 'kpi-value' + (stressNorm > 0.7 ? ' crit' : stressNorm > 0.4 ? ' warn' : '');
+
+    kpiDiverg.textContent = d.fst_pct.toFixed(1) + '%';
+    kpiDiverg.className = 'kpi-value' + (d.fst_pct > 20 ? ' warn' : '');
+  } catch(e) {}
+}
+
+// ── PENTAGON (RADAR) RENDERING ──
+function renderPentagon(ctx, canvas, labels, values, color, thresholdRing) {
+  const w = canvas.clientWidth || 200;
+  const h = canvas.clientHeight || 200;
+  const cx = w / 2;
+  const cy = h / 2;
+  const radius = Math.min(cx, cy) * 0.65;
+  const n = labels.length;
+  const angleStep = (2 * Math.PI) / n;
+  const startAngle = -Math.PI / 2; // top
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Background rings
+  for (let ring = 0.25; ring <= 1.0; ring += 0.25) {
+    ctx.strokeStyle = 'rgba(61,42,16,0.5)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const angle = startAngle + (i % n) * angleStep;
+      const x = cx + Math.cos(angle) * radius * ring;
+      const y = cy + Math.sin(angle) * radius * ring;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Axis lines
+  ctx.strokeStyle = 'rgba(61,42,16,0.6)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+    ctx.stroke();
+  }
+
+  // Speciation threshold ring (pulsing dashed)
+  if (thresholdRing > 0) {
+    const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 500);
+    ctx.strokeStyle = `rgba(221,193,101,${0.3 * pulse})`;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const angle = startAngle + (i % n) * angleStep;
+      const x = cx + Math.cos(angle) * radius * thresholdRing;
+      const y = cy + Math.sin(angle) * radius * thresholdRing;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Data polygon fill
+  const rgb = hexToRgb(color);
+  ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.2)`;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const angle = startAngle + (i % n) * angleStep;
+    const v = Math.max(0, Math.min(1, values[i % n]));
+    const x = cx + Math.cos(angle) * radius * v;
+    const y = cy + Math.sin(angle) * radius * v;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Data points
+  ctx.fillStyle = color;
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    const v = Math.max(0, Math.min(1, values[i]));
+    const x = cx + Math.cos(angle) * radius * v;
+    const y = cy + Math.sin(angle) * radius * v;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Labels
+  ctx.fillStyle = '#e8d5c0';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    const lx = cx + Math.cos(angle) * (radius + 16);
+    const ly = cy + Math.sin(angle) * (radius + 16);
+    ctx.fillText(labels[i], lx, ly);
+  }
+}
+
+function renderTraitPentagon() {
+  if (!traitPentCtx) return;
+  try {
+    const genJson = pyodide.runPython('get_velothrix_genetics()');
+    const d = JSON.parse(genJson);
+    const labels = ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP'];
+    const values = [
+      d.alleles.crest * pentagonAnimScale, d.alleles.spine * pentagonAnimScale,
+      d.alleles.body * pentagonAnimScale, d.alleles.litter * pentagonAnimScale,
+      d.alleles.dispersal * pentagonAnimScale
+    ];
+    renderPentagon(traitPentCtx, traitPentCanvas, labels, values, '#DDC165', 0.85);
+  } catch(e) {}
+}
+
+function renderStatusPentagon() {
+  if (!statusPentCtx) return;
+  try {
+    const genJson = pyodide.runPython('get_velothrix_genetics()');
+    const d = JSON.parse(genJson);
+
+    // Viability: proportion of tiles with Velothrix pop > 0
+    const viab = pyodide.runPython(`
+sum(1 for r in range(GRID_SIZE) for c in range(GRID_SIZE) if grid[r][c]['pops'][VELOTHRIX] > 5) / (GRID_SIZE * GRID_SIZE)
+`);
+
+    // Env stress
+    const crestMismatch = Math.abs(d.alleles.crest - 0.5);
+    const stress = Math.min(1, (d.leviathan_acuity * crestMismatch + d.beetle_pressure * 0.3 + Math.abs(d.alleles.body - 0.5) * 0.3) * 2);
+
+    const labels = ['w\u0304', 'VIAB', 'DIV', 'STRESS', 'DIVERG'];
+    const values = [
+      d.w_bar * pentagonAnimScale,
+      viab * pentagonAnimScale,
+      d.mean_H * 2 * pentagonAnimScale,
+      stress * pentagonAnimScale,
+      Math.min(1, d.fst / 0.25) * pentagonAnimScale
+    ];
+    renderPentagon(statusPentCtx, statusPentCanvas, labels, values, '#E5591C', 0.85);
+  } catch(e) {}
+}
+
+// ── SPECIMEN VIEWER ──
+function renderSpecimen() {
+  if (!specimenCtx) return;
+  try {
+    const genJson = pyodide.runPython('get_velothrix_genetics()');
+    const d = JSON.parse(genJson);
+    const w = specimenCanvas.clientWidth || 200;
+    const h = specimenCanvas.clientHeight || 200;
+    const ctx = specimenCtx;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const crest = d.alleles.crest;
+    const spine = d.alleles.spine;
+    const body = d.alleles.body;
+    const litter = d.alleles.litter;
+    const disp = d.alleles.dispersal;
+
+    const cx = w / 2;
+    const cy = h * 0.52;
+
+    // Body size scales the creature
+    const bodyScale = 0.6 + body * 0.8; // 0.6 to 1.4x
+
+    // Body ellipse
+    const bodyW = 28 * bodyScale;
+    const bodyH = 20 * bodyScale;
+    ctx.fillStyle = `hsl(35, 60%, ${35 + crest * 30}%)`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, bodyW, bodyH, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = `hsl(35, 40%, ${25 + crest * 20}%)`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Head
+    const headR = 12 * bodyScale;
+    const headX = cx;
+    const headY = cy - bodyH - headR * 0.5;
+    ctx.fillStyle = `hsl(35, 55%, ${38 + crest * 25}%)`;
+    ctx.beginPath();
+    ctx.arc(headX, headY, headR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Eyes
+    const eyeR = 2.5 * bodyScale;
+    ctx.fillStyle = '#1A0D00';
+    ctx.beginPath();
+    ctx.arc(headX - headR * 0.35, headY - headR * 0.15, eyeR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(headX + headR * 0.35, headY - headR * 0.15, eyeR, 0, Math.PI * 2);
+    ctx.fill();
+    // Eye highlights
+    ctx.fillStyle = '#FFE9A3';
+    ctx.beginPath();
+    ctx.arc(headX - headR * 0.35 + 1, headY - headR * 0.15 - 1, 1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(headX + headR * 0.35 + 1, headY - headR * 0.15 - 1, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Crest (brightness/saturation from crest allele)
+    const crestH = 15 + crest * 25; // taller with higher freq
+    const crestSat = 50 + crest * 50;
+    const crestLight = 45 + crest * 25;
+    ctx.fillStyle = `hsl(${35 + crest * 15}, ${crestSat}%, ${crestLight}%)`;
+    // Fan-shaped crest
+    const numFeathers = 5 + Math.floor(crest * 4);
+    for (let i = 0; i < numFeathers; i++) {
+      const angle = -Math.PI * 0.8 + (i / (numFeathers - 1)) * Math.PI * 0.6;
+      const featherLen = (crestH + Math.sin(i * 1.5) * 3) * bodyScale;
+      const fx = headX + Math.cos(angle) * featherLen;
+      const fy = headY + Math.sin(angle) * featherLen;
+      ctx.beginPath();
+      ctx.moveTo(headX, headY - headR * 0.5);
+      ctx.quadraticCurveTo(
+        headX + Math.cos(angle) * featherLen * 0.6,
+        headY + Math.sin(angle) * featherLen * 0.6 - 4,
+        fx, fy
+      );
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = `hsl(${35 + crest * 15}, ${crestSat}%, ${crestLight}%)`;
+      ctx.stroke();
+      // Feather tip dot
+      ctx.beginPath();
+      ctx.arc(fx, fy, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Crown spines
+    const numSpines = Math.round(2 + spine * 6); // 2-8 spines
+    ctx.strokeStyle = `hsl(30, 30%, ${30 + spine * 20}%)`;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < numSpines; i++) {
+      const angle = -Math.PI * 0.3 + (i / Math.max(1, numSpines - 1)) * Math.PI * 0.6;
+      const spineLen = (8 + spine * 8) * bodyScale;
+      const sx = headX + Math.cos(angle - Math.PI / 2) * headR * 0.7;
+      const sy = headY + Math.sin(angle - Math.PI / 2) * headR * 0.7;
+      const tx = sx + Math.cos(angle - Math.PI / 2) * spineLen;
+      const ty = sy + Math.sin(angle - Math.PI / 2) * spineLen;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+    }
+
+    // Legs
+    ctx.strokeStyle = `hsl(35, 40%, 30%)`;
+    ctx.lineWidth = 2;
+    for (let side = -1; side <= 1; side += 2) {
+      for (let i = 0; i < 2; i++) {
+        const lx = cx + side * (bodyW * (0.3 + i * 0.4));
+        const ly = cy + bodyH * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly);
+        ctx.lineTo(lx + side * 6 * bodyScale, ly + 14 * bodyScale);
+        ctx.lineTo(lx + side * 8 * bodyScale, ly + 14 * bodyScale);
+        ctx.stroke();
+      }
+    }
+
+    // Tail (length from dispersal allele)
+    const tailLen = (15 + disp * 30) * bodyScale;
+    ctx.strokeStyle = `hsl(35, 50%, ${35 + crest * 20}%)`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + bodyH);
+    ctx.quadraticCurveTo(cx + 10 * bodyScale, cy + bodyH + tailLen * 0.5, cx + 5 * bodyScale, cy + bodyH + tailLen);
+    ctx.stroke();
+    // Tail tip
+    ctx.fillStyle = `hsl(${35 + crest * 15}, ${crestSat * 0.5}%, ${crestLight * 0.8}%)`;
+    ctx.beginPath();
+    ctx.arc(cx + 5 * bodyScale, cy + bodyH + tailLen, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Label
+    ctx.fillStyle = '#8a7560';
+    ctx.font = '8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Velothrix aurantis', cx, h - 6);
+  } catch(e) {}
+}
+
+// ── FIELD MODE LINE CHARTS ──
+function renderFieldCharts() {
+  if (fieldHistory.length < 2) return;
+  _renderFieldLine(fieldCrestCtx, fieldCrestCanvas,
+    fieldHistory.map(d => d.crest), '#DDC165', 'Crest',
+    fieldHistory.map(d => d.acuity), '#C0392B', 'Acuity'
+  );
+  _renderFieldLine(fieldPopCtx, fieldPopCanvas,
+    fieldHistory.map(d => d.pop), '#DDC165', 'Pop',
+    null, null, null
+  );
+  _renderFieldLine(fieldFitnessCtx, fieldFitnessCanvas,
+    fieldHistory.map(d => d.wbar), '#E5591C', 'w\u0304',
+    null, null, null
+  );
+}
+
+function _renderFieldLine(ctx, canvas, data1, color1, label1, data2, color2, label2) {
+  if (!ctx || !canvas) return;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (w <= 0 || h <= 0) return;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#1A0D00';
+  ctx.fillRect(0, 0, w, h);
+
+  const pad = { l: 5, r: 5, t: 5, b: 5 };
+  const pw = w - pad.l - pad.r;
+  const ph = h - pad.t - pad.b;
+
+  function drawLine(data, color) {
+    if (!data || data.length < 2) return;
+    let min = Infinity, max = -Infinity;
+    data.forEach(v => { if (v < min) min = v; if (v > max) max = v; });
+    if (max === min) { min -= 0.1; max += 0.1; }
+    const range = max - min;
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const x = pad.l + (i / (data.length - 1)) * pw;
+      const y = pad.t + ph - ((data[i] - min) / range) * ph;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  drawLine(data1, color1);
+  drawLine(data2, color2);
+}
+
+// ── SPLIT CARD ──
+function checkSplitCard() {
+  try {
+    const cardJson = pyodide.runPython('get_split_card()');
+    const card = JSON.parse(cardJson);
+    if (card && card.type === 'split_ready') {
+      showSplitCard(card);
+    }
+  } catch(e) {}
+}
+
+function showSplitCard(data) {
+  // Pause sim
+  playing = false;
+  document.getElementById('btn-play').textContent = '\u25b6 Play';
+
+  const overlay = document.getElementById('split-overlay');
+  overlay.classList.add('active');
+
+  document.getElementById('split-subtitle').textContent =
+    `Gen ${data.gen} — Separation score: ${data.separation.toFixed(2)}`;
+
+  // Larger pop info
+  document.getElementById('split-name-a').textContent = data.larger.name;
+  document.getElementById('split-stats-a').textContent =
+    `Pop: ${data.larger.pop} | ${data.larger.tiles.length} tiles`;
+
+  // Smaller pop info
+  document.getElementById('split-name-b').textContent = data.smaller.name;
+  document.getElementById('split-stats-b').textContent =
+    `Pop: ${data.smaller.pop} (founded from ${data.smaller.trajectory.length} gen buffer)`;
+
+  // Draw pentagons
+  const labels = ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP'];
+  const pentA = document.getElementById('split-pent-a');
+  const pentB = document.getElementById('split-pent-b');
+  // Size canvases
+  const size = pentA.parentElement.clientWidth || 200;
+  const dpr = window.devicePixelRatio || 1;
+  for (const c of [pentA, pentB]) {
+    c.width = size * dpr;
+    c.height = size * dpr;
+    c.style.width = size + 'px';
+    c.style.height = size + 'px';
+    c.getContext('2d').scale(dpr, dpr);
+  }
+  renderPentagon(pentA.getContext('2d'), pentA, labels, data.larger.alleles, '#DDC165', 0);
+  renderPentagon(pentB.getContext('2d'), pentB, labels, data.smaller.alleles, '#E5591C', 0);
+
+  // Draw sparkline of founding colony trajectory
+  const sparkCanvas = document.getElementById('split-sparkline');
+  const sw = sparkCanvas.clientWidth;
+  const sh = sparkCanvas.clientHeight;
+  sparkCanvas.width = sw * dpr;
+  sparkCanvas.height = sh * dpr;
+  const sctx = sparkCanvas.getContext('2d');
+  sctx.scale(dpr, dpr);
+  sctx.fillStyle = '#1A0D00';
+  sctx.fillRect(0, 0, sw, sh);
+
+  const traj = data.smaller.trajectory;
+  if (traj.length > 1) {
+    let maxN = 1;
+    traj.forEach(t => { if (t[1] > maxN) maxN = t[1]; });
+    sctx.strokeStyle = '#E5591C';
+    sctx.lineWidth = 1.5;
+    sctx.beginPath();
+    for (let i = 0; i < traj.length; i++) {
+      const x = (i / (traj.length - 1)) * sw;
+      const y = sh - (traj[i][1] / maxN) * (sh - 4) - 2;
+      if (i === 0) sctx.moveTo(x, y);
+      else sctx.lineTo(x, y);
+    }
+    sctx.stroke();
+    // Label
+    sctx.fillStyle = '#8a7560';
+    sctx.font = '8px monospace';
+    sctx.fillText('Founding colony viability', 4, 10);
+  }
+
+  // Update button labels
+  const buttons = overlay.querySelectorAll('.split-buttons button');
+  buttons[0].textContent = 'Follow ' + data.larger.name.split('(')[0].trim();
+  buttons[1].textContent = 'Follow ' + data.smaller.name.split('(')[0].trim();
+}
+
+function chooseSplit(choice) {
+  pyodide.runPython(`execute_split("${choice}")`);
+  document.getElementById('split-overlay').classList.remove('active');
+  // Resume play
+  playing = true;
+  document.getElementById('btn-play').textContent = '\u23f8 Pause';
+  tick();
+}
+
+// ── GHOST PANEL ──
+function renderGhostPanel() {
+  try {
+    const ghostJson = pyodide.runPython('get_ghost_data()');
+    const ghosts = JSON.parse(ghostJson);
+    const panel = document.getElementById('ghost-panel');
+    const list = document.getElementById('ghost-list');
+
+    if (ghosts.length === 0) {
+      panel.classList.remove('has-ghosts');
+      return;
+    }
+    panel.classList.add('has-ghosts');
+
+    let html = '';
+    ghosts.forEach(g => {
+      const dotClass = g.alive ? 'alive' : '';
+      const status = g.alive ? `N:${g.N}` : 'extinct';
+      const fstPct = (g.fst * 100).toFixed(1);
+      html += `<div class="ghost-entry">
+        <div class="ghost-dot ${dotClass}"></div>
+        <div class="ghost-name">${g.name}</div>
+        <div class="ghost-stat">${status}</div>
+        <div class="ghost-stat">${fstPct}%</div>
+      </div>`;
+    });
+    list.innerHTML = html;
+  } catch(e) {}
+}
+
+// ── SPECIATION COMPLETION & PENTAGON ZERO-RESET ──
+let pentagonAnimState = null; // null or {phase, startTime, duration}
+
+function checkSpeciationCompletion() {
+  if (pentagonAnimState) return; // animation in progress
+  try {
+    const json = pyodide.runPython('get_speciation_completion()');
+    const data = JSON.parse(json);
+    if (data) {
+      triggerPentagonReset(data);
+    }
+  } catch(e) {}
+}
+
+function triggerPentagonReset(data) {
+  // Pause sim during animation
+  const wasPlaying = playing;
+  playing = false;
+
+  // Show speciation notification
+  showMapNotification(
+    `Speciation complete! ${data.ghost_name} is now a separate species (FST=${data.fst.toFixed(3)})`,
+    true
+  );
+
+  // Start collapse phase
+  pentagonAnimState = {
+    phase: 'collapse',
+    startTime: performance.now(),
+    duration: 1200,
+    wasPlaying: wasPlaying,
+    ghostName: data.ghost_name,
+  };
+
+  // Run the animation loop
+  requestAnimationFrame(animatePentagonReset);
+}
+
+function animatePentagonReset(now) {
+  if (!pentagonAnimState) return;
+
+  const elapsed = now - pentagonAnimState.startTime;
+  const t = Math.min(1, elapsed / pentagonAnimState.duration);
+
+  // Ease in-out
+  const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+  if (pentagonAnimState.phase === 'collapse') {
+    // Scale values from 1 → 0
+    pentagonAnimScale = 1 - ease;
+    renderTraitPentagon();
+    renderStatusPentagon();
+
+    if (t >= 1) {
+      // Transition to expand phase
+      pentagonAnimState.phase = 'expand';
+      pentagonAnimState.startTime = performance.now();
+      pentagonAnimState.duration = 1500;
+    }
+    requestAnimationFrame(animatePentagonReset);
+
+  } else if (pentagonAnimState.phase === 'expand') {
+    // Scale values from 0 → 1
+    pentagonAnimScale = ease;
+    renderTraitPentagon();
+    renderStatusPentagon();
+
+    if (t >= 1) {
+      // Animation complete
+      pentagonAnimScale = 1;
+      const wasPlaying = pentagonAnimState.wasPlaying;
+      pentagonAnimState = null;
+      // Resume sim
+      if (wasPlaying) {
+        playing = true;
+        tick();
+      }
+    } else {
+      requestAnimationFrame(animatePentagonReset);
+    }
+  }
+}
+
+let pentagonAnimScale = 1; // 0-1, multiplied against pentagon values during animation
+
 // ── PYTHON SIM CODE ──
 const SIM_CODE = `
 import json
@@ -1580,7 +2595,7 @@ import math
 import random
 
 # ── CONFIG ──
-GRID_SIZE = 12
+GRID_SIZE = 8
 NUM_SPECIES = 5
 
 # Species indices
@@ -1590,91 +2605,150 @@ CRAWLER = 2
 CRAB = 3
 WORM = 4
 
-# Carrying capacities per tile
-BASE_K = [60, 45, 55, 50, 58]  # Velothrix, Leviathan, Crawler, Crab, Worm
-
-# Minimum effective K on any suitable tile (prevents stochastic extinction spirals)
-MIN_K = 15
+# Carrying capacities per tile (tuned for 8x8 grid long-term stability)
+BASE_K = [100, 70, 80, 70, 120]
 
 # Growth rates (per generation, logistic)
-GROWTH_RATES = [0.08, 0.06, 0.07, 0.065, 0.07]
+GROWTH_RATES = [0.05, 0.05, 0.05, 0.045, 0.06]
 
-# Mutation rate and step
-MUTATION_RATE = 0.003
-MUTATION_STEP = 0.012
+# ── VELOTHRIX ALLELE-FREQUENCY GENETICS ──
+# Locus indices
+LOCUS_CREST = 0   # Crest brightness/hue
+LOCUS_SPINE = 1   # Crown spine count
+LOCUS_BODY = 2    # Body size
+LOCUS_LITTER = 3  # Litter size
+LOCUS_DISP = 4    # Dispersal allele
+NUM_LOCI = 5
+LOCUS_NAMES = ['crest', 'spine', 'body', 'litter', 'dispersal']
 
-# Drift strength (lower = less drift)
+# Dominance coefficients per locus (0=A recessive, 0.5=additive, 1=A dominant)
+DOMINANCE = [0.3, 0.5, 0.5, 0.5, 0.7]
+
+# Selection parameters
+SEL_CREST_SEXUAL = 0.02        # Sexual selection for bright crest
+SEL_CREST_PREDATION = 0.03     # Predation cost (scaled by Leviathan acuity)
+SEL_SPINE_BENEFIT = 0.015      # Defense vs beetle
+SEL_SPINE_COST = 0.005         # Metabolic cost of spines
+SEL_BODY_STRENGTH = 0.04       # Stabilizing selection intensity on body
+BODY_OPTIMUM = 0.5             # Optimal body size (shifts with environment)
+BODY_SIGMA = 0.35              # Gaussian width for stabilizing selection
+SEL_LITTER_STRENGTH = 0.03     # Lack clutch selection intensity
+LITTER_OPTIMUM = 0.5           # Lack optimum C* (shifts with caterpillar timing)
+LITTER_SIGMA = 0.35            # Gaussian width for Lack selection
+SEL_DISP_DENSITY = 0.01        # Dispersal selection scaling with density
+
+# Effective population size
+NE_RATIO = 0.7                 # Ne = N * NE_RATIO
+
+# Mutation (forward/back per locus per generation)
+MU_FORWARD = 0.0001            # A -> a
+MU_BACK = 0.0001               # a -> A
+
+# Gene flow (island model)
+GENE_FLOW_M = 0.01
+
+# Non-Velothrix legacy parameters
+MUTATION_RATE = 0.002
+MUTATION_STEP = 0.01
 DRIFT_STRENGTH = 0.005
+SELECTION_STRENGTH = 0.02
 
-# Selection strength (how much trait affects fitness)
-SELECTION_STRENGTH = 0.01
-
-# Predation rates (fraction of prey eaten per predator per gen)
-PREDATION_LEVIATHAN_VELOTHRIX = 0.008
-PREDATION_LEVIATHAN_WORM = 0.006
-PREDATION_VELOTHRIX_WORM = 0.003
+# Predation rates
+PREDATION_LEVIATHAN_VELOTHRIX = 0.002
+PREDATION_LEVIATHAN_WORM = 0.001
+PREDATION_VELOTHRIX_WORM = 0.0005
 
 # Competition coefficients
-COMPETITION_VELOTHRIX_CRAWLER = 0.0002
+COMPETITION_VELOTHRIX_CRAWLER = 0.0005
 COMPETITION_CRAB_SPACE = 0.0002
 
-# Migration rate (fraction that migrates per gen)
-MIGRATION_RATE = 0.03
+# Migration rate (non-Velothrix species)
+MIGRATION_RATE = 0.015
 
-# Recolonization base rate (chance per gen per empty suitable tile)
-RECOLONIZATION_BASE = 0.05
+# ── COEVOLUTION ──
+ACUITY_RESPONSE_RATE = 0.005   # Leviathan visual acuity tracks p(crest)
+BEETLE_RESPONSE_RATE = 0.003   # Beetle armor tracks p(spine)
+CATERPILLAR_DRIFT_RATE = 0.001 # Caterpillar timing drifts independently
 
-# Event probabilities per gen
-DROUGHT_PROB = 0.002
-FLOOD_PROB = 0.002
-DISEASE_PROB = 0.001
-ALGAL_BLOOM_PROB = 0.003
-TIDAL_SURGE_PROB = 0.002
-MIGRATION_CORRIDOR_PROB = 0.0015
-REEF_FORMATION_PROB = 0.001
+# ── FST / SPECIATION ──
+FST_SPECIATION_THRESHOLD = 0.25
+FST_WARNING_THRESHOLD = 0.15
+SPECIATION_SUSTAINED_GENS = 100
 
-# Season cycle length
-SEASON_LENGTH = 120
+# ── ENVIRONMENT ──
+SEASON_LENGTH = 100
+ENV_TREND_STRENGTH = 0.001     # Directional shift per generation
+ENV_NOISE_STRENGTH = 0.0005    # Random noise per generation
 
-# Environmental event state
-active_events = []  # list of {type, start_gen, duration, data}
-
-# Per-step event flags (set by _check_events, read by _update_tile)
-_bloom_active = False
-_surge_tiles = set()  # set of (r,c) tuples for tiles affected by tidal surge
-
-# Speciation tracking
-SPECIATION_THRESHOLD = 0.3
-SPECIATION_GENS = 100
+# ── STOCHASTIC EVENTS ──
+EVENT_BASE_PROB = 0.001
+EVENT_DEFS = [
+    {'name': 'drought', 'axes': {'food': 0.4, 'water': 0.5},
+     'pop_mult': {0: 0.9, 2: 0.85, 4: 0.9}, 'duration': (10, 30),
+     'narr': 'Scouts report dry conditions along the {region} shore'},
+    {'name': 'flood', 'axes': {'water': 1.3, 'food': 0.9},
+     'pop_mult': {3: 0.7, 2: 0.8}, 'duration': (5, 20),
+     'narr': 'Rising waters in the {region} tidal flats'},
+    {'name': 'disease', 'axes': {}, 'pop_mult': None, 'duration': (15, 40),
+     'narr': 'A wasting sickness spreads through the {species} population'},
+    {'name': 'volcanic', 'axes': {'temp': 0.8, 'food': 0.7, 'water': 0.85},
+     'pop_mult': {0: 0.8, 1: 0.85, 2: 0.75, 3: 0.9, 4: 0.85}, 'duration': (20, 60),
+     'narr': 'Seismic tremors along the {region} ridge'},
+    {'name': 'algal_bloom', 'axes': {'food': 1.4, 'water': 0.95},
+     'pop_mult': {4: 1.2, 0: 1.1}, 'duration': (10, 25),
+     'narr': 'Dense algal mats forming in the {region} shallows'},
+    {'name': 'predator_surge', 'axes': {},
+     'pop_mult': {1: 1.3}, 'duration': (15, 35),
+     'narr': 'Leviathan activity intensifying near the {region} deep channels'},
+]
 
 # ── STATE ──
 generation = 0
 events_buffer = []
+speciation_events = {}  # species_idx -> {split_trait, gen, parent_name, variant_name}
 
-# Persistent speciation state: species_idx -> {
-#   'split_trait': float,       # trait value where the split occurred
-#   'gen': int,                 # generation when speciation was detected
-#   'variant_name': str,        # name for the new variant
-#   'parent_name': str,         # name for the original variant
-#   'variant_color': str,       # hex color for the new variant
-#   'parent_color': str,        # hex color for the parent
-# }
-speciation_events = {}
+# Coevolution state
+leviathan_acuity = 0.5   # Tracks p(crest) across population — arms race
+beetle_pressure = 0.5    # Tracks p(spine) — arms race
+caterpillar_timing = 0.5 # Drifts independently — shifts LITTER optimum
+
+# Environmental trends (randomized per playthrough)
+env_trends = {}  # axis_name -> {'direction': float, 'value': float}
+
+# Active stochastic events with remaining duration
+active_events = []  # [{'def_idx': int, 'remaining': int, 'region': (r,c,radius), 'target_species': int|None}]
+
+# FST tracking
+fst_history = []       # list of (gen, fst_value)
+fst_divergence_counter = 0  # Gens sustained above threshold
+fst_warning_fired = False
+
+# ── PHASE 1: Population splitting & ghost lineages ──
+SUBGROUP_CHECK_INTERVAL = 25    # Check for subgroups every N gens
+SUBGROUP_SEPARATION_THRESHOLD = 1.1  # Cluster quality ratio to trigger
+FOUNDING_MORTALITY_BASE = 0.3   # Base mortality for founding colony
+FOUNDING_MIN_N = 8              # Minimum viable founding colony
+BUFFER_SIM_GENS = 40            # Generations to simulate founding viability
+GHOST_UPDATE_INTERVAL = 7       # Update ghosts every N gens
+GHOST_FST_REINTEGRATION = 0.05  # FST below this → reintegration possible
+
+pending_subgroup = None         # None or dict with detection/buffer data
+ghost_populations = []          # list of ghost pop dicts
+split_card_pending = None       # None or dict for JS to pick up
+speciation_completed = None     # None or dict with speciation info for JS animation
 
 # Grid state: [row][col] -> tile
 # Each tile: {
-#   elevation: float 0-1,
-#   food: float 0-1,
-#   water: float 0-1,
-#   temp: float 0-1,
-#   pops: [5 ints],         # population per species
-#   traits: [5 floats],     # mean trait per species (0-1)
-#   trait_var: [5 floats],  # trait variance per species
+#   elevation, food, water, temp: float 0-1,
+#   pops: [5 ints],
+#   traits: [5 floats],     # mean trait per species (CREST freq for Velothrix)
+#   trait_var: [5 floats],  # variance (mean H for Velothrix)
+#   alleles: [5 floats],    # Velothrix allele frequencies per locus
 # }
 
 grid = []
 
-TERRAIN_SEED = None  # Set to an int for reproducible maps, None for random
+TERRAIN_SEED = None
 
 # Biome thresholds
 BIOME_DEEP_WATER = 0.2
@@ -1788,17 +2862,96 @@ def get_biome(elev):
 def habitat_suitability(elev, species_idx):
     """Returns 0-1 suitability for species at given elevation/biome."""
     biome = get_biome(elev)
-    suits = {
-        VELOTHRIX: {'shallow_marsh': 1.0, 'reed_beds': 0.7, 'tidal_flats': 0.4, 'deep_water': 0.25, 'rocky_shore': 0.15},
-        LEVIATHAN: {'deep_water': 1.0, 'shallow_marsh': 0.7, 'reed_beds': 0.35, 'tidal_flats': 0.1, 'rocky_shore': 0.0},
-        CRAWLER: {'reed_beds': 1.0, 'shallow_marsh': 0.75, 'tidal_flats': 0.55, 'deep_water': 0.2, 'rocky_shore': 0.35},
-        CRAB: {'rocky_shore': 1.0, 'tidal_flats': 0.75, 'reed_beds': 0.35, 'shallow_marsh': 0.15, 'deep_water': 0.05},
-        WORM: {'deep_water': 0.75, 'shallow_marsh': 0.9, 'reed_beds': 0.7, 'tidal_flats': 0.4, 'rocky_shore': 0.1},
-    }
-    return suits.get(species_idx, {}).get(biome, 0.5)
+    if species_idx == VELOTHRIX:
+        # Prime habitat: shallow marsh (0.2-0.4)
+        if biome == 'shallow_marsh':
+            return 1.0
+        elif biome == 'reed_beds':
+            return 0.6
+        elif biome == 'tidal_flats':
+            return 0.3
+        elif biome == 'deep_water':
+            return 0.15
+        else:
+            return 0.1
+    elif species_idx == LEVIATHAN:
+        # Deep water + shallow marsh territory
+        if biome == 'deep_water':
+            return 1.0
+        elif biome == 'shallow_marsh':
+            return 0.7
+        elif biome == 'reed_beds':
+            return 0.25
+        elif biome == 'tidal_flats':
+            return 0.1
+        else:
+            return 0.05
+    elif species_idx == CRAWLER:
+        # Reed beds + adjacent zones
+        if biome == 'reed_beds':
+            return 1.0
+        elif biome == 'shallow_marsh':
+            return 0.6
+        elif biome == 'tidal_flats':
+            return 0.5
+        elif biome == 'rocky_shore':
+            return 0.3
+        elif biome == 'deep_water':
+            return 0.1
+        else:
+            return 0.2
+    elif species_idx == CRAB:
+        # Rocky shore + tidal flats + reed beds
+        if biome == 'rocky_shore':
+            return 1.0
+        elif biome == 'tidal_flats':
+            return 0.8
+        elif biome == 'reed_beds':
+            return 0.4
+        elif biome == 'shallow_marsh':
+            return 0.15
+        else:
+            return 0.05
+    elif species_idx == WORM:
+        # Everywhere, prefer wet areas
+        if biome == 'deep_water':
+            return 0.9
+        elif biome == 'shallow_marsh':
+            return 1.0
+        elif biome == 'reed_beds':
+            return 0.7
+        elif biome == 'tidal_flats':
+            return 0.4
+        else:
+            return 0.25
+    return 0.5
+
+def _init_env_trends():
+    """Randomize environmental trend directions for this playthrough."""
+    global env_trends
+    env_trends = {}
+    for axis in ['terrain_roughness', 'water_coverage', 'temperature', 'air_quality']:
+        env_trends[axis] = {
+            'direction': random.uniform(-1, 1),  # directional bias
+            'value': 0.0,                         # cumulative shift from baseline
+        }
 
 def init_grid():
-    global grid
+    global grid, leviathan_acuity, beetle_pressure, caterpillar_timing
+    global fst_history, fst_divergence_counter, fst_warning_fired, active_events
+
+    # Reset coevolution state
+    leviathan_acuity = 0.5
+    beetle_pressure = 0.5
+    caterpillar_timing = 0.5
+    fst_history = []
+    fst_divergence_counter = 0
+    fst_warning_fired = False
+    active_events = []
+
+    # Initialize environmental trends
+    _init_env_trends()
+
     elevations = generate_elevation()
     grid = []
     for r in range(GRID_SIZE):
@@ -1813,22 +2966,32 @@ def init_grid():
                 'pops': [0]*NUM_SPECIES,
                 'traits': [0.5]*NUM_SPECIES,
                 'trait_var': [0.01]*NUM_SPECIES,
+                'alleles': [0.5]*NUM_LOCI,  # Velothrix allele frequencies
             }
 
             # Set initial populations based on biome suitability
             for s in range(NUM_SPECIES):
                 suit = habitat_suitability(elev, s)
-                if suit > 0.4:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.4, 0.7))
-                elif suit > 0.1:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.15, 0.35))
+                if suit > 0.5:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.5, 0.8))
+                elif suit > 0.2:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.2, 0.4))
+                elif suit > 0.05:
+                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.05, 0.15))
                 else:
-                    tile['pops'][s] = int(BASE_K[s] * suit * random.uniform(0.0, 0.1))
+                    tile['pops'][s] = 0
 
             # Initial trait values with slight spatial variation
             for s in range(NUM_SPECIES):
                 tile['traits'][s] = 0.5 + random.uniform(-0.05, 0.05)
                 tile['trait_var'][s] = 0.01
+
+            # Initialize Velothrix allele frequencies with spatial variation
+            for locus in range(NUM_LOCI):
+                tile['alleles'][locus] = 0.5 + random.uniform(-0.05, 0.05)
+
+            # Sync traits[VELOTHRIX] with CREST allele frequency for backward compat
+            tile['traits'][VELOTHRIX] = tile['alleles'][LOCUS_CREST]
 
             row.append(tile)
         grid.append(row)
@@ -1839,6 +3002,50 @@ def get_season():
     """Returns season factor 0-1 (0=harsh winter, 1=peak summer)."""
     return 0.5 + 0.5 * math.sin(2 * math.pi * generation / SEASON_LENGTH)
 
+def _update_env_trends():
+    """Advance environmental trends by one generation (Ornstein-Uhlenbeck)."""
+    for axis, trend in env_trends.items():
+        # Mean-reverting with directional bias
+        mean_reversion = -0.005 * trend['value']  # pull back toward 0
+        drift = trend['direction'] * ENV_TREND_STRENGTH
+        noise = random.gauss(0, ENV_NOISE_STRENGTH)
+        trend['value'] = max(-0.2, min(0.2, trend['value'] + drift + noise + mean_reversion))
+
+def _update_coevolution():
+    """Update coevolving antagonist state based on population allele frequencies."""
+    global leviathan_acuity, beetle_pressure, caterpillar_timing
+
+    # Compute population-weighted mean allele frequencies across all tiles
+    total_pop = 0
+    sum_crest = 0.0
+    sum_spine = 0.0
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            p = grid[r][c]['pops'][VELOTHRIX]
+            if p > 0:
+                sum_crest += grid[r][c]['alleles'][LOCUS_CREST] * p
+                sum_spine += grid[r][c]['alleles'][LOCUS_SPINE] * p
+                total_pop += p
+
+    if total_pop > 0:
+        mean_crest = sum_crest / total_pop
+        mean_spine = sum_spine / total_pop
+    else:
+        mean_crest = 0.5
+        mean_spine = 0.5
+
+    # Leviathan acuity tracks crest frequency — arms race
+    leviathan_acuity += ACUITY_RESPONSE_RATE * (mean_crest - leviathan_acuity)
+    leviathan_acuity = max(0.0, min(1.0, leviathan_acuity))
+
+    # Beetle pressure tracks spine frequency — arms race
+    beetle_pressure += BEETLE_RESPONSE_RATE * (mean_spine - beetle_pressure)
+    beetle_pressure = max(0.0, min(1.0, beetle_pressure))
+
+    # Caterpillar timing drifts independently — not coevolving
+    caterpillar_timing += random.gauss(0, CATERPILLAR_DRIFT_RATE)
+    caterpillar_timing = max(0.1, min(0.9, caterpillar_timing))
+
 def step():
     """Advance one generation."""
     global generation
@@ -1846,295 +3053,190 @@ def step():
     season = get_season()
 
     # 1. Environment update
+    _update_env_trends()
+    temp_shift = env_trends.get('temperature', {}).get('value', 0)
+    food_shift = env_trends.get('air_quality', {}).get('value', 0)
+
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
             tile = grid[r][c]
-            # Food regrows
-            tile['food'] = min(1.0, tile['food'] + 0.01 * season)
-            # Temperature seasonal
-            tile['temp'] = 0.4 + 0.2 * season + random.uniform(-0.02, 0.02)
+            tile['food'] = max(0.1, min(1.0, tile['food'] + 0.01 * season + food_shift * 0.002))
+            tile['temp'] = 0.4 + 0.2 * season + temp_shift * 0.3 + random.uniform(-0.02, 0.02)
 
-    # 2. Random events (very rare)
-    _check_events(season)
+    # 2. Stochastic events
+    _process_events(season)
 
-    # 3. Per-tile, per-species dynamics
+    # 3. Coevolution update
+    _update_coevolution()
+
+    # 4. Per-tile dynamics
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
             _update_tile(r, c, season)
 
-    # 4. Migration
+    # 5. Migration / gene flow
     _migrate()
 
-    # 5. Speciation check (every 50 gens to save compute)
+    # 6. FST and speciation check (every 50 gens)
     if generation % 50 == 0:
         _check_speciation()
 
-def _check_events(season):
-    """Check for random environmental events and manage active persistent events."""
-    global active_events, _bloom_active, _surge_tiles
+    # 7. Subgroup detection & split processing
+    _step_pending_subgroup()
+
+    # 8. Ghost population updates
+    _step_ghosts()
+
+def _get_region_name(cr, cc):
+    """Get a narrative region name from grid coordinates."""
+    if cr < GRID_SIZE // 2:
+        return "northern" if cc < GRID_SIZE // 2 else "northeastern"
+    else:
+        return "southern" if cc < GRID_SIZE // 2 else "southeastern"
+
+def _process_events(season):
+    """Handle active events and spawn new stochastic events."""
+    global active_events
     names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
 
-    # Reset per-step flags
-    _bloom_active = False
-    _surge_tiles = set()
-
-    # ── Process active persistent events ──
+    # Process active events (ongoing effects)
     still_active = []
     for ev in active_events:
-        remaining = ev['start_gen'] + ev['duration'] - generation
-        if remaining <= 0:
-            # Event ending
-            if ev['type'] == 'algal_bloom':
-                events_buffer.append({'gen': generation, 'text': f'Algal bloom subsiding — visibility returning to normal'})
-            elif ev['type'] == 'tidal_surge':
-                # Restore original elevations
-                for pos, orig_elev in ev['data']['original_elevations']:
-                    r, c = pos
-                    if 0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE:
-                        grid[r][c]['elevation'] = orig_elev
-                events_buffer.append({'gen': generation, 'text': f'Tidal surge receding — deep water boundaries contracting'})
-            elif ev['type'] == 'migration_corridor':
-                events_buffer.append({'gen': generation, 'text': f'Migration corridor closing as seasonal currents shift'})
-            elif ev['type'] == 'reef_formation':
-                r, c = ev['data']['tile']
-                final_elev = ev['data']['target_elevation']
-                if 0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE:
-                    grid[r][c]['elevation'] = final_elev
-                    biome = get_biome(final_elev)
-                    events_buffer.append({'gen': generation, 'text': f'🪸 Reef at ({r},{c}) fully formed — tile is now {biome.replace("_"," ")}'})
-            continue
-        still_active.append(ev)
+        edef = EVENT_DEFS[ev['def_idx']]
+        cr, cc, radius = ev['region']
+        # Apply per-tick axis effects (attenuated since they persist)
+        for r in range(max(0, cr - radius), min(GRID_SIZE, cr + radius + 1)):
+            for c in range(max(0, cc - radius), min(GRID_SIZE, cc + radius + 1)):
+                for axis, mult in edef['axes'].items():
+                    if axis == 'food':
+                        grid[r][c]['food'] *= (1.0 + (mult - 1.0) * 0.01)
+                        grid[r][c]['food'] = max(0.15, min(1.0, grid[r][c]['food']))
+                    elif axis == 'water':
+                        grid[r][c]['water'] *= (1.0 + (mult - 1.0) * 0.01)
+                        grid[r][c]['water'] = max(0.1, min(1.0, grid[r][c]['water']))
+                    elif axis == 'temp':
+                        grid[r][c]['temp'] *= (1.0 + (mult - 1.0) * 0.005)
+                # Population impacts (mild per-tick)
+                pop_mult = edef['pop_mult']
+                if pop_mult is not None:
+                    for s_idx, mult in pop_mult.items():
+                        if mult < 1.0:
+                            loss_rate = (1.0 - mult) * 0.01
+                            grid[r][c]['pops'][s_idx] = max(0, int(grid[r][c]['pops'][s_idx] * (1.0 - loss_rate)))
+                        elif mult > 1.0:
+                            gain_rate = (mult - 1.0) * 0.01
+                            grid[r][c]['pops'][s_idx] = int(grid[r][c]['pops'][s_idx] * (1.0 + gain_rate))
+                elif ev.get('target_species') is not None:
+                    ts = ev['target_species']
+                    grid[r][c]['pops'][ts] = max(0, int(grid[r][c]['pops'][ts] * 0.998))
 
-        if ev['type'] == 'algal_bloom':
-            _bloom_active = True
-            # Boost food in wet biomes
-            for r in range(GRID_SIZE):
-                for c in range(GRID_SIZE):
-                    biome = get_biome(grid[r][c]['elevation'])
-                    if biome in ('deep_water', 'shallow_marsh', 'reed_beds'):
-                        grid[r][c]['food'] = min(1.0, grid[r][c]['food'] + 0.015)
-
-        elif ev['type'] == 'tidal_surge':
-            # Track affected tiles so _update_tile can boost Leviathan/Worm K
-            for pos, _ in ev['data']['original_elevations']:
-                _surge_tiles.add(pos)
-
-        elif ev['type'] == 'migration_corridor':
-            # Enhanced bidirectional migration along corridor
-            path = ev['data']['path']
-            for i in range(len(path) - 1):
-                r1, c1 = path[i]
-                r2, c2 = path[i + 1]
-                if not (0 <= r1 < GRID_SIZE and 0 <= c1 < GRID_SIZE): continue
-                if not (0 <= r2 < GRID_SIZE and 0 <= c2 < GRID_SIZE): continue
-                for s in range(NUM_SPECIES):
-                    pop1 = grid[r1][c1]['pops'][s]
-                    pop2 = grid[r2][c2]['pops'][s]
-                    diff = pop1 - pop2
-                    # Flow from high to low, proportional to difference
-                    if abs(diff) > 3:
-                        transfer = max(1, int(abs(diff) * 0.1))
-                        if diff > 0:
-                            grid[r1][c1]['pops'][s] = max(0, pop1 - transfer)
-                            grid[r2][c2]['pops'][s] += transfer
-                        else:
-                            grid[r2][c2]['pops'][s] = max(0, pop2 - transfer)
-                            grid[r1][c1]['pops'][s] += transfer
-
-        elif ev['type'] == 'reef_formation':
-            # Gradually shift elevation toward rocky_shore
-            r, c = ev['data']['tile']
-            if 0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE:
-                progress = (generation - ev['start_gen']) / ev['duration']
-                orig = ev['data']['original_elevation']
-                target = ev['data']['target_elevation']
-                grid[r][c]['elevation'] = orig + (target - orig) * progress
-
+        ev['remaining'] -= 1
+        if ev['remaining'] > 0:
+            still_active.append(ev)
     active_events = still_active
 
-    # ── Instantaneous events ──
-    if random.random() < DROUGHT_PROB:
-        cr = random.randint(0, GRID_SIZE-1)
-        cc = random.randint(0, GRID_SIZE-1)
-        radius = random.randint(1, 3)
-        affected_count = 0
-        for r in range(max(0,cr-radius), min(GRID_SIZE,cr+radius+1)):
-            for c in range(max(0,cc-radius), min(GRID_SIZE,cc+radius+1)):
-                grid[r][c]['food'] *= 0.5
-                grid[r][c]['water'] *= 0.6
-                affected_count += 1
-        region = "eastern" if cc > GRID_SIZE//2 else "western"
-        events_buffer.append({
-            'gen': generation,
-            'text': f'☀️ Drought in {region} marsh — {affected_count} tiles affected, food and water dropping'
-        })
+    # Spawn new events
+    if random.random() < EVENT_BASE_PROB and len(active_events) < 2:
+        def_idx = random.randint(0, len(EVENT_DEFS) - 1)
+        edef = EVENT_DEFS[def_idx]
+        cr = random.randint(0, GRID_SIZE - 1)
+        cc = random.randint(0, GRID_SIZE - 1)
+        radius = random.randint(1, 2)
+        duration = random.randint(edef['duration'][0], edef['duration'][1])
+        region_name = _get_region_name(cr, cc)
 
-    if random.random() < FLOOD_PROB:
-        cr = random.randint(0, GRID_SIZE-1)
-        cc = random.randint(0, GRID_SIZE-1)
-        radius = random.randint(1, 3)
-        affected_count = 0
-        for r in range(max(0,cr-radius), min(GRID_SIZE,cr+radius+1)):
-            for c in range(max(0,cc-radius), min(GRID_SIZE,cc+radius+1)):
-                grid[r][c]['water'] = min(1.0, grid[r][c]['water'] + 0.3)
-                grid[r][c]['pops'][CRAB] = int(grid[r][c]['pops'][CRAB] * 0.75)
-                grid[r][c]['pops'][CRAWLER] = int(grid[r][c]['pops'][CRAWLER] * 0.85)
-                affected_count += 1
-        region = "northern" if cr < GRID_SIZE//2 else "southern"
-        events_buffer.append({
-            'gen': generation,
-            'text': f'🌧️ Flooding in {region} tidal flats — {affected_count} tiles submerged'
-        })
+        new_ev = {
+            'def_idx': def_idx,
+            'remaining': duration,
+            'region': (cr, cc, radius),
+            'target_species': None,
+        }
 
-    # ── Density-dependent disease ──
-    if random.random() < DISEASE_PROB:
-        # Target the currently most populous species (density-dependent)
-        global_pops = [0] * NUM_SPECIES
-        for r in range(GRID_SIZE):
-            for c in range(GRID_SIZE):
-                for s in range(NUM_SPECIES):
-                    global_pops[s] += grid[r][c]['pops'][s]
-        total_all = sum(global_pops)
-        if total_all > 0:
-            # Weight selection toward dominant species
-            weights = [p * p for p in global_pops]  # square for stronger density bias
-            total_w = sum(weights)
-            if total_w > 0:
-                roll = random.random() * total_w
-                target = 0
-                cumulative = 0
-                for s in range(NUM_SPECIES):
-                    cumulative += weights[s]
-                    if roll < cumulative:
-                        target = s
-                        break
-            else:
-                target = random.randint(0, NUM_SPECIES - 1)
-            # Severity: dominant species hit harder (lower survival)
-            dominance = global_pops[target] / max(1, total_all)
-            severity = 0.75 + 0.2 * (1.0 - dominance)  # 0.75-0.95 survival
-            # Disease spreads from epicenter — tiles near center hit harder
-            epicenter_r = random.randint(0, GRID_SIZE - 1)
-            epicenter_c = random.randint(0, GRID_SIZE - 1)
-            for r in range(GRID_SIZE):
-                for c in range(GRID_SIZE):
-                    dist = abs(r - epicenter_r) + abs(c - epicenter_c)
-                    local_severity = severity + 0.1 * min(1.0, dist / GRID_SIZE)  # farther = milder
-                    local_severity = min(1.0, local_severity)
-                    grid[r][c]['pops'][target] = int(grid[r][c]['pops'][target] * local_severity)
-            mortality_pct = int((1 - severity) * 100)
-            events_buffer.append({
-                'gen': generation,
-                'text': f'🦠 Disease outbreak targeting {names[target]} — epicenter ({epicenter_r},{epicenter_c}), ~{mortality_pct}% peak mortality'
-            })
+        narr = edef['narr'].replace('{region}', region_name)
+        if edef['pop_mult'] is None and edef['name'] == 'disease':
+            target = random.randint(0, NUM_SPECIES - 1)
+            new_ev['target_species'] = target
+            narr = narr.replace('{species}', names[target])
 
-    # ── Algal bloom (persistent: 40-100 gens) ──
-    if random.random() < ALGAL_BLOOM_PROB:
-        if not any(e['type'] == 'algal_bloom' for e in active_events):
-            duration = random.randint(40, 100)
-            active_events.append({
-                'type': 'algal_bloom',
-                'start_gen': generation,
-                'duration': duration,
-                'data': {}
-            })
-            events_buffer.append({
-                'gen': generation,
-                'text': f'🌿 Algal bloom spreading across wetlands — Worm/Velothrix food surging, Leviathan hunting impaired (duration: {duration} gens)'
-            })
+        active_events.append(new_ev)
+        events_buffer.append({'gen': generation, 'text': narr})
 
-    # ── Tidal surge (persistent: 25-60 gens) ──
-    if random.random() < TIDAL_SURGE_PROB:
-        if not any(e['type'] == 'tidal_surge' for e in active_events):
-            # Temporarily lower elevation of tiles adjacent to deep water
-            affected = []
-            for r in range(GRID_SIZE):
-                for c in range(GRID_SIZE):
-                    elev = grid[r][c]['elevation']
-                    if get_biome(elev) in ('shallow_marsh', 'reed_beds'):
-                        for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
-                            nr, nc = r+dr, c+dc
-                            if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
-                                if get_biome(grid[nr][nc]['elevation']) == 'deep_water':
-                                    # Lower elevation to push tile toward deep water biome
-                                    new_elev = max(0.05, elev - 0.15)
-                                    affected.append(((r, c), elev))
-                                    grid[r][c]['elevation'] = new_elev
-                                    break
-            duration = random.randint(25, 60)
-            active_events.append({
-                'type': 'tidal_surge',
-                'start_gen': generation,
-                'duration': duration,
-                'data': {'original_elevations': affected}
-            })
-            events_buffer.append({
-                'gen': generation,
-                'text': f'🌊 Tidal surge — deep water expanding into {len(affected)} coastal tiles (duration: {duration} gens)'
-            })
+def _velothrix_selection(tile, season):
+    """Compute per-locus selection coefficients for Velothrix on this tile.
+    Returns list of 5 Δp values and a mean fitness multiplier for growth."""
+    alleles = tile['alleles']
+    lev_pop = tile['pops'][LEVIATHAN]
+    pop = tile['pops'][VELOTHRIX]
 
-    # ── Migration corridor (persistent: 20-50 gens) ──
-    if random.random() < MIGRATION_CORRIDOR_PROB:
-        if not any(e['type'] == 'migration_corridor' for e in active_events):
-            # Create a winding path connecting two edges
-            if random.random() < 0.5:
-                row = random.randint(1, GRID_SIZE - 2)
-                path = []
-                for c in range(GRID_SIZE):
-                    # Slight wander for organic feel
-                    r_offset = random.choice([-1, 0, 0, 0, 1])
-                    actual_r = max(0, min(GRID_SIZE - 1, row + r_offset))
-                    path.append((actual_r, c))
-                direction = "east-west"
-            else:
-                col = random.randint(1, GRID_SIZE - 2)
-                path = []
-                for r in range(GRID_SIZE):
-                    c_offset = random.choice([-1, 0, 0, 0, 1])
-                    actual_c = max(0, min(GRID_SIZE - 1, col + c_offset))
-                    path.append((r, actual_c))
-                direction = "north-south"
-            duration = random.randint(20, 50)
-            active_events.append({
-                'type': 'migration_corridor',
-                'start_gen': generation,
-                'duration': duration,
-                'data': {'path': path}
-            })
-            events_buffer.append({
-                'gen': generation,
-                'text': f'🔀 Seasonal migration corridor opening {direction} — species flowing between isolated biomes (duration: {duration} gens)'
-            })
+    # Environmental modifiers from trends
+    body_opt = BODY_OPTIMUM + env_trends.get('terrain_roughness', {}).get('value', 0)
+    litter_opt = caterpillar_timing  # Lack optimum tracks caterpillar emergence
 
-    # ── Reef formation (persistent: 150-300 gens, permanent terrain change) ──
-    # Cap total reefs at 10 tiles (~7% of grid) to prevent long-run biome erasure
-    total_rocky = sum(1 for r in range(GRID_SIZE) for c in range(GRID_SIZE) if get_biome(grid[r][c]['elevation']) == 'rocky_shore')
-    if random.random() < REEF_FORMATION_PROB and total_rocky < GRID_SIZE * GRID_SIZE * 0.25:
-        if not any(e['type'] == 'reef_formation' for e in active_events):
-            # Pick a tidal_flats or shallow_marsh tile to develop into rocky_shore
-            candidates = []
-            for r in range(GRID_SIZE):
-                for c in range(GRID_SIZE):
-                    biome = get_biome(grid[r][c]['elevation'])
-                    if biome in ('tidal_flats', 'shallow_marsh'):
-                        candidates.append((r, c))
-            if candidates:
-                tile_pos = random.choice(candidates)
-                r, c = tile_pos
-                orig_elev = grid[r][c]['elevation']
-                # Target elevation in rocky_shore range (0.75-0.85)
-                target_elev = 0.75 + random.random() * 0.1
-                duration = random.randint(150, 300)
-                active_events.append({
-                    'type': 'reef_formation',
-                    'start_gen': generation,
-                    'duration': duration,
-                    'data': {'tile': tile_pos, 'original_elevation': orig_elev, 'target_elevation': target_elev}
-                })
-                events_buffer.append({
-                    'gen': generation,
-                    'text': f'🪸 Reef forming at ({r},{c}) — elevation rising, new Crab habitat developing over {duration} generations'
-                })
+    delta_p = [0.0] * NUM_LOCI
+    w_locus = [1.0] * NUM_LOCI  # per-locus fitness contribution
+
+    # ── CREST: sexual selection UP, predation DOWN (frequency-dependent) ──
+    p = alleles[LOCUS_CREST]
+    q = 1.0 - p
+    s_net = SEL_CREST_SEXUAL - SEL_CREST_PREDATION * leviathan_acuity * (lev_pop / max(1, BASE_K[LEVIATHAN]))
+    h = DOMINANCE[LOCUS_CREST]
+    if q > 0.001 and p > 0.001:
+        # Δp = pq·s·[ph + q(1-h)] / w̄ (simplified: w̄ ≈ 1 for small s)
+        delta_p[LOCUS_CREST] = p * q * s_net * (p * h + q * (1 - h))
+    # Fitness: w̄ = p²·1 + 2pq·(1-h·|s|) + q²·(1-|s|)
+    w_locus[LOCUS_CREST] = max(0.5, 1.0 - abs(s_net) * q * q)
+
+    # ── SPINE: beetle defense vs metabolic cost ──
+    p = alleles[LOCUS_SPINE]
+    q = 1.0 - p
+    s_net = SEL_SPINE_BENEFIT * beetle_pressure - SEL_SPINE_COST
+    h = DOMINANCE[LOCUS_SPINE]
+    if q > 0.001 and p > 0.001:
+        delta_p[LOCUS_SPINE] = p * q * s_net * (p * h + q * (1 - h))
+    w_locus[LOCUS_SPINE] = max(0.5, 1.0 - abs(s_net) * q * q)
+
+    # ── BODY: Gaussian stabilizing selection ──
+    p = alleles[LOCUS_BODY]
+    q = 1.0 - p
+    # Phenotypic mean from allele frequency (additive)
+    z_mean = p  # normalized body size
+    # Fitness = exp(-(z - θ)² / 2σ²)
+    fitness_body = math.exp(-((z_mean - body_opt) ** 2) / (2 * BODY_SIGMA * BODY_SIGMA))
+    # Selection gradient: dW/dp ∝ -(z_mean - θ) / σ²
+    s_stab = -SEL_BODY_STRENGTH * (z_mean - body_opt) / (BODY_SIGMA * BODY_SIGMA)
+    if q > 0.001 and p > 0.001:
+        delta_p[LOCUS_BODY] = p * q * s_stab
+    w_locus[LOCUS_BODY] = fitness_body
+
+    # ── LITTER: Lack clutch size optimum ──
+    p = alleles[LOCUS_LITTER]
+    q = 1.0 - p
+    z_mean = p
+    fitness_litter = math.exp(-((z_mean - litter_opt) ** 2) / (2 * LITTER_SIGMA * LITTER_SIGMA))
+    s_lack = -SEL_LITTER_STRENGTH * (z_mean - litter_opt) / (LITTER_SIGMA * LITTER_SIGMA)
+    if q > 0.001 and p > 0.001:
+        delta_p[LOCUS_LITTER] = p * q * s_lack
+    w_locus[LOCUS_LITTER] = fitness_litter
+
+    # ── DISP: density-dependent dispersal selection ──
+    p = alleles[LOCUS_DISP]
+    q = 1.0 - p
+    suit = habitat_suitability(tile['elevation'], VELOTHRIX)
+    k = BASE_K[VELOTHRIX] * suit * tile['food'] * (0.7 + 0.3 * season)
+    density = pop / max(1, k)
+    # High density favors dispersal; low density penalizes it (Allee effect)
+    s_disp = SEL_DISP_DENSITY * (density - 0.5)
+    h = DOMINANCE[LOCUS_DISP]
+    if q > 0.001 and p > 0.001:
+        delta_p[LOCUS_DISP] = p * q * s_disp * (p * h + q * (1 - h))
+    w_locus[LOCUS_DISP] = max(0.5, 1.0)  # dispersal doesn't directly affect fitness
+
+    # Mean fitness across loci (multiplicative)
+    w_mean = 1.0
+    for w in w_locus:
+        w_mean *= w
+
+    return delta_p, w_mean
 
 def _update_tile(r, c, season):
     """Update populations and traits for one tile."""
@@ -2144,182 +3246,185 @@ def _update_tile(r, c, season):
     for s in range(NUM_SPECIES):
         pop = tile['pops'][s]
         if pop <= 0:
-            # Recolonization from nearby populations or seed bank
-            suit = habitat_suitability(elev, s)
-            if suit > 0.05 and random.random() < RECOLONIZATION_BASE * suit:
-                # Check if species exists on any adjacent tile (local dispersal)
-                has_neighbor = False
-                for dr, dc in [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)]:
-                    nr, nc = r + dr, c + dc
-                    if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
-                        if grid[nr][nc]['pops'][s] > 3:
-                            has_neighbor = True
+            # Check neighbors for recolonization source
+            neighbor_pop = 0
+            for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                nr, nc = r+dr, c+dc
+                if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
+                    neighbor_pop += grid[nr][nc]['pops'][s]
+            # Higher recolonization chance if neighbors have the species
+            recol_rate = 0.01 * habitat_suitability(elev, s)
+            if neighbor_pop > 3:
+                recol_rate += 0.03 * min(1.0, neighbor_pop / 15.0)
+            if random.random() < recol_rate:
+                tile['pops'][s] = max(1, int(neighbor_pop * 0.05)) if neighbor_pop > 0 else 1
+                tile['traits'][s] = 0.5 + random.uniform(-0.1, 0.1)
+                if s == VELOTHRIX:
+                    # Inherit alleles from nearest populated neighbor
+                    for locus in range(NUM_LOCI):
+                        tile['alleles'][locus] = 0.5 + random.uniform(-0.1, 0.1)
+                    for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                        nr, nc = r+dr, c+dc
+                        if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE and grid[nr][nc]['pops'][VELOTHRIX] > 0:
+                            for locus in range(NUM_LOCI):
+                                tile['alleles'][locus] = grid[nr][nc]['alleles'][locus] + random.uniform(-0.05, 0.05)
+                                tile['alleles'][locus] = max(0.01, min(0.99, tile['alleles'][locus]))
                             break
-                if has_neighbor:
-                    tile['pops'][s] = max(2, int(MIN_K * suit * 0.3))
-                    tile['traits'][s] = 0.5 + random.uniform(-0.1, 0.1)
-                elif random.random() < 0.005 * suit:
-                    # Rare long-distance dispersal / seed bank
-                    tile['pops'][s] = 1
-                    tile['traits'][s] = 0.5 + random.uniform(-0.1, 0.1)
+                    tile['traits'][VELOTHRIX] = tile['alleles'][LOCUS_CREST]
             continue
 
-        trait = tile['traits'][s]
-        trait_v = tile['trait_var'][s]
-
-        # Effective carrying capacity depends on habitat and food
         suit = habitat_suitability(elev, s)
-        k = BASE_K[s] * suit * (0.7 + 0.3 * tile['food']) * (0.85 + 0.15 * season)
-        # Tidal surge: boost K for water species on affected tiles
-        if (r, c) in _surge_tiles and s in (LEVIATHAN, WORM):
-            k *= 1.3
-        # Algal bloom: boost K for Worm and Velothrix (food abundance)
-        if _bloom_active and s in (WORM, VELOTHRIX):
-            k *= 1.15
-        # Enforce minimum K on suitable tiles to prevent stochastic extinction spirals
-        if suit > 0.15:
-            k = max(MIN_K, k)
+        k = BASE_K[s] * suit * tile['food'] * (0.7 + 0.3 * season)
 
-        # ── SPECIES INTERACTIONS ──
         if s == VELOTHRIX:
-            # Predation by Leviathans (brighter = more visible)
+            # ── VELOTHRIX: Full allele-frequency genetics ──
+            alleles = tile['alleles']
             lev_pop = tile['pops'][LEVIATHAN]
-            pred_rate = PREDATION_LEVIATHAN_VELOTHRIX
-            # Algal bloom reduces Leviathan hunting efficiency
-            if _bloom_active:
-                pred_rate *= 0.5
-            predation_loss = lev_pop * pred_rate * (0.5 + trait * 0.5)
-            # Competition with crawlers
             craw_pop = tile['pops'][CRAWLER]
+
+            # Predation loss (uses CREST freq: brighter = more visible)
+            predation_loss = lev_pop * PREDATION_LEVIATHAN_VELOTHRIX * (0.5 + alleles[LOCUS_CREST] * 0.5)
+            # Competition
             comp_loss = craw_pop * COMPETITION_VELOTHRIX_CRAWLER
             k = max(1, k - comp_loss * 10)
-            # Sexual selection: brighter = more mates (increases effective growth)
-            sex_sel_bonus = trait * 0.01
-            growth = GROWTH_RATES[s] + sex_sel_bonus
-            # Net selection pressure on trait: sexual sel pushes UP, predation pushes DOWN
-            sel_pressure = SELECTION_STRENGTH * (0.5 - trait) * 0.1  # mild stabilizing
-            sel_pressure += SELECTION_STRENGTH * 0.3  # sexual selection pushes up
-            if lev_pop > 0:
-                sel_pressure -= SELECTION_STRENGTH * 0.5 * (lev_pop / max(1, BASE_K[LEVIATHAN]))
-        elif s == LEVIATHAN:
-            # Energy from prey
-            vel_pop = tile['pops'][VELOTHRIX]
-            worm_pop = tile['pops'][WORM]
-            prey_available = vel_pop + worm_pop * 0.5
-            # Hunting range: wider = more prey but more energy cost
-            hunt_bonus = trait * 0.005 * prey_available / max(1, BASE_K[VELOTHRIX])
-            energy_cost = trait * trait * 0.01
-            # Algal bloom impairs hunting — energy cost increases
-            if _bloom_active:
-                energy_cost *= 1.5
-                hunt_bonus *= 0.6
-            growth = GROWTH_RATES[s] + hunt_bonus - energy_cost
-            k = max(1, k * (0.6 + 0.4 * prey_available / max(1, BASE_K[VELOTHRIX] + BASE_K[WORM])))
-            sel_pressure = 0
-            if prey_available > BASE_K[VELOTHRIX] * 0.3:
-                sel_pressure = SELECTION_STRENGTH * 0.2  # push range up when prey abundant
-            else:
-                sel_pressure = -SELECTION_STRENGTH * 0.2  # push range down when prey scarce
-            predation_loss = 0
-        elif s == CRAWLER:
-            # Burrowing depth: deeper = safer but less food
-            safety = trait * 0.8
-            food_access = 1.0 - trait * 0.3
-            lev_pop = tile['pops'][LEVIATHAN]
-            predation_loss = lev_pop * 0.001 * (1 - safety)
-            growth = GROWTH_RATES[s] * food_access
-            vel_pop = tile['pops'][VELOTHRIX]
-            comp_loss = vel_pop * COMPETITION_VELOTHRIX_CRAWLER
-            k = max(1, k * food_access - comp_loss * 5)
-            sel_pressure = 0
-            if lev_pop > BASE_K[LEVIATHAN] * 0.3:
-                sel_pressure = SELECTION_STRENGTH * 0.2  # burrow deeper when predators present
-            else:
-                sel_pressure = -SELECTION_STRENGTH * 0.1  # come up for food when safe
-        elif s == CRAB:
-            # Shell thickness: thicker = armor but slow
-            armor = trait * 0.7
-            mobility = 1.0 - trait * 0.3
-            growth = GROWTH_RATES[s] * mobility
-            # Space competition
-            total_pop = sum(tile['pops'])
-            space_pressure = total_pop * COMPETITION_CRAB_SPACE
-            k = max(1, k - space_pressure * 5)
-            predation_loss = 0
-            sel_pressure = SELECTION_STRENGTH * (0.5 - trait) * 0.1  # stabilizing
-            if total_pop > sum(BASE_K) * 0.5:
-                sel_pressure += SELECTION_STRENGTH * 0.15  # thicker shells when crowded
-        elif s == WORM:
-            # Glow: brighter = more mates but more predators
-            vel_pop = tile['pops'][VELOTHRIX]
-            lev_pop = tile['pops'][LEVIATHAN]
-            # Algal bloom reduces predation on worms (predators can't see through algae)
-            bloom_pred_mod = 0.5 if _bloom_active else 1.0
-            predation_loss = (vel_pop * PREDATION_VELOTHRIX_WORM + lev_pop * PREDATION_LEVIATHAN_WORM) * (0.3 + trait * 0.7) * bloom_pred_mod
-            # Sexual selection for brightness
-            sex_sel_bonus = trait * 0.01
-            growth = GROWTH_RATES[s] + sex_sel_bonus
-            sel_pressure = SELECTION_STRENGTH * 0.2  # sexual sel pushes up
-            predator_count = vel_pop + lev_pop
-            if predator_count > 10:
-                sel_pressure -= SELECTION_STRENGTH * 0.3 * (predator_count / max(1, BASE_K[VELOTHRIX] + BASE_K[LEVIATHAN]))
 
-        # ── POPULATION DYNAMICS (logistic) ──
-        if k <= 0:
-            k = 1
+            # Compute selection pressures (allele changes only, not growth)
+            delta_p, w_mean = _velothrix_selection(tile, season)
+            sex_sel_bonus = alleles[LOCUS_CREST] * 0.01
+            litter_bonus = (alleles[LOCUS_LITTER] - 0.5) * 0.005
+            # Growth rate same as original — fitness affects alleles, not demography
+            growth = GROWTH_RATES[s] + sex_sel_bonus + litter_bonus
 
-        # Apply predation as survival fraction (not before growth)
-        if s != LEVIATHAN:
-            survival = max(0.0, 1.0 - predation_loss)
-            pop_after_pred = pop * survival
-        else:
-            pop_after_pred = float(pop)
+            # Population dynamics
+            pop = max(0, pop - int(predation_loss * pop))
+            if k <= 0:
+                k = 1
+            dpop = growth * pop * (1.0 - pop / k)
+            new_pop = max(0, int(pop + dpop + random.uniform(-0.5, 0.5)))
 
-        # Logistic growth on surviving population
-        dpop = growth * pop_after_pred * (1.0 - pop_after_pred / k)
-        raw_pop = pop_after_pred + dpop
+            if 0 < new_pop <= 1 and random.random() < 0.01:
+                new_pop = 0
+            tile['pops'][s] = min(new_pop, int(k * 1.5))
 
-        # Probabilistic rounding: preserves fractional growth
-        floor_pop = int(raw_pop)
-        frac = raw_pop - floor_pop
-        new_pop = floor_pop + (1 if random.random() < frac else 0)
-        new_pop = max(0, new_pop)
-
-        # Stochastic extinction only for truly tiny isolated populations
-        if new_pop == 1 and random.random() < 0.02:
-            new_pop = 0
-
-        tile['pops'][s] = min(new_pop, int(k * 1.5))  # hard cap
-
-        # ── TRAIT EVOLUTION ──
-        if tile['pops'][s] > 0:
-            # Selection
-            new_trait = trait + sel_pressure
-
-            # Soft boundaries: extreme phenotypes face increasing physiological resistance
-            # Cubic pull prevents permanent pinning at 0 or 1
-            boundary_pressure = -0.005 * (2 * trait - 1) ** 3
-            new_trait += boundary_pressure
-
-            # Drift (inversely proportional to sqrt(pop))
+            # ── ALLELE FREQUENCY EVOLUTION ──
             if tile['pops'][s] > 0:
+                Ne = max(1, int(tile['pops'][s] * NE_RATIO))
+                mean_H = 0.0
+
+                for locus in range(NUM_LOCI):
+                    p = alleles[locus]
+
+                    # 1. Selection (Δp computed above)
+                    p += delta_p[locus]
+
+                    # 2. Genetic drift: variance = p(1-p) / (2Ne)
+                    if Ne > 1 and p > 0.001 and p < 0.999:
+                        drift_var = p * (1 - p) / (2 * Ne)
+                        p += random.gauss(0, math.sqrt(max(0, drift_var)))
+
+                    # 3. Mutation: forward (A→a) and back (a→A)
+                    p = p - MU_FORWARD * p + MU_BACK * (1 - p)
+
+                    # Clamp
+                    p = max(0.001, min(0.999, p))
+                    alleles[locus] = p
+
+                    # Heterozygosity for this locus
+                    mean_H += 2 * p * (1 - p)
+
+                mean_H /= NUM_LOCI
+
+                # Sync backward-compatible fields
+                tile['traits'][VELOTHRIX] = alleles[LOCUS_CREST]
+                tile['trait_var'][VELOTHRIX] = mean_H
+
+        else:
+            # ── OTHER SPECIES: Simplified trait dynamics (unchanged) ──
+            trait = tile['traits'][s]
+
+            if s == LEVIATHAN:
+                vel_pop = tile['pops'][VELOTHRIX]
+                worm_pop = tile['pops'][WORM]
+                prey_available = vel_pop + worm_pop * 0.5
+                hunt_bonus = trait * 0.004 * prey_available / max(1, BASE_K[VELOTHRIX])
+                energy_cost = trait * trait * 0.001
+                growth = max(0.02, GROWTH_RATES[s] + hunt_bonus - energy_cost)
+                # Prey boosts K above baseline, but baseline K is always available
+                # Apex predators have territory-based carrying capacity
+                prey_bonus = 0.3 * min(1.0, prey_available / max(1, BASE_K[VELOTHRIX] * 0.5))
+                k = k * (1.0 + prey_bonus)  # prey ADDS to K, never reduces below habitat K
+                sel_pressure = 0
+                if prey_available > BASE_K[VELOTHRIX] * 0.3:
+                    sel_pressure = SELECTION_STRENGTH * 0.2
+                else:
+                    sel_pressure = -SELECTION_STRENGTH * 0.1
+                predation_loss = 0
+            elif s == CRAWLER:
+                safety = trait * 0.8
+                food_access = 1.0 - trait * 0.4
+                lev_pop = tile['pops'][LEVIATHAN]
+                predation_loss = lev_pop * 0.001 * (1 - safety)
+                growth = GROWTH_RATES[s] * food_access
+                vel_pop = tile['pops'][VELOTHRIX]
+                comp_loss = vel_pop * COMPETITION_VELOTHRIX_CRAWLER
+                k = max(5, k * food_access - comp_loss * 3)
+                sel_pressure = 0
+                if lev_pop > BASE_K[LEVIATHAN] * 0.3:
+                    sel_pressure = SELECTION_STRENGTH * 0.2
+                else:
+                    sel_pressure = -SELECTION_STRENGTH * 0.1
+            elif s == CRAB:
+                mobility = 1.0 - trait * 0.2
+                growth = GROWTH_RATES[s] * mobility
+                total_pop = sum(tile['pops'])
+                space_pressure = total_pop * COMPETITION_CRAB_SPACE
+                k = max(5, k - space_pressure * 3)
+                predation_loss = 0
+                sel_pressure = SELECTION_STRENGTH * (0.5 - trait) * 0.1
+                if total_pop > sum(BASE_K) * 0.5:
+                    sel_pressure += SELECTION_STRENGTH * 0.15
+            elif s == WORM:
+                vel_pop = tile['pops'][VELOTHRIX]
+                lev_pop = tile['pops'][LEVIATHAN]
+                predation_loss = (vel_pop * PREDATION_VELOTHRIX_WORM + lev_pop * PREDATION_LEVIATHAN_WORM) * (0.3 + trait * 0.7)
+                sex_sel_bonus = trait * 0.01
+                growth = GROWTH_RATES[s] + sex_sel_bonus
+                sel_pressure = SELECTION_STRENGTH * 0.2
+                predator_count = vel_pop + lev_pop
+                if predator_count > 10:
+                    sel_pressure -= SELECTION_STRENGTH * 0.3 * (predator_count / max(1, BASE_K[VELOTHRIX] + BASE_K[LEVIATHAN]))
+
+            # Population dynamics (logistic)
+            if s != LEVIATHAN:
+                pop = max(0, pop - int(predation_loss * pop))
+            if k <= 0:
+                k = 1
+            dpop = growth * pop * (1.0 - pop / k)
+            # Allee effect: small populations get a recovery boost
+            if 0 < pop <= 5 and k > 5:
+                dpop = max(dpop, growth * 2)  # guaranteed minimum growth
+            new_pop = max(0, int(pop + dpop + random.uniform(-0.5, 0.5)))
+            # Stochastic extinction only at pop=1 with low chance
+            if new_pop == 1 and random.random() < 0.008:
+                new_pop = 0
+            tile['pops'][s] = min(new_pop, int(k * 1.5))
+
+            # Trait evolution (simplified)
+            if tile['pops'][s] > 0:
+                new_trait = trait + sel_pressure
                 drift = random.gauss(0, DRIFT_STRENGTH / math.sqrt(max(1, tile['pops'][s])))
                 new_trait += drift
-
-            # Mutation
-            if random.random() < MUTATION_RATE * tile['pops'][s]:
-                new_trait += random.gauss(0, MUTATION_STEP)
-
-            # Clamp to 0-1
-            tile['traits'][s] = max(0.0, min(1.0, new_trait))
-
-            # Update variance (simplified)
-            tile['trait_var'][s] = max(0.001, tile['trait_var'][s] * 0.99 + MUTATION_RATE * 0.01)
+                if random.random() < MUTATION_RATE * tile['pops'][s]:
+                    new_trait += random.gauss(0, MUTATION_STEP)
+                tile['traits'][s] = max(0.0, min(1.0, new_trait))
+                tile['trait_var'][s] = max(0.001, tile['trait_var'][s] * 0.99 + MUTATION_RATE * 0.01)
 
 def _migrate():
-    """Species migrate between adjacent tiles."""
+    """Species migrate between adjacent tiles. Velothrix uses island-model gene flow."""
     # Build migration deltas first, apply after
     deltas = [[{s: 0 for s in range(NUM_SPECIES)} for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+    # Allele flow tracking for Velothrix: (target_r, target_c) -> [(source_alleles, weight)]
+    allele_flow = {}
 
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
@@ -2342,16 +3447,21 @@ def _migrate():
                 if k <= 0:
                     continue
 
-                # Migrate when over capacity
+                # For Velothrix, dispersal allele modulates migration rate
+                if s == VELOTHRIX:
+                    disp_freq = tile['alleles'][LOCUS_DISP]
+                    mig_rate = GENE_FLOW_M * (0.5 + disp_freq)  # higher disp = more migration
+                else:
+                    mig_rate = MIGRATION_RATE
+
                 pressure = pop / k
                 if pressure < 0.7:
                     continue
 
-                migrants = max(0, int(pop * MIGRATION_RATE * (pressure - 0.5)))
+                migrants = max(0, int(pop * mig_rate * (pressure - 0.5)))
                 if migrants <= 0:
                     continue
 
-                # Distribute among neighbors based on suitability
                 suits = []
                 for nr, nc in neighbors:
                     ns = habitat_suitability(grid[nr][nc]['elevation'], s)
@@ -2366,25 +3476,109 @@ def _migrate():
                 if total_suit <= 0:
                     continue
 
-                actual_migrants = min(migrants, pop // 4)  # Never migrate more than 25%
+                actual_migrants = min(migrants, pop // 4)
                 deltas[r][c][s] -= actual_migrants
 
                 for nr, nc, su in suits:
                     share = int(actual_migrants * su / total_suit)
+                    if share <= 0:
+                        continue
                     deltas[nr][nc][s] += share
 
-    # Apply deltas
+                    # Track allele flow for Velothrix
+                    if s == VELOTHRIX:
+                        key = (nr, nc)
+                        if key not in allele_flow:
+                            allele_flow[key] = []
+                        allele_flow[key].append((tile['alleles'][:], share))
+
+    # Apply population deltas
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
             for s in range(NUM_SPECIES):
                 grid[r][c]['pops'][s] = max(0, grid[r][c]['pops'][s] + deltas[r][c][s])
 
-# Track trait divergence for speciation
+    # Apply Velothrix allele flow (island model: mix migrant alleles into local pool)
+    for (tr, tc), sources in allele_flow.items():
+        tile = grid[tr][tc]
+        local_pop = tile['pops'][VELOTHRIX]
+        if local_pop <= 0:
+            continue
+
+        total_migrants = sum(w for _, w in sources)
+        if total_migrants <= 0:
+            continue
+
+        # Fraction of population that is migrants
+        m = total_migrants / local_pop
+        m = min(m, 0.5)  # cap at 50% replacement
+
+        # Weighted average migrant allele frequencies
+        migrant_alleles = [0.0] * NUM_LOCI
+        for src_alleles, weight in sources:
+            for locus in range(NUM_LOCI):
+                migrant_alleles[locus] += src_alleles[locus] * weight
+        for locus in range(NUM_LOCI):
+            migrant_alleles[locus] /= total_migrants
+
+        # Island model: p_new = (1-m)*p_local + m*p_migrant
+        for locus in range(NUM_LOCI):
+            tile['alleles'][locus] = (1 - m) * tile['alleles'][locus] + m * migrant_alleles[locus]
+
+        # Sync traits
+        tile['traits'][VELOTHRIX] = tile['alleles'][LOCUS_CREST]
+
+def _compute_velothrix_fst():
+    """Compute FST across all Velothrix subpopulations (tiles with pop > 5).
+    F_ST = (H_T - H_S) / H_T
+    H_T = expected heterozygosity of total population
+    H_S = mean expected heterozygosity of subpopulations
+    Returns mean FST across all loci, or 0 if insufficient data."""
+
+    # Collect allele frequencies and populations per tile
+    subpops = []  # [(pop, alleles)]
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            p = grid[r][c]['pops'][VELOTHRIX]
+            if p > 5:
+                subpops.append((p, grid[r][c]['alleles'][:]))
+
+    if len(subpops) < 2:
+        return 0.0
+
+    total_pop = sum(sp[0] for sp in subpops)
+    if total_pop <= 0:
+        return 0.0
+
+    fst_per_locus = []
+    for locus in range(NUM_LOCI):
+        # H_S: mean subpopulation heterozygosity (weighted by pop)
+        H_S = 0.0
+        # Compute total (weighted) allele frequency
+        p_total = 0.0
+        for pop, alleles in subpops:
+            p_i = alleles[locus]
+            H_S += pop * 2 * p_i * (1 - p_i)
+            p_total += pop * p_i
+        H_S /= total_pop
+        p_total /= total_pop
+
+        # H_T: expected heterozygosity of total population
+        H_T = 2 * p_total * (1 - p_total)
+
+        if H_T > 0.001:
+            fst_per_locus.append((H_T - H_S) / H_T)
+        else:
+            fst_per_locus.append(0.0)
+
+    return sum(fst_per_locus) / len(fst_per_locus)
+
+# Legacy trait divergence counter for non-Velothrix species
 trait_divergence_counter = {}
 
 def _check_speciation():
-    """Check if any species has diverged enough to speciate."""
-    global speciation_events
+    """Check speciation using FST for Velothrix, trait divergence for others."""
+    global speciation_events, fst_divergence_counter, fst_warning_fired
     names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
     trait_names = ['crest brightness', 'hunting range', 'burrowing depth', 'shell thickness', 'glow intensity']
     variant_suffixes = [
@@ -2395,12 +3589,23 @@ def _check_speciation():
         ('lucens', 'obscura'),
     ]
 
-    for s in range(NUM_SPECIES):
-        # Skip species that have already speciated
+    # ── VELOTHRIX: FST tracking only (speciation handled by Phase 1 split/ghost system) ──
+    fst = _compute_velothrix_fst()
+    fst_history.append((generation, fst))
+
+    # Early warning (informational only — no speciation trigger)
+    if fst > FST_WARNING_THRESHOLD and not fst_warning_fired:
+        fst_warning_fired = True
+        events_buffer.append({
+            'gen': generation,
+            'text': f'Field observation: Velothrix subgroups showing genetic divergence (FST={fst:.3f}). Outcome uncertain.',
+        })
+
+    # ── OTHER SPECIES: Legacy trait divergence ──
+    for s in range(1, NUM_SPECIES):
         if s in speciation_events:
             continue
 
-        # Collect traits across all tiles with population
         traits_by_tile = []
         for r in range(GRID_SIZE):
             for c in range(GRID_SIZE):
@@ -2410,31 +3615,23 @@ def _check_speciation():
         if len(traits_by_tile) < 4:
             continue
 
-        # Find max trait difference
         trait_vals = [t[2] for t in traits_by_tile]
         max_diff = max(trait_vals) - min(trait_vals)
 
         key = f"species_{s}"
-        if max_diff > SPECIATION_THRESHOLD:
-            trait_divergence_counter[key] = trait_divergence_counter.get(key, 0) + 50  # we check every 50 gens
-            if trait_divergence_counter[key] >= SPECIATION_GENS:
-                # Find the median trait to determine the split point
+        if max_diff > 0.3:
+            trait_divergence_counter[key] = trait_divergence_counter.get(key, 0) + 50
+            if trait_divergence_counter[key] >= 100:
                 sorted_traits = sorted(traits_by_tile, key=lambda x: x[2])
                 mid = len(sorted_traits) // 2
                 split_trait = (sorted_traits[mid-1][2] + sorted_traits[mid][2]) / 2.0
 
-                low_region = sorted_traits[0]
-                high_region = sorted_traits[-1]
-
-                # Compute geographic centers for each variant
                 low_tiles = [(r, c) for r, c, t in sorted_traits if t <= split_trait]
                 high_tiles = [(r, c) for r, c, t in sorted_traits if t > split_trait]
                 low_center = f"({sum(r for r,c in low_tiles)//max(1,len(low_tiles))},{sum(c for r,c in low_tiles)//max(1,len(low_tiles))})"
                 high_center = f"({sum(r for r,c in high_tiles)//max(1,len(high_tiles))},{sum(c for r,c in high_tiles)//max(1,len(high_tiles))})"
 
                 parent_suffix, variant_suffix = variant_suffixes[s]
-
-                # Store permanent speciation state
                 speciation_events[s] = {
                     'split_trait': split_trait,
                     'gen': generation,
@@ -2442,34 +3639,446 @@ def _check_speciation():
                     'variant_name': f'{names[s]} {variant_suffix}',
                 }
 
-                # Fire prominent speciation event
                 events_buffer.append({
                     'gen': generation,
-                    'text': f'⚡ SPECIATION: {names[s]} has split into two species! {names[s]} {parent_suffix} ({trait_names[s]} ≤{split_trait:.2f}, centered {low_center}, {len(low_tiles)} tiles) vs {names[s]} {variant_suffix} ({trait_names[s]} >{split_trait:.2f}, centered {high_center}, {len(high_tiles)} tiles). Divergence sustained for {SPECIATION_GENS}+ generations.',
+                    'text': f'⚡ SPECIATION: {names[s]} has split! {names[s]} {parent_suffix} (centered {low_center}) vs {names[s]} {variant_suffix} (centered {high_center}).',
                     'speciation': True
                 })
                 trait_divergence_counter[key] = 0
         else:
             trait_divergence_counter[key] = 0
 
-    # Also check for population surges/crashes
-    for s in range(NUM_SPECIES):
-        total = sum(grid[r][c]['pops'][s] for r in range(GRID_SIZE) for c in range(GRID_SIZE))
-        expected = sum(BASE_K[s] * habitat_suitability(grid[r][c]['elevation'], s) * 0.5
-                      for r in range(GRID_SIZE) for c in range(GRID_SIZE))
-        names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
-        if expected > 0:
-            ratio = total / expected
-            if ratio > 2.0:
+    # Population surge/crash monitoring (only fire every 200 gens to avoid spam)
+    if generation % 200 == 0:
+        for s in range(NUM_SPECIES):
+            total = sum(grid[r][c]['pops'][s] for r in range(GRID_SIZE) for c in range(GRID_SIZE))
+            expected = sum(BASE_K[s] * habitat_suitability(grid[r][c]['elevation'], s) * 0.5
+                          for r in range(GRID_SIZE) for c in range(GRID_SIZE))
+            if expected > 0:
+                ratio = total / expected
+                if ratio > 3.0:
+                    events_buffer.append({
+                        'gen': generation,
+                        'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)'
+                    })
+                elif ratio < 0.05 and total > 0:
+                    events_buffer.append({
+                        'gen': generation,
+                        'text': f'{names[s]} population critically low — only {total} individuals remain'
+                    })
+
+# ── PHASE 1: SUBGROUP DETECTION & SPLITTING ──
+
+def _detect_subgroups():
+    """Detect forming spatial subgroups using 2-means clustering on allele vectors.
+    Returns None or dict with cluster info."""
+    # Collect populated tiles
+    tiles = []
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            p = grid[r][c]['pops'][VELOTHRIX]
+            if p > 5:
+                tiles.append((r, c, p, grid[r][c]['alleles'][:]))
+
+    if len(tiles) < 6:  # need at least 3 tiles per cluster
+        return None
+
+    # Build feature vectors: 5 allele freqs + 2 scaled spatial coords
+    spatial_weight = 0.3
+    features = []
+    for r, c, pop, alleles in tiles:
+        vec = alleles + [r / GRID_SIZE * spatial_weight, c / GRID_SIZE * spatial_weight]
+        features.append(vec)
+
+    # 2-means clustering with multiple restarts
+    best_labels = None
+    best_score = -1
+
+    for restart in range(5):
+        # Random init: pick 2 distinct tiles as centroids
+        idx_a = random.randint(0, len(features) - 1)
+        idx_b = random.randint(0, len(features) - 2)
+        if idx_b >= idx_a:
+            idx_b += 1
+        centroids = [features[idx_a][:], features[idx_b][:]]
+
+        labels = [0] * len(features)
+        for iteration in range(15):
+            # Assign
+            for i, vec in enumerate(features):
+                d0 = sum((vec[j] - centroids[0][j])**2 for j in range(7))
+                d1 = sum((vec[j] - centroids[1][j])**2 for j in range(7))
+                labels[i] = 0 if d0 <= d1 else 1
+
+            # Update centroids
+            for k in range(2):
+                members = [features[i] for i in range(len(features)) if labels[i] == k]
+                if members:
+                    centroids[k] = [sum(m[j] for m in members) / len(members) for j in range(7)]
+
+        # Score: between-cluster / within-cluster distance ratio
+        between = sum((centroids[0][j] - centroids[1][j])**2 for j in range(5))  # alleles only
+        within = [0.0, 0.0]
+        counts = [0, 0]
+        for i, vec in enumerate(features):
+            k = labels[i]
+            within[k] += sum((vec[j] - centroids[k][j])**2 for j in range(5))
+            counts[k] += 1
+
+        avg_within = sum(within) / max(1, sum(counts))
+        score = math.sqrt(between) / max(0.001, math.sqrt(avg_within))
+
+        if score > best_score and min(counts) >= 3:
+            best_score = score
+            best_labels = labels[:]
+
+    if best_labels is None or best_score < SUBGROUP_SEPARATION_THRESHOLD:
+        return None
+
+    # Build cluster info
+    cluster_a = [(tiles[i][0], tiles[i][1]) for i in range(len(tiles)) if best_labels[i] == 0]
+    cluster_b = [(tiles[i][0], tiles[i][1]) for i in range(len(tiles)) if best_labels[i] == 1]
+
+    # Population-weighted mean alleles per cluster
+    def cluster_alleles(tile_list):
+        total_p = 0
+        sums = [0.0] * NUM_LOCI
+        for r, c in tile_list:
+            p = grid[r][c]['pops'][VELOTHRIX]
+            for l in range(NUM_LOCI):
+                sums[l] += grid[r][c]['alleles'][l] * p
+            total_p += p
+        if total_p > 0:
+            return [s / total_p for s in sums], total_p
+        return [0.5] * NUM_LOCI, 0
+
+    alleles_a, pop_a = cluster_alleles(cluster_a)
+    alleles_b, pop_b = cluster_alleles(cluster_b)
+
+    return {
+        'cluster_a': cluster_a, 'cluster_b': cluster_b,
+        'alleles_a': alleles_a, 'alleles_b': alleles_b,
+        'pop_a': pop_a, 'pop_b': pop_b,
+        'separation': best_score,
+        'detected_gen': generation,
+    }
+
+
+def _run_buffer_sim(founding_alleles, founding_N, tile_elev, tile_food, season):
+    """Simulate a founding colony for BUFFER_SIM_GENS generations.
+    Returns dict with survival outcome and trajectory."""
+    N = founding_N
+    alleles = founding_alleles[:]
+    trajectory = [(0, N)]
+
+    # Founding mortality based on DISP frequency
+    disp_freq = alleles[LOCUS_DISP]
+    mortality = FOUNDING_MORTALITY_BASE * (1.0 + disp_freq * 0.5)
+    N = max(1, int(N * (1.0 - mortality)))
+
+    suit = habitat_suitability(tile_elev, VELOTHRIX)
+    k = BASE_K[VELOTHRIX] * suit * tile_food * (0.7 + 0.3 * season)
+
+    for gen in range(BUFFER_SIM_GENS):
+        if N <= 0:
+            break
+
+        # Logistic growth
+        growth = GROWTH_RATES[VELOTHRIX] + alleles[LOCUS_CREST] * 0.01
+        dpop = growth * N * (1.0 - N / max(1, k))
+        N = max(0, int(N + dpop + random.uniform(-0.5, 0.5)))
+
+        # Allee effect: tiny populations struggle
+        if 0 < N <= 2 and random.random() < 0.05:
+            N = 0
+            break
+
+        # Drift on alleles
+        Ne = max(1, int(N * NE_RATIO))
+        for locus in range(NUM_LOCI):
+            p = alleles[locus]
+            if Ne > 1 and 0.001 < p < 0.999:
+                drift_var = p * (1 - p) / (2 * Ne)
+                p += random.gauss(0, math.sqrt(max(0, drift_var)))
+            p = p - MU_FORWARD * p + MU_BACK * (1 - p)
+            alleles[locus] = max(0.001, min(0.999, p))
+
+        trajectory.append((gen + 1, N))
+
+    return {
+        'survived': N >= FOUNDING_MIN_N,
+        'final_N': N,
+        'final_alleles': alleles,
+        'trajectory': trajectory,
+    }
+
+
+def _step_pending_subgroup():
+    """Process pending subgroup detection → buffer sim → split card."""
+    global pending_subgroup, split_card_pending
+
+    if pending_subgroup is not None:
+        return  # Already processing one
+    if split_card_pending is not None:
+        return  # Waiting for player decision
+    if len(ghost_populations) >= 3:
+        return  # Cap on active ghost lineages
+
+    if generation % SUBGROUP_CHECK_INTERVAL != 0:
+        return
+
+    result = _detect_subgroups()
+    if result is None:
+        return
+
+    # DISP modulates split probability
+    smaller_cluster = result['cluster_b'] if result['pop_b'] < result['pop_a'] else result['cluster_a']
+    smaller_alleles = result['alleles_b'] if result['pop_b'] < result['pop_a'] else result['alleles_a']
+    smaller_pop = min(result['pop_a'], result['pop_b'])
+    disp_freq = smaller_alleles[LOCUS_DISP]
+
+    split_prob = 0.4 + 0.3 * disp_freq * result['separation'] / 3.0
+    if random.random() > split_prob:
+        return  # No split this time
+
+    # Pick a representative tile for the buffer sim
+    rep_tile = smaller_cluster[len(smaller_cluster) // 2]
+    tile = grid[rep_tile[0]][rep_tile[1]]
+    founding_N = max(FOUNDING_MIN_N, int(smaller_pop * 0.1))
+
+    buf_result = _run_buffer_sim(
+        smaller_alleles, founding_N,
+        tile['elevation'], tile['food'], get_season()
+    )
+
+    if not buf_result['survived']:
+        events_buffer.append({
+            'gen': generation,
+            'text': 'A dispersing Velothrix group failed to establish a viable colony'
+        })
+        return
+
+    # Buffer sim succeeded — prepare split card for JS
+    events_buffer.append({
+        'gen': generation,
+        'text': 'A Velothrix subpopulation has established a viable founding colony!'
+    })
+
+    # Determine names
+    larger_cluster = result['cluster_a'] if result['pop_a'] >= result['pop_b'] else result['cluster_b']
+    larger_alleles = result['alleles_a'] if result['pop_a'] >= result['pop_b'] else result['alleles_b']
+    larger_pop = max(result['pop_a'], result['pop_b'])
+
+    split_card_pending = {
+        'type': 'split_ready',
+        'larger': {
+            'name': 'Velothrix aurantis (ancestral)',
+            'tiles': larger_cluster,
+            'alleles': larger_alleles,
+            'pop': larger_pop,
+        },
+        'smaller': {
+            'name': 'Velothrix divergens (founding)',
+            'tiles': smaller_cluster,
+            'alleles': buf_result['final_alleles'],
+            'pop': buf_result['final_N'],
+            'trajectory': buf_result['trajectory'],
+        },
+        'separation': result['separation'],
+        'gen': generation,
+    }
+
+
+def execute_split(choice):
+    """Execute the split. choice = 'larger' or 'smaller'.
+    The chosen pop stays on the grid; the other becomes a ghost."""
+    global split_card_pending, ghost_populations
+
+    if split_card_pending is None:
+        return
+
+    data = split_card_pending
+    if choice == 'larger':
+        ghost_tiles = data['smaller']['tiles']
+        ghost_alleles = data['smaller']['alleles']
+        ghost_pop = data['smaller']['pop']
+        ghost_name = data['smaller']['name']
+    else:
+        ghost_tiles = data['larger']['tiles']
+        ghost_alleles = data['larger']['alleles']
+        ghost_pop = data['larger']['pop']
+        ghost_name = data['larger']['name']
+
+    # Zero out the ghost's tiles on the main grid
+    for r, c in ghost_tiles:
+        grid[r][c]['pops'][VELOTHRIX] = 0
+
+    # Create ghost population
+    ghost = {
+        'id': f'ghost_{len(ghost_populations)}',
+        'name': ghost_name,
+        'origin_gen': generation,
+        'tiles': ghost_tiles,
+        'N': ghost_pop,
+        'alleles': ghost_alleles[:],
+        'w_bar': 0.8,
+        'fst_vs_main': data['separation'] * 0.1,
+        'last_updated_gen': generation,
+        'alive': True,
+        'fst_sustained': 0,
+        'history': [(generation, ghost_pop, ghost_alleles[:])],
+    }
+    ghost_populations.append(ghost)
+
+    events_buffer.append({
+        'gen': generation,
+        'text': f'Population split! Now following the {"ancestral" if choice == "larger" else "founding"} group. {ghost_name} continues as a ghost lineage ({ghost_pop} individuals).'
+    })
+
+    split_card_pending = None
+
+
+def _step_ghosts():
+    """Update ghost populations at reduced cadence."""
+    global speciation_completed
+    if generation % GHOST_UPDATE_INTERVAL != 0:
+        return
+
+    season = get_season()
+
+    # Get main population mean alleles for FST computation
+    main_total_pop = 0
+    main_sum_alleles = [0.0] * NUM_LOCI
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            p = grid[r][c]['pops'][VELOTHRIX]
+            if p > 0:
+                for l in range(NUM_LOCI):
+                    main_sum_alleles[l] += grid[r][c]['alleles'][l] * p
+                main_total_pop += p
+    if main_total_pop > 0:
+        main_alleles = [s / main_total_pop for s in main_sum_alleles]
+    else:
+        main_alleles = [0.5] * NUM_LOCI
+
+    for ghost in ghost_populations:
+        if not ghost['alive']:
+            continue
+
+        N = ghost['N']
+        alleles = ghost['alleles']
+
+        # Simplified logistic growth
+        k = BASE_K[VELOTHRIX] * 0.6 * len(ghost['tiles'])  # rough K estimate
+        growth = GROWTH_RATES[VELOTHRIX]
+        dpop = growth * N * (1.0 - N / max(1, k))
+        N = max(0, int(N + dpop * GHOST_UPDATE_INTERVAL + random.gauss(0, max(1, math.sqrt(N)))))
+
+        # Stochastic extinction
+        if N < 3:
+            ghost['alive'] = False
+            ghost['N'] = 0
+            events_buffer.append({
+                'gen': generation,
+                'text': f'{ghost["name"]} ghost lineage has gone extinct',
+                'ghost_extinction': True,
+            })
+            continue
+
+        # Allele drift + selection (simplified)
+        Ne = max(1, int(N * NE_RATIO))
+        for locus in range(NUM_LOCI):
+            p = alleles[locus]
+            # Drift
+            if Ne > 1 and 0.001 < p < 0.999:
+                drift_var = p * (1 - p) / (2 * Ne)
+                p += random.gauss(0, math.sqrt(max(0, drift_var))) * math.sqrt(GHOST_UPDATE_INTERVAL)
+            # Selection pressure (simplified directional)
+            if locus == LOCUS_CREST:
+                s_net = SEL_CREST_SEXUAL - SEL_CREST_PREDATION * leviathan_acuity
+                p += p * (1 - p) * s_net * GHOST_UPDATE_INTERVAL * 0.3
+            elif locus == LOCUS_SPINE:
+                s_net = SEL_SPINE_BENEFIT * beetle_pressure - SEL_SPINE_COST
+                p += p * (1 - p) * s_net * GHOST_UPDATE_INTERVAL * 0.3
+            # Mutation
+            p = p - MU_FORWARD * p + MU_BACK * (1 - p)
+            alleles[locus] = max(0.001, min(0.999, p))
+
+        ghost['N'] = N
+        ghost['alleles'] = alleles
+
+        # Mean fitness estimate
+        ghost['w_bar'] = max(0.3, 1.0 - abs(alleles[LOCUS_CREST] - 0.5) * 0.3 - abs(alleles[LOCUS_BODY] - 0.5) * 0.2)
+
+        # FST vs main population
+        if main_total_pop > 0:
+            fst_sum = 0.0
+            for locus in range(NUM_LOCI):
+                p_main = main_alleles[locus]
+                p_ghost = alleles[locus]
+                p_total = (p_main * main_total_pop + p_ghost * N) / (main_total_pop + N)
+                H_T = 2 * p_total * (1 - p_total)
+                H_S = (main_total_pop * 2 * p_main * (1 - p_main) + N * 2 * p_ghost * (1 - p_ghost)) / (main_total_pop + N)
+                if H_T > 0.001:
+                    fst_sum += (H_T - H_S) / H_T
+            ghost['fst_vs_main'] = fst_sum / NUM_LOCI
+        else:
+            ghost['fst_vs_main'] = 0.5
+
+        ghost['last_updated_gen'] = generation
+        ghost['history'].append((generation, N, alleles[:]))
+        # Keep history bounded
+        if len(ghost['history']) > 100:
+            ghost['history'] = ghost['history'][-100:]
+
+        # Speciation completion check
+        if ghost['fst_vs_main'] > FST_SPECIATION_THRESHOLD:
+            ghost['fst_sustained'] += GHOST_UPDATE_INTERVAL
+            if ghost['fst_sustained'] >= SPECIATION_SUSTAINED_GENS:
+                ghost['alive'] = False  # Becomes a separate species
                 events_buffer.append({
                     'gen': generation,
-                    'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)'
+                    'text': f'Full speciation! {ghost["name"]} is now reproductively isolated (FST={ghost["fst_vs_main"]:.3f})',
+                    'speciation': True,
                 })
-            elif ratio < 0.2 and total > 0:
-                events_buffer.append({
+                # Signal JS for pentagon zero-reset animation
+                speciation_completed = {
+                    'ghost_name': ghost['name'],
+                    'fst': ghost['fst_vs_main'],
                     'gen': generation,
-                    'text': f'{names[s]} population critically low — only {total} individuals remain'
-                })
+                }
+        else:
+            ghost['fst_sustained'] = max(0, ghost['fst_sustained'] - GHOST_UPDATE_INTERVAL // 2)
+
+
+def get_split_card():
+    """Return pending split card data for JS, or empty JSON."""
+    if split_card_pending is not None:
+        return json.dumps(split_card_pending)
+    return json.dumps(None)
+
+def get_speciation_completion():
+    """Return and consume pending speciation completion event."""
+    global speciation_completed
+    if speciation_completed is not None:
+        result = json.dumps(speciation_completed)
+        speciation_completed = None
+        return result
+    return json.dumps(None)
+
+def get_ghost_data():
+    """Return ghost population data for JS rendering."""
+    return json.dumps([{
+        'id': g['id'],
+        'name': g['name'],
+        'N': g['N'],
+        'alleles': {LOCUS_NAMES[i]: round(g['alleles'][i], 4) for i in range(NUM_LOCI)},
+        'fst': round(g['fst_vs_main'], 4),
+        'w_bar': round(g['w_bar'], 4),
+        'alive': g['alive'],
+        'origin_gen': g['origin_gen'],
+    } for g in ghost_populations])
+
 
 # ── API FUNCTIONS (called from JS) ──
 
@@ -2503,7 +4112,7 @@ def get_map_data(species_idx):
     pops = []
     elevations = []
     biomes = []
-    variants = []  # 0 = no speciation or parent, 1 = variant
+    variants = []
     max_pop = 1
     has_speciation = species_idx in speciation_events
     split_trait = speciation_events[species_idx]['split_trait'] if has_speciation else 0
@@ -2534,9 +4143,7 @@ def get_map_data(species_idx):
 def get_speciation_info():
     """Return all speciation events for JS."""
     result = {}
-    names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
     for s, info in speciation_events.items():
-        # Compute per-variant stats
         parent_pop = 0
         parent_trait_sum = 0.0
         parent_tiles = []
@@ -2589,7 +4196,6 @@ def get_trait_histogram(species_idx):
 def get_scatter_spatial():
     """Return per-tile data for spatial scatter plot."""
     tiles = []
-    season = get_season()
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
             t = grid[r][c]
@@ -2603,27 +4209,82 @@ def get_scatter_spatial():
             })
     return json.dumps(tiles)
 
-def get_active_events_info():
-    """Return info about currently active persistent events."""
-    result = []
-    for ev in active_events:
-        remaining = ev['start_gen'] + ev['duration'] - generation
-        info = {'type': ev['type'], 'remaining': remaining, 'duration': ev['duration']}
-        if ev['type'] == 'tidal_surge':
-            info['affected_count'] = len(ev['data']['original_elevations'])
-        elif ev['type'] == 'reef_formation':
-            info['tile'] = list(ev['data']['tile'])
-            info['progress'] = (generation - ev['start_gen']) / ev['duration']
-        elif ev['type'] == 'migration_corridor':
-            info['path_length'] = len(ev['data']['path'])
-        result.append(info)
-    return json.dumps(result)
-
 def get_and_clear_events():
     global events_buffer
     out = json.dumps(events_buffer)
     events_buffer = []
     return out
+
+# ── NEW GENETICS API ──
+
+def get_velothrix_genetics():
+    """Return comprehensive Velothrix genetics data for UI."""
+    # Population-weighted allele frequencies across all tiles
+    total_pop = 0
+    sum_alleles = [0.0] * NUM_LOCI
+    sum_H = [0.0] * NUM_LOCI
+
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            p = grid[r][c]['pops'][VELOTHRIX]
+            if p > 0:
+                for locus in range(NUM_LOCI):
+                    freq = grid[r][c]['alleles'][locus]
+                    sum_alleles[locus] += freq * p
+                    sum_H[locus] += 2 * freq * (1 - freq) * p
+                total_pop += p
+
+    if total_pop > 0:
+        mean_alleles = [s / total_pop for s in sum_alleles]
+        mean_H = [s / total_pop for s in sum_H]
+    else:
+        mean_alleles = [0.5] * NUM_LOCI
+        mean_H = [0.5] * NUM_LOCI
+
+    # Current FST
+    fst = _compute_velothrix_fst()
+
+    # Mean fitness
+    w_mean_sum = 0.0
+    w_count = 0
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            if grid[r][c]['pops'][VELOTHRIX] > 0:
+                _, w = _velothrix_selection(grid[r][c], get_season())
+                w_mean_sum += w * grid[r][c]['pops'][VELOTHRIX]
+                w_count += grid[r][c]['pops'][VELOTHRIX]
+    w_bar = w_mean_sum / max(1, w_count)
+
+    return json.dumps({
+        'alleles': {LOCUS_NAMES[i]: round(mean_alleles[i], 4) for i in range(NUM_LOCI)},
+        'heterozygosity': {LOCUS_NAMES[i]: round(mean_H[i], 4) for i in range(NUM_LOCI)},
+        'mean_H': round(sum(mean_H) / NUM_LOCI, 4),
+        'fst': round(fst, 4),
+        'fst_pct': round(fst * 100, 1),
+        'w_bar': round(w_bar, 4),
+        'population': total_pop,
+        'leviathan_acuity': round(leviathan_acuity, 4),
+        'beetle_pressure': round(beetle_pressure, 4),
+        'caterpillar_timing': round(caterpillar_timing, 4),
+        'locus_names': LOCUS_NAMES,
+    })
+
+def get_fst_history():
+    """Return FST time series for charting."""
+    return json.dumps(fst_history)
+
+def get_env_trends():
+    """Return current environmental trend state."""
+    return json.dumps({k: round(v['value'], 4) for k, v in env_trends.items()})
+
+def get_tile_alleles(r, c):
+    """Return allele frequencies for a specific tile."""
+    tile = grid[r][c]
+    return json.dumps({
+        'alleles': {LOCUS_NAMES[i]: round(tile['alleles'][i], 4) for i in range(NUM_LOCI)},
+        'heterozygosity': [round(2 * tile['alleles'][i] * (1 - tile['alleles'][i]), 4) for i in range(NUM_LOCI)],
+        'pop': tile['pops'][VELOTHRIX],
+    })
 `;
 
 // ── BOOT ──
