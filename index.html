@@ -1167,6 +1167,228 @@ body {
     font-size: 11px;
   }
 }
+
+/* ── EPOCH BANNER ── */
+#epoch-banner {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  pointer-events: none;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+#epoch-banner.visible { opacity: 1; }
+#epoch-name {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--epoch-accent, var(--dim));
+  text-shadow: 0 0 12px var(--epoch-glow, transparent);
+}
+#epoch-subtitle {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: 2px;
+  opacity: 0.7;
+}
+
+/* ── EPOCH TRANSITION FLASH ── */
+#epoch-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(ellipse at center, var(--epoch-glow, rgba(221,193,101,0.15)) 0%, transparent 70%);
+}
+#epoch-transition-overlay.flash {
+  opacity: 1;
+  animation: epoch-flash 2s ease-out forwards;
+}
+@keyframes epoch-flash {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── EPOCH TRANSITION ANNOUNCEMENT ── */
+#epoch-announce {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 201;
+  pointer-events: none;
+  text-align: center;
+  opacity: 0;
+}
+#epoch-announce.show {
+  animation: epoch-announce-in 3s ease-out forwards;
+}
+@keyframes epoch-announce-in {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  10% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  70% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
+}
+#epoch-announce-name {
+  font-family: var(--sans);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--epoch-accent, var(--gold));
+  text-shadow: 0 0 30px var(--epoch-glow, rgba(221,193,101,0.4));
+}
+#epoch-announce-line {
+  width: 120px;
+  height: 1px;
+  background: var(--epoch-accent, var(--gold));
+  margin: 8px auto;
+  opacity: 0.5;
+}
+#epoch-announce-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 1px;
+}
+
+/* ── ATMOSPHERE VARIABLES (defaults = genesis) ── */
+:root {
+  --epoch-accent: var(--dim);
+  --epoch-glow: rgba(138, 117, 96, 0.2);
+  --epoch-bg-shift: transparent;
+  --epoch-vignette: transparent;
+}
+
+/* Atmosphere overlays */
+#atmosphere-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: background 2s ease, box-shadow 2s ease;
+}
+
+/* Atmosphere classes applied to body */
+body.atmo-genesis { }
+body.atmo-expansion {
+  --epoch-accent: #7fcc7f;
+  --epoch-glow: rgba(127, 204, 127, 0.25);
+}
+body.atmo-equilibrium {
+  --epoch-accent: #8a9cc0;
+  --epoch-glow: rgba(138, 156, 192, 0.2);
+}
+body.atmo-drought {
+  --epoch-accent: #cc8844;
+  --epoch-glow: rgba(204, 136, 68, 0.3);
+}
+body.atmo-marsh {
+  --epoch-accent: #5daa8f;
+  --epoch-glow: rgba(93, 170, 143, 0.25);
+}
+body.atmo-reef {
+  --epoch-accent: var(--orange);
+  --epoch-glow: rgba(229, 89, 28, 0.3);
+}
+body.atmo-warming {
+  --epoch-accent: #e07040;
+  --epoch-glow: rgba(224, 112, 64, 0.3);
+}
+body.atmo-frost {
+  --epoch-accent: #88bbdd;
+  --epoch-glow: rgba(136, 187, 221, 0.3);
+}
+body.atmo-dominance {
+  --epoch-accent: var(--gold);
+  --epoch-glow: rgba(221, 193, 101, 0.3);
+}
+body.atmo-collapse {
+  --epoch-accent: #cc3333;
+  --epoch-glow: rgba(204, 51, 51, 0.4);
+}
+body.atmo-divergence {
+  --epoch-accent: #bb77dd;
+  --epoch-glow: rgba(187, 119, 221, 0.3);
+}
+
+/* Atmosphere background tints — subtle color washes behind the app */
+body.atmo-drought #atmosphere-layer {
+  background: linear-gradient(180deg, rgba(80,50,10,0.08) 0%, transparent 60%);
+}
+body.atmo-marsh #atmosphere-layer {
+  background: linear-gradient(180deg, rgba(20,60,50,0.08) 0%, transparent 60%);
+}
+body.atmo-frost #atmosphere-layer {
+  background: linear-gradient(180deg, rgba(30,50,70,0.1) 0%, transparent 60%);
+}
+body.atmo-warming #atmosphere-layer {
+  background: linear-gradient(180deg, rgba(80,30,10,0.08) 0%, transparent 60%);
+}
+body.atmo-collapse #atmosphere-layer {
+  background: linear-gradient(180deg, rgba(60,10,10,0.12) 0%, transparent 60%);
+  box-shadow: inset 0 0 120px rgba(100,20,20,0.15);
+}
+body.atmo-divergence #atmosphere-layer {
+  background: linear-gradient(180deg, rgba(50,20,60,0.08) 0%, transparent 60%);
+}
+body.atmo-expansion #atmosphere-layer {
+  background: linear-gradient(180deg, rgba(20,50,20,0.06) 0%, transparent 60%);
+}
+body.atmo-reef #atmosphere-layer {
+  background: linear-gradient(180deg, rgba(60,30,10,0.06) 0%, transparent 60%);
+}
+
+/* Epoch marker in event log */
+.log-entry.epoch-marker {
+  background: rgba(138, 117, 96, 0.15);
+  border-left: 3px solid var(--epoch-accent, var(--dim));
+  padding: 4px 8px;
+  margin: 4px 0;
+  font-family: var(--sans);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 10px;
+  color: var(--epoch-accent, var(--dim));
+}
+
+/* Event log epoch history section */
+.epoch-history-entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 10px;
+  color: var(--dim);
+  border-bottom: 1px solid rgba(61,42,16,0.3);
+}
+.epoch-history-entry .epoch-h-name {
+  font-family: var(--sans);
+  font-weight: 600;
+  color: var(--text);
+}
+.epoch-history-entry .epoch-h-gens {
+  font-family: var(--mono);
+  color: var(--dim);
+}
+#epoch-history-bar {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  max-height: 80px;
+  overflow-y: auto;
+}
+#epoch-history-bar:empty {
+  display: none;
+}
 </style>
 </head>
 <body>
@@ -1206,6 +1428,19 @@ body {
   <button id="btn-begin" onclick="beginObservation()">Begin Observation</button>
 </div>
 
+<!-- ATMOSPHERE LAYER (behind everything) -->
+<div id="atmosphere-layer"></div>
+
+<!-- EPOCH TRANSITION OVERLAY -->
+<div id="epoch-transition-overlay"></div>
+
+<!-- EPOCH ANNOUNCEMENT -->
+<div id="epoch-announce">
+  <div id="epoch-announce-name"></div>
+  <div id="epoch-announce-line"></div>
+  <div id="epoch-announce-sub"></div>
+</div>
+
 <!-- APP -->
 <div id="app">
   <!-- HEADER -->
@@ -1240,6 +1475,10 @@ body {
 
   <!-- MAP -->
   <div id="map-area">
+    <div id="epoch-banner">
+      <div id="epoch-name"></div>
+      <div id="epoch-subtitle"></div>
+    </div>
     <canvas id="map-canvas"></canvas>
     <div id="event-feed"></div>
   </div>
@@ -1382,6 +1621,7 @@ body {
 
   <!-- EVENT LOG -->
   <div id="event-log">
+    <div id="epoch-history-bar"></div>
     <div class="log-entry"><span class="ev-gen">[System]</span> <span class="ev-text">Ecosystem initializing...</span></div>
   </div>
 
@@ -1455,6 +1695,11 @@ let stepsPerFrame = 1;
 let setupMapSize = 12;
 let previewData = null;
 let previewCanvas, previewCtx;
+
+// ── EPOCH STATE ──
+let currentEpochName = null;
+let currentAtmosphere = null;
+let epochCheckCounter = 0;
 
 // ── ISOMETRIC CAMERA ──
 let camTilt = 0.5;    // 0.25 = nearly flat, 0.75 = steep
@@ -1698,8 +1943,19 @@ function beginObservation() {
   document.getElementById('gen-num').textContent = '0';
   document.getElementById('btn-play').textContent = '\u25b6 Play';
 
+  // Reset epoch state
+  currentEpochName = null;
+  currentAtmosphere = null;
+  epochCheckCounter = 0;
+  document.body.className = document.body.className.replace(/\batmo-\S+/g, '').trim();
+
   resizeCanvases();
   setViewMode('field'); // Start in Field mode
+
+  // Initialize epoch on first frame
+  pyodide.runPython('_check_epoch()');
+  updateEpoch();
+
   updateKPIStrip();
   updatePentagons();
   renderAll();
@@ -2885,6 +3141,71 @@ function showNotification(text) {
   setTimeout(() => banner.remove(), 4500);
 }
 
+// ── EPOCH SYSTEM (JS) ──
+const EPOCH_SUBTITLES = {
+  'genesis': 'The world awakens',
+  'expansion': 'Life spreads across the marsh',
+  'equilibrium': 'A fragile balance holds',
+  'drought': 'The waters recede',
+  'marsh': 'The wetlands rise',
+  'reef': 'Stone overtakes the shore',
+  'warming': 'Heat shimmers on the flats',
+  'frost': 'Cold grips the marsh',
+  'dominance': 'One species claims the world',
+  'collapse': 'The ecosystem unravels',
+  'divergence': 'Lineages split apart',
+};
+
+function updateEpoch() {
+  const epochJson = pyodide.runPython('get_epoch_info()');
+  const epoch = JSON.parse(epochJson);
+
+  if (epoch.name !== currentEpochName) {
+    const isFirst = currentEpochName === null;
+    currentEpochName = epoch.name;
+    currentAtmosphere = epoch.atmosphere;
+
+    // Update banner
+    const banner = document.getElementById('epoch-banner');
+    const nameEl = document.getElementById('epoch-name');
+    const subEl = document.getElementById('epoch-subtitle');
+    nameEl.textContent = epoch.name;
+    subEl.textContent = EPOCH_SUBTITLES[epoch.atmosphere] || '';
+    banner.classList.add('visible');
+
+    // Switch atmosphere class on body
+    document.body.className = document.body.className.replace(/\batmo-\S+/g, '').trim();
+    document.body.classList.add('atmo-' + epoch.atmosphere);
+
+    // Update epoch history bar in event log
+    const histBar = document.getElementById('epoch-history-bar');
+    if (histBar && epoch.history.length > 0) {
+      histBar.innerHTML = epoch.history.map(e =>
+        `<div class="epoch-history-entry"><span class="epoch-h-name">${e.name}</span><span class="epoch-h-gens">Gen ${e.start}–${e.end}</span></div>`
+      ).join('');
+    }
+
+    // Transition animation (skip for first epoch)
+    if (!isFirst) {
+      // Flash overlay
+      const overlay = document.getElementById('epoch-transition-overlay');
+      overlay.classList.remove('flash');
+      void overlay.offsetWidth; // force reflow
+      overlay.classList.add('flash');
+      setTimeout(() => overlay.classList.remove('flash'), 2200);
+
+      // Announcement
+      const announce = document.getElementById('epoch-announce');
+      document.getElementById('epoch-announce-name').textContent = epoch.name;
+      document.getElementById('epoch-announce-sub').textContent = EPOCH_SUBTITLES[epoch.atmosphere] || '';
+      announce.classList.remove('show');
+      void announce.offsetWidth;
+      announce.classList.add('show');
+      setTimeout(() => announce.classList.remove('show'), 3200);
+    }
+  }
+}
+
 // ── FIELD DISPATCH VOICE ──
 function toFieldVoice(text) {
   // Strip emoji and parameter values, add narrative framing
@@ -2951,16 +3272,20 @@ function tick() {
     const log = document.getElementById('event-log');
     events.forEach(ev => {
       const isSpeciation = ev.speciation === true;
+      const isEpochTransition = ev.epoch_transition === true;
       // Field dispatch voice: narrative, no raw parameters
       const displayText = viewMode === 'field' ? toFieldVoice(ev.text) : ev.text;
       const feedDiv = document.createElement('div');
       feedDiv.innerHTML = `<span class="ev-gen">[Gen ${ev.gen}]</span> <span class="ev-text" style="font-style:italic">${displayText}</span>`;
       if (isSpeciation) feedDiv.style.color = 'var(--gold-light)';
+      if (isEpochTransition) feedDiv.style.color = 'var(--epoch-accent)';
       feed.appendChild(feedDiv);
 
       const logDiv = document.createElement('div');
-      logDiv.className = 'log-entry' + (isSpeciation ? ' speciation-event' : '');
-      logDiv.innerHTML = feedDiv.innerHTML;
+      logDiv.className = 'log-entry' + (isSpeciation ? ' speciation-event' : '') + (isEpochTransition ? ' epoch-marker' : '');
+      logDiv.innerHTML = isEpochTransition
+        ? `<span class="ev-gen">[Gen ${ev.gen}]</span> ${ev.epoch_name || ev.text}`
+        : feedDiv.innerHTML;
       log.appendChild(logDiv);
     });
     // Keep feed short
@@ -2977,6 +3302,13 @@ function tick() {
         showGameOutcome(ev.outcome);
       }
     });
+  }
+
+  // Update epoch (every 10 frames to match Python-side check interval)
+  epochCheckCounter++;
+  if (epochCheckCounter >= 10) {
+    epochCheckCounter = 0;
+    updateEpoch();
   }
 
   // Update KPI strip and pentagons
@@ -3751,6 +4083,161 @@ _surge_tiles = set()  # set of (r,c) tuples for tiles affected by tidal surge
 SPECIATION_THRESHOLD = 0.3
 SPECIATION_GENS = 100
 
+# ── EPOCH SYSTEM ──
+# Epochs are narrative eras determined by ecosystem state + generation count.
+# Each epoch has atmosphere properties sent to JS for visual styling.
+
+EPOCH_CHECK_INTERVAL = 10  # check epoch every N gens
+
+current_epoch = None
+epoch_history = []  # list of {name, start_gen, end_gen}
+
+def _get_ecosystem_metrics():
+    """Compute summary metrics for epoch classification."""
+    global_pops = [0] * NUM_SPECIES
+    total_pop = 0
+    occupied_tiles = 0
+    species_present = 0
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            tile_total = 0
+            for s in range(NUM_SPECIES):
+                global_pops[s] += grid[r][c]['pops'][s]
+                tile_total += grid[r][c]['pops'][s]
+            if tile_total > 0:
+                occupied_tiles += 1
+            total_pop += tile_total
+    for s in range(NUM_SPECIES):
+        if global_pops[s] > 0:
+            species_present += 1
+
+    # Dominance: max species pop / total
+    max_pop = max(global_pops) if total_pop > 0 else 0
+    dominance = max_pop / max(1, total_pop)
+    dominant_species = global_pops.index(max_pop) if max_pop > 0 else -1
+
+    # Biome composition
+    rocky_count = 0
+    water_count = 0
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            b = get_biome(grid[r][c]['elevation'])
+            if b == 'rocky_shore':
+                rocky_count += 1
+            elif b == 'deep_water':
+                water_count += 1
+    total_tiles = GRID_SIZE * GRID_SIZE
+
+    return {
+        'global_pops': global_pops,
+        'total_pop': total_pop,
+        'species_present': species_present,
+        'occupied_tiles': occupied_tiles,
+        'total_tiles': total_tiles,
+        'dominance': dominance,
+        'dominant_species': dominant_species,
+        'rocky_frac': rocky_count / total_tiles,
+        'water_frac': water_count / total_tiles,
+        'moisture': env_trends['moisture'],
+        'temperature': env_trends['temperature'],
+        'productivity': env_trends['productivity'],
+        'has_speciation': len(speciation_events) > 0,
+        'num_active_events': len(active_events),
+    }
+
+def _classify_epoch(m):
+    """Determine current epoch from ecosystem metrics. Returns (name, atmosphere_key)."""
+    names = ['Velothrix', 'Kelp Leviathan', 'Reed Crawler', 'Tidal Crab', 'Bioluminescent Worm']
+
+    # Priority-ordered epoch checks — first match wins
+
+    # 1. Mass extinction: 2 or fewer species remain
+    if m['species_present'] <= 2:
+        return ('The Collapse', 'collapse')
+
+    # 2. Speciation has occurred
+    if m['has_speciation']:
+        return ('Age of Divergence', 'divergence')
+
+    # 3. Single-species dominance >60%
+    if m['dominance'] > 0.60 and m['dominant_species'] >= 0:
+        dom_name = names[m['dominant_species']]
+        epoch_names = {
+            0: f'Velothrix Ascendancy',
+            1: f'Leviathan Reign',
+            2: f'Crawler Dominion',
+            3: f'Crab Hegemony',
+            4: f'Worm Bloom',
+        }
+        return (epoch_names.get(m['dominant_species'], f'{dom_name} Dominance'), 'dominance')
+
+    # 4. Low productivity / drought era
+    if m['productivity'] < 0.25:
+        return ('The Great Drought', 'drought')
+
+    # 5. High moisture — marsh expansion
+    if m['moisture'] > 0.75:
+        return ('Tide of the Marsh', 'marsh')
+
+    # 6. Reef-heavy terrain
+    if m['rocky_frac'] > 0.2:
+        return ('Reef Dominance', 'reef')
+
+    # 7. High temperature
+    if m['temperature'] > 0.75:
+        return ('The Warming', 'warming')
+
+    # 8. Low temperature
+    if m['temperature'] < 0.25:
+        return ('The Long Frost', 'frost')
+
+    # 9. High total population — expansion
+    expected_total = sum(BASE_K) * m['total_tiles'] * 0.3
+    if m['total_pop'] > expected_total * 1.5:
+        return ('Age of Expansion', 'expansion')
+
+    # 10. Early game — genesis
+    if generation < 200:
+        return ('Genesis', 'genesis')
+
+    # 11. Default — equilibrium
+    return ('The Equilibrium', 'equilibrium')
+
+def _check_epoch():
+    """Check if epoch should change. Called every EPOCH_CHECK_INTERVAL gens."""
+    global current_epoch
+    m = _get_ecosystem_metrics()
+    name, atmo = _classify_epoch(m)
+
+    if current_epoch is None or current_epoch['name'] != name:
+        # Epoch transition
+        if current_epoch is not None:
+            current_epoch['end_gen'] = generation
+            epoch_history.append(current_epoch)
+            events_buffer.append({
+                'gen': generation,
+                'text': f'A new era dawns — {name}',
+                'epoch_transition': True,
+                'epoch_name': name,
+            })
+        current_epoch = {
+            'name': name,
+            'atmosphere': atmo,
+            'start_gen': generation,
+            'end_gen': None,
+        }
+
+def get_epoch_info():
+    """Return current epoch state for JS."""
+    if current_epoch is None:
+        return json.dumps({'name': 'Genesis', 'atmosphere': 'genesis', 'start_gen': 0, 'history': []})
+    return json.dumps({
+        'name': current_epoch['name'],
+        'atmosphere': current_epoch['atmosphere'],
+        'start_gen': current_epoch['start_gen'],
+        'history': [{'name': e['name'], 'start': e['start_gen'], 'end': e['end_gen']} for e in epoch_history[-20:]],
+    })
+
 # ── STATE ──
 generation = 0
 events_buffer = []
@@ -4010,11 +4497,14 @@ def generate_preview(seed_str, grid_size):
 def init_grid(seed_str=None):
     global grid, generation, events_buffer, active_events, speciation_events, trait_divergence_counter
     global leviathan_acuity, beetle_pressure, caterpillar_C_star, caterpillar_drift_dir
+    global current_epoch, epoch_history
     generation = 0
     events_buffer = []
     active_events = []
     speciation_events = {}
     trait_divergence_counter = {}
+    current_epoch = None
+    epoch_history = []
     # Randomise environmental trend velocities per playthrough
     global env_trends, env_trend_velocities, env_trend_history
     env_trends = {k: 0.5 for k in env_trends}
@@ -4180,6 +4670,10 @@ def step():
 
     # 3. Random events (very rare)
     _check_events(season)
+
+    # 3b. Epoch check (every N gens)
+    if generation % EPOCH_CHECK_INTERVAL == 0:
+        _check_epoch()
 
     # 4. Update coevolving antagonists
     _update_coevolving_antagonists()
@@ -4370,6 +4864,77 @@ def _record_lab_history():
         antagonist_history[:] = antagonist_history[-1500:]
         fitness_history[:] = fitness_history[-1500:]
 
+def _narrate_event(event_type, **kwargs):
+    """Generate narrative text for events — atmospheric field-journal voice."""
+    region = kwargs.get('region', 'the marsh')
+    tiles = kwargs.get('tiles', 0)
+    duration = kwargs.get('duration', 0)
+    target = kwargs.get('target', '')
+    mortality = kwargs.get('mortality', 0)
+    direction = kwargs.get('direction', '')
+    r = kwargs.get('r', 0)
+    c = kwargs.get('c', 0)
+    total = kwargs.get('total', 0)
+    ratio = kwargs.get('ratio', 0)
+
+    narratives = {
+        'drought': [
+            f'The {region} flats crack and whiten — {tiles} tiles stripped of moisture',
+            f'A dry wind sweeps {region} — food and water vanishing from {tiles} tiles',
+            f'Dust rises from the {region} shore. The marsh remembers wetter days.',
+        ],
+        'flood': [
+            f'Water surges through the {region} lowlands — {tiles} tiles submerged beneath silt-brown current',
+            f'The {region} channels overflow their banks. Crabs and Crawlers scatter.',
+            f'Rain hammers the {region} coast — the boundary between land and sea shifts overnight',
+        ],
+        'disease': [
+            f'A sickness moves through the {target} colonies — epicenter near the {region} shore, ~{mortality}% peak mortality',
+            f'The {target} grow lethargic. Something unseen culls the dense populations.',
+            f'Field note: unusual die-off among {target}. Density-dependent pathogen suspected.',
+        ],
+        'bloom_start': [
+            f'The water greens with algae — a bloom spreads across the wetlands. Duration: {duration} generations',
+            f'Nutrients surge through the channels. An algal bloom clouds the deep water for {duration} generations.',
+        ],
+        'bloom_end': [
+            'The algal bloom subsides. Clarity returns to the channels.',
+            'Green gives way to dark water again — the bloom has run its course.',
+        ],
+        'surge_start': [
+            f'Tidal surge — the sea claims {tiles} coastal tiles. The deep water boundary shifts landward.',
+            f'Storm-driven waves push inland. {tiles} tiles temporarily submerged for {duration} generations.',
+        ],
+        'surge_end': [
+            'The tidal surge recedes. Shore-dwellers reclaim exposed substrate.',
+            'Water levels drop — the coast rebuilds itself, tile by tile.',
+        ],
+        'corridor_start': [
+            f'A seasonal current opens a {direction} migration corridor — species flow between isolated biomes',
+            f'Warm water carves a temporary {direction} passage. Isolated populations reconnect.',
+        ],
+        'corridor_end': [
+            'The migration corridor closes as seasonal currents shift.',
+            'The connecting current weakens and dies. Populations isolated once more.',
+        ],
+        'reef_start': [
+            f'Calcium carbonate accumulates near the {region} shore — a reef is forming. This will take {duration} generations.',
+        ],
+        'reef_complete': [
+            f'The reef stands complete — new rocky substrate has emerged along the {region} shore.',
+        ],
+        'pop_surge': [
+            f'{target} numbers explode — {total} individuals, {ratio:.1f}x expected. The marsh strains under the weight.',
+        ],
+        'pop_critical': [
+            f'{target} population critically low — only {total} remain. The species clings to existence.',
+            f'Field note: fewer than {total} {target} observed. Extinction risk elevated.',
+        ],
+    }
+
+    options = narratives.get(event_type, [f'{event_type}: {kwargs}'])
+    return random.choice(options)
+
 def _check_events(season):
     """Check for random environmental events and manage active persistent events."""
     global active_events, _bloom_active, _surge_tiles
@@ -4386,23 +4951,23 @@ def _check_events(season):
         if remaining <= 0:
             # Event ending
             if ev['type'] == 'algal_bloom':
-                events_buffer.append({'gen': generation, 'text': f'Algal bloom subsiding — visibility returning to normal'})
+                events_buffer.append({'gen': generation, 'text': _narrate_event('bloom_end')})
             elif ev['type'] == 'tidal_surge':
                 # Restore original elevations
                 for pos, orig_elev in ev['data']['original_elevations']:
                     r, c = pos
                     if 0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE:
                         grid[r][c]['elevation'] = orig_elev
-                events_buffer.append({'gen': generation, 'text': f'Tidal surge receding — deep water boundaries contracting'})
+                events_buffer.append({'gen': generation, 'text': _narrate_event('surge_end')})
             elif ev['type'] == 'migration_corridor':
-                events_buffer.append({'gen': generation, 'text': f'Migration corridor closing as seasonal currents shift'})
+                events_buffer.append({'gen': generation, 'text': _narrate_event('corridor_end')})
             elif ev['type'] == 'reef_formation':
                 r, c = ev['data']['tile']
                 final_elev = ev['data']['target_elevation']
                 if 0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE:
                     grid[r][c]['elevation'] = final_elev
-                    biome = get_biome(final_elev)
-                    events_buffer.append({'gen': generation, 'text': f'🪸 Reef at ({r},{c}) fully formed — tile is now {biome.replace("_"," ")}'})
+                    _region = "northern" if r < GRID_SIZE//2 else "southern"
+                    events_buffer.append({'gen': generation, 'text': _narrate_event('reef_complete', region=_region)})
             continue
         still_active.append(ev)
 
@@ -4467,7 +5032,7 @@ def _check_events(season):
         region = "eastern" if cc > GRID_SIZE//2 else "western"
         events_buffer.append({
             'gen': generation,
-            'text': f'☀️ Drought in {region} marsh — {affected_count} tiles affected, food and water dropping'
+            'text': _narrate_event('drought', region=region, tiles=affected_count)
         })
 
     if random.random() < FLOOD_PROB:
@@ -4484,7 +5049,7 @@ def _check_events(season):
         region = "northern" if cr < GRID_SIZE//2 else "southern"
         events_buffer.append({
             'gen': generation,
-            'text': f'🌧️ Flooding in {region} tidal flats — {affected_count} tiles submerged'
+            'text': _narrate_event('flood', region=region, tiles=affected_count)
         })
 
     # ── Density-dependent disease ──
@@ -4524,9 +5089,10 @@ def _check_events(season):
                     local_severity = min(1.0, local_severity)
                     grid[r][c]['pops'][target] = int(grid[r][c]['pops'][target] * local_severity)
             mortality_pct = int((1 - severity) * 100)
+            _region = "northern" if epicenter_r < GRID_SIZE//2 else "southern"
             events_buffer.append({
                 'gen': generation,
-                'text': f'🦠 Disease outbreak targeting {names[target]} — epicenter ({epicenter_r},{epicenter_c}), ~{mortality_pct}% peak mortality'
+                'text': _narrate_event('disease', target=names[target], region=_region, mortality=mortality_pct)
             })
 
     # ── Algal bloom (persistent: 40-100 gens) ──
@@ -4541,7 +5107,7 @@ def _check_events(season):
             })
             events_buffer.append({
                 'gen': generation,
-                'text': f'🌿 Algal bloom spreading across wetlands — Worm/Velothrix food surging, Leviathan hunting impaired (duration: {duration} gens)'
+                'text': _narrate_event('bloom_start', duration=duration)
             })
 
     # ── Tidal surge (persistent: 25-60 gens) ──
@@ -4571,7 +5137,7 @@ def _check_events(season):
             })
             events_buffer.append({
                 'gen': generation,
-                'text': f'🌊 Tidal surge — deep water expanding into {len(affected)} coastal tiles (duration: {duration} gens)'
+                'text': _narrate_event('surge_start', tiles=len(affected), duration=duration)
             })
 
     # ── Migration corridor (persistent: 20-50 gens) ──
@@ -4604,7 +5170,7 @@ def _check_events(season):
             })
             events_buffer.append({
                 'gen': generation,
-                'text': f'🔀 Seasonal migration corridor opening {direction} — species flowing between isolated biomes (duration: {duration} gens)'
+                'text': _narrate_event('corridor_start', direction=direction)
             })
 
     # ── Reef formation (persistent: 150-300 gens, permanent terrain change) ──
@@ -4632,9 +5198,10 @@ def _check_events(season):
                     'duration': duration,
                     'data': {'tile': tile_pos, 'original_elevation': orig_elev, 'target_elevation': target_elev}
                 })
+                _region = "northern" if r < GRID_SIZE//2 else "southern"
                 events_buffer.append({
                     'gen': generation,
-                    'text': f'🪸 Reef forming at ({r},{c}) — elevation rising, new Crab habitat developing over {duration} generations'
+                    'text': _narrate_event('reef_start', region=_region, duration=duration)
                 })
 
 def _update_tile(r, c, season):
@@ -5979,12 +6546,12 @@ def _check_speciation():
             if ratio > 2.0:
                 events_buffer.append({
                     'gen': generation,
-                    'text': f'{names[s]} population surge — {total} individuals ({ratio:.1f}x expected)'
+                    'text': _narrate_event('pop_surge', target=names[s], total=total, ratio=ratio)
                 })
             elif ratio < 0.2 and total > 0:
                 events_buffer.append({
                     'gen': generation,
-                    'text': f'{names[s]} population critically low — only {total} individuals remain'
+                    'text': _narrate_event('pop_critical', target=names[s], total=total)
                 })
 
 # ── API FUNCTIONS (called from JS) ──
