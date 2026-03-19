@@ -305,6 +305,47 @@ body {
   min-width: 40px;
 }
 
+/* ── CREATURE CARDS ── */
+.creature-card {
+  display: flex;
+  gap: 8px;
+  padding: 6px 10px;
+  border-left: 3px solid;
+  margin-bottom: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 0 4px 4px 0;
+}
+.creature-card:hover { background: var(--card); }
+.creature-card.selected { background: rgba(221,193,101,0.08); border-left-width: 4px; }
+.creature-card.extinct { opacity: 0.45; }
+.creature-card.extinct .creature-portrait { filter: grayscale(0.8); }
+.creature-portrait { width: 40px; height: 40px; flex-shrink: 0; border-radius: 3px; }
+.creature-info { flex: 1; min-width: 0; }
+.creature-name { font-size: 11px; font-weight: 600; color: var(--text); }
+.creature-pop { font-size: 10px; color: var(--dim); }
+.creature-extinct-label { font-size: 9px; color: #C0392B; font-weight: 700; letter-spacing: 1px; }
+.trait-bar { height: 3px; background: var(--border); border-radius: 2px; margin: 3px 0; position: relative; }
+.trait-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.trait-label { font-size: 9px; color: var(--dim); display: flex; justify-content: space-between; }
+
+/* ── CREATURE DETAIL PANEL ── */
+.creature-detail { padding: 8px 0; }
+.creature-detail-back { font-size: 10px; color: var(--dim); cursor: pointer; margin-bottom: 8px; display: inline-block; }
+.creature-detail-back:hover { color: var(--gold); }
+.creature-detail-portrait { display: flex; justify-content: center; margin-bottom: 10px; }
+.creature-detail-name { font-size: 14px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 1px; }
+.creature-detail-subtitle { font-size: 10px; color: var(--dim); font-style: italic; margin-bottom: 10px; }
+.creature-detail-stats { font-size: 10px; color: var(--dim); line-height: 1.8; }
+.creature-detail-stats .stat-label { color: var(--dim); }
+.creature-detail-stats .stat-value { color: var(--text); }
+.creature-detail-stats .stat-row { display: flex; justify-content: space-between; }
+.creature-detail-hist { margin: 8px 0; }
+
+/* ── POPULATION MOSAIC ── */
+.pop-mosaic-wrap { margin-top: 8px; padding: 6px 0; }
+.pop-mosaic-label { font-size: 9px; color: var(--dim); margin-bottom: 4px; }
+
 /* ── CHART CANVASES ── */
 .chart-canvas {
   width: 100%;
@@ -2019,6 +2060,8 @@ function beginObservation() {
   // Reset JS state
   popHistory = [];
   knownExtinctions = [];
+  detailPanelSpecies = -1;
+  lastPortraitTraits = [-1, -1, -1, -1, -1];
   selectedTile = null;
   playing = false;
   camTilt = 0.5; camZoom = 1.0; camPanX = 0; camPanY = 0;
@@ -3599,9 +3642,9 @@ function renderMap() {
       const sx = offsetX + ix;
       const sy = offsetY + iy - iz;
 
-      // Pillar height — all sides extend down to a common baseline (elevation = -1)
-      // The baseline is where elevation = 0 would be, minus a small offset
-      const baselineY = offsetY + (c + r) * (tileH * 0.5) + tileH * 0.5;
+      // Pillar height — all sides extend down to elevation = -1 baseline
+      // baselineY = iso position at elevation -1 for this tile's (r,c)
+      const baselineY = offsetY + (c + r) * (tileH * 0.5) + tileH * 0.5 + heightScale;
       const pillarH = baselineY - (sy + tileH * 0.5);
 
       if (pillarH > 0) {
@@ -3710,80 +3753,90 @@ function renderMap() {
 }
 
 // ── RENDER SPECIES LIST ──
+let lastPortraitTraits = [-1, -1, -1, -1, -1];
+
 function renderSpeciesList() {
   const listEl = document.getElementById('species-list');
-  let html = '';
 
-  // Fetch speciation info once
+  // Detail panel mode
+  if (detailPanelSpecies >= 0) {
+    renderSpeciesDetail(detailPanelSpecies);
+    return;
+  }
+
+  let html = '';
   const specInfoJson = pyodide.runPython('get_speciation_info()');
   const specInfo = JSON.parse(specInfoJson);
+  const extinctSet = {};
+  knownExtinctions.forEach(ext => { extinctSet[ext.species] = ext; });
 
   if (panelMode === 'global') {
     for (let s = 0; s < 5; s++) {
       const pop = pyodide.runPython(`get_global_pop(${s})`);
       const trait = pyodide.runPython(`get_global_trait(${s})`);
       const info = specInfo[String(s)];
+      const isExtinct = s in extinctSet;
+      const isSelected = s === selectedSpecies;
 
-      if (info) {
-        // Show parent species row
-        html += `<div class="species-row">
-          <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
-          <div class="sp-name">${SPECIES[s].fullName}</div>
-          <div class="sp-pop">${pop}</div>
-          <div class="sp-trait">${trait.toFixed(3)}</div>
-        </div>`;
-        // Variant sub-entries
-        html += `<div class="species-row species-variant">
-          <div class="sp-dot" style="background:${SPECIES[s].color}; width:6px; height:6px;"></div>
-          <div class="sp-name sp-variant-name">${info.parent_name}</div>
-          <div class="sp-pop">${info.parent_pop}</div>
-          <div class="sp-trait">${info.parent_trait.toFixed(3)}</div>
-        </div>`;
-        html += `<div class="species-row species-variant">
-          <div class="sp-dot" style="background:${SPECIES[s].variantColor}; width:6px; height:6px;"></div>
-          <div class="sp-name sp-variant-name">${info.variant_name}</div>
-          <div class="sp-pop">${info.variant_pop}</div>
-          <div class="sp-trait">${info.variant_trait.toFixed(3)}</div>
-        </div>`;
+      html += `<div class="creature-card${isSelected ? ' selected' : ''}${isExtinct ? ' extinct' : ''}" style="border-left-color:${SPECIES[s].color}" onclick="showSpeciesDetail(${s})">`;
+      html += `<canvas class="creature-portrait" id="portrait-${s}" width="40" height="40"></canvas>`;
+      html += `<div class="creature-info">`;
+      html += `<div class="creature-name">${SPECIES[s].fullName}</div>`;
+      if (isExtinct) {
+        html += `<div class="creature-extinct-label">EXTINCT</div>`;
       } else {
-        html += `<div class="species-row">
-          <div class="sp-dot" style="background:${SPECIES[s].color}"></div>
-          <div class="sp-name">${SPECIES[s].fullName}</div>
-          <div class="sp-pop">${pop}</div>
-          <div class="sp-trait">${trait.toFixed(3)}</div>
-        </div>`;
+        html += `<div class="creature-pop">Pop: ${pop.toLocaleString()}</div>`;
       }
+      html += `<div class="trait-bar"><div class="trait-bar-fill" style="width:${(trait * 100).toFixed(1)}%;background:${SPECIES[s].color}"></div></div>`;
+      html += `<div class="trait-label"><span>${SPECIES[s].trait}</span><span>${trait.toFixed(2)}</span></div>`;
+      if (info) {
+        html += `<div style="font-size:8px;color:var(--dim);margin-top:2px;">${info.parent_name} / ${info.variant_name}</div>`;
+      }
+      html += `</div></div>`;
     }
+    html += `<div class="pop-mosaic-wrap"><div class="pop-mosaic-label">Population Share</div><canvas id="pop-mosaic-canvas" width="200" height="32" style="width:100%;height:32px;"></canvas></div>`;
   } else if (selectedTile) {
     for (let s = 0; s < 5; s++) {
       const pop = pyodide.runPython(`get_tile_pop(${selectedTile.r},${selectedTile.c},${s})`);
       const trait = pyodide.runPython(`get_tile_trait(${selectedTile.r},${selectedTile.c},${s})`);
       const info = specInfo[String(s)];
-
-      // Determine variant color for this tile
-      let dotColor = SPECIES[s].color;
+      const isSelected = s === selectedSpecies;
       let tileName = SPECIES[s].name;
+      let dotColor = SPECIES[s].color;
       if (info && pop > 0) {
-        if (trait > info.split_trait) {
-          dotColor = SPECIES[s].variantColor;
-          tileName = info.variant_name;
-        } else {
-          tileName = info.parent_name;
-        }
+        if (trait > info.split_trait) { dotColor = SPECIES[s].variantColor; tileName = info.variant_name; }
+        else { tileName = info.parent_name; }
       }
-
-      html += `<div class="species-row">
-        <div class="sp-dot" style="background:${dotColor}"></div>
-        <div class="sp-name">${tileName}</div>
-        <div class="sp-pop">${pop}</div>
-        <div class="sp-trait">${trait.toFixed(3)}</div>
-      </div>`;
+      html += `<div class="creature-card${isSelected ? ' selected' : ''}" style="border-left-color:${dotColor}" onclick="showSpeciesDetail(${s})">`;
+      html += `<canvas class="creature-portrait" id="portrait-${s}" width="40" height="40"></canvas>`;
+      html += `<div class="creature-info">`;
+      html += `<div class="creature-name">${tileName}</div>`;
+      html += `<div class="creature-pop">Pop: ${pop.toLocaleString()}</div>`;
+      html += `<div class="trait-bar"><div class="trait-bar-fill" style="width:${(trait * 100).toFixed(1)}%;background:${dotColor}"></div></div>`;
+      html += `<div class="trait-label"><span>${SPECIES[s].trait}</span><span>${trait.toFixed(2)}</span></div>`;
+      html += `</div></div>`;
     }
   } else {
     html = '<div style="color:var(--dim);font-size:10px;">Click a tile on the map</div>';
   }
 
   listEl.innerHTML = html;
+
+  // Draw portraits
+  for (let s = 0; s < 5; s++) {
+    const canvas = document.getElementById(`portrait-${s}`);
+    if (!canvas) continue;
+    const trait = panelMode === 'global'
+      ? pyodide.runPython(`get_global_trait(${s})`)
+      : (selectedTile ? pyodide.runPython(`get_tile_trait(${selectedTile.r},${selectedTile.c},${s})`) : 0.5);
+    const traitRounded = Math.round(trait * 100);
+    if (Math.abs(traitRounded - lastPortraitTraits[s]) >= 1) {
+      drawCreaturePortrait(canvas.getContext('2d'), s, trait, 40);
+      lastPortraitTraits[s] = traitRounded;
+    }
+  }
+
+  renderPopMosaic();
 }
 
 // ── RENDER POP CHART ──
@@ -3917,6 +3970,523 @@ function renderTraitChart() {
   ctx.fillText('0.0', padL, h - 2);
   ctx.fillText('0.5', padL + plotW / 2, h - 2);
   ctx.fillText('1.0', padL + plotW, h - 2);
+}
+
+// ── CREATURE PORTRAITS ──
+const portraitCache = new Map(); // key: `${species}_${size}_${traitRounded}` → ImageData
+
+function drawCreaturePortrait(ctx, species, traitValue, size) {
+  const t = Math.max(0, Math.min(1, traitValue));
+  const s = size;
+  const cx = s / 2;
+  const cy = s / 2;
+  const scale = s / 120; // normalize to 120px reference
+
+  ctx.clearRect(0, 0, s, s);
+  ctx.save();
+
+  const color = SPECIES[species].color;
+  const rgb = hexToRgb(color);
+
+  switch (species) {
+    case 0: drawVelothrix(ctx, cx, cy, scale, t, rgb, color); break;
+    case 1: drawLeviathan(ctx, cx, cy, scale, t, rgb, color); break;
+    case 2: drawCrawler(ctx, cx, cy, scale, t, rgb, color); break;
+    case 3: drawCrab(ctx, cx, cy, scale, t, rgb, color); break;
+    case 4: drawWorm(ctx, cx, cy, scale, t, rgb, color); break;
+  }
+
+  ctx.restore();
+}
+
+function drawVelothrix(ctx, cx, cy, scale, t, rgb, color) {
+  // Marsh stalker — elongated heron-like body with crest rays
+  const bodyW = 18 * scale;
+  const bodyH = 38 * scale;
+  const headY = cy - bodyH * 0.38;
+  const bodyY = cy + bodyH * 0.1;
+
+  // Legs
+  ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.6)`;
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.moveTo(cx - 6 * scale, bodyY + bodyH * 0.3);
+  ctx.lineTo(cx - 8 * scale, cy + bodyH * 0.55);
+  ctx.moveTo(cx + 6 * scale, bodyY + bodyH * 0.3);
+  ctx.lineTo(cx + 5 * scale, cy + bodyH * 0.55);
+  ctx.stroke();
+
+  // Body — elongated oval
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyY, bodyW * 0.45, bodyH * 0.4, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(cx + 2 * scale, headY, 8 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye
+  ctx.fillStyle = '#1A0D00';
+  ctx.beginPath();
+  ctx.arc(cx + 5 * scale, headY - 2 * scale, 2 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Crest — trait modulates ray count and glow
+  const numRays = Math.round(3 + t * 6);
+  const glowIntensity = t * 0.8;
+  const crestLen = (15 + t * 15) * scale;
+
+  ctx.save();
+  ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},${glowIntensity})`;
+  ctx.shadowBlur = t * 12 * scale;
+  ctx.strokeStyle = `rgba(${Math.min(255, rgb.r + 40)},${Math.min(255, rgb.g + 20)},${rgb.b},${0.5 + t * 0.5})`;
+  ctx.lineWidth = (1.5 + t) * scale;
+
+  for (let i = 0; i < numRays; i++) {
+    const angle = -Math.PI / 2 + (i - (numRays - 1) / 2) * 0.2;
+    ctx.beginPath();
+    ctx.moveTo(cx + 2 * scale, headY - 6 * scale);
+    ctx.lineTo(cx + 2 * scale + Math.cos(angle) * crestLen, headY - 6 * scale + Math.sin(angle) * crestLen);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawLeviathan(ctx, cx, cy, scale, t, rgb, color) {
+  // Aquatic predator — torpedo body with jaw and fins
+  const bodyLen = 44 * scale;
+  const bodyH = (14 + t * 4) * scale;
+  const jawW = (8 + t * 12) * scale;
+
+  // Body — tapered torpedo
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx - bodyLen * 0.45, cy);
+  ctx.quadraticCurveTo(cx - bodyLen * 0.2, cy - bodyH, cx + bodyLen * 0.1, cy - bodyH * 0.7);
+  ctx.quadraticCurveTo(cx + bodyLen * 0.4, cy - bodyH * 0.3, cx + bodyLen * 0.5, cy);
+  ctx.quadraticCurveTo(cx + bodyLen * 0.4, cy + bodyH * 0.3, cx + bodyLen * 0.1, cy + bodyH * 0.7);
+  ctx.quadraticCurveTo(cx - bodyLen * 0.2, cy + bodyH, cx - bodyLen * 0.45, cy);
+  ctx.fill();
+
+  // Jaw — V-shape
+  ctx.strokeStyle = color;
+  ctx.lineWidth = (2 + t) * scale;
+  ctx.beginPath();
+  ctx.moveTo(cx + bodyLen * 0.4, cy - jawW * 0.3);
+  ctx.lineTo(cx + bodyLen * 0.55, cy);
+  ctx.lineTo(cx + bodyLen * 0.4, cy + jawW * 0.3);
+  ctx.stroke();
+
+  // Dorsal spines
+  const finLen = (10 + t * 10) * scale;
+  ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.8)`;
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.moveTo(cx - 5 * scale, cy - bodyH * 0.7);
+  ctx.lineTo(cx - 2 * scale, cy - bodyH * 0.7 - finLen);
+  ctx.moveTo(cx + 8 * scale, cy - bodyH * 0.6);
+  ctx.lineTo(cx + 10 * scale, cy - bodyH * 0.6 - finLen * 0.7);
+  ctx.stroke();
+
+  // Tail fork
+  ctx.beginPath();
+  ctx.moveTo(cx - bodyLen * 0.45, cy);
+  ctx.lineTo(cx - bodyLen * 0.55, cy - 10 * scale);
+  ctx.moveTo(cx - bodyLen * 0.45, cy);
+  ctx.lineTo(cx - bodyLen * 0.55, cy + 10 * scale);
+  ctx.stroke();
+
+  // Eye
+  ctx.fillStyle = '#FFE9A3';
+  ctx.beginPath();
+  ctx.arc(cx + bodyLen * 0.3, cy - bodyH * 0.2, 2.5 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#1A0D00';
+  ctx.beginPath();
+  ctx.arc(cx + bodyLen * 0.3, cy - bodyH * 0.2, 1.2 * scale, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawCrawler(ctx, cx, cy, scale, t, rgb, color) {
+  // Burrowing herbivore — segmented caterpillar
+  const segments = Math.round(3 + t * 4);
+  const compression = 0.7 + (1 - t) * 0.3; // flatter = deeper burrower
+  const segRadius = (9 - t * 1.5) * scale;
+  const segSpacing = segRadius * 1.3;
+  const startX = cx - ((segments - 1) * segSpacing) / 2;
+
+  // Segments
+  for (let i = 0; i < segments; i++) {
+    const x = startX + i * segSpacing;
+    const shade = i === 0 ? 1.0 : (0.7 + 0.3 * (1 - i / segments));
+    ctx.fillStyle = `rgba(${Math.round(rgb.r * shade)},${Math.round(rgb.g * shade)},${Math.round(rgb.b * shade)},0.9)`;
+    ctx.beginPath();
+    ctx.ellipse(x, cy + 4 * scale, segRadius, segRadius * compression, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tiny leg stubs
+    if (i > 0) {
+      ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.5)`;
+      ctx.lineWidth = 1.5 * scale;
+      ctx.beginPath();
+      ctx.moveTo(x, cy + 4 * scale + segRadius * compression);
+      ctx.lineTo(x - 2 * scale, cy + 4 * scale + segRadius * compression + 5 * scale);
+      ctx.moveTo(x, cy + 4 * scale + segRadius * compression);
+      ctx.lineTo(x + 2 * scale, cy + 4 * scale + segRadius * compression + 5 * scale);
+      ctx.stroke();
+    }
+  }
+
+  // Head (first segment is head)
+  const headX = startX;
+  const headY = cy + 4 * scale;
+
+  // Antennae
+  ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.7)`;
+  ctx.lineWidth = 1.5 * scale;
+  ctx.beginPath();
+  ctx.moveTo(headX, headY - segRadius * compression);
+  ctx.quadraticCurveTo(headX - 8 * scale, headY - 18 * scale, headX - 12 * scale, headY - 20 * scale);
+  ctx.moveTo(headX, headY - segRadius * compression);
+  ctx.quadraticCurveTo(headX + 4 * scale, headY - 18 * scale, headX + 6 * scale, headY - 22 * scale);
+  ctx.stroke();
+
+  // Antenna tips
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(headX - 12 * scale, headY - 20 * scale, 2 * scale, 0, Math.PI * 2);
+  ctx.arc(headX + 6 * scale, headY - 22 * scale, 2 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#1A0D00';
+  ctx.beginPath();
+  ctx.arc(headX - 3 * scale, headY - 2 * scale, 1.5 * scale, 0, Math.PI * 2);
+  ctx.arc(headX + 3 * scale, headY - 2 * scale, 1.5 * scale, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawCrab(ctx, cx, cy, scale, t, rgb, color) {
+  // Armored scavenger — wide body with claws and legs
+  const bodyW = (22 + t * 8) * scale;
+  const bodyH = (16 + t * 4) * scale;
+  const outlineW = (1.5 + t * 2) * scale;
+
+  // Legs (4 per side, jointed)
+  ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.6)`;
+  ctx.lineWidth = 1.5 * scale;
+  for (let side = -1; side <= 1; side += 2) {
+    for (let i = 0; i < 4; i++) {
+      const baseX = cx + side * bodyW * (0.3 + i * 0.15);
+      const baseY = cy + bodyH * 0.3;
+      const midX = baseX + side * 8 * scale;
+      const midY = baseY + 6 * scale;
+      const endX = midX + side * 4 * scale;
+      const endY = midY + 8 * scale;
+      ctx.beginPath();
+      ctx.moveTo(baseX, baseY);
+      ctx.lineTo(midX, midY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
+  }
+
+  // Body — wide oval/hexagonal
+  ctx.fillStyle = color;
+  ctx.strokeStyle = `rgba(${Math.min(255, rgb.r + 50)},${Math.min(255, rgb.g + 30)},${rgb.b},0.9)`;
+  ctx.lineWidth = outlineW;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, bodyW, bodyH, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Claws — asymmetric pincers
+  const clawSize = (12 + t * 6) * scale;
+  // Left claw (bigger)
+  ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.85)`;
+  ctx.beginPath();
+  ctx.moveTo(cx - bodyW * 0.8, cy - bodyH * 0.2);
+  ctx.lineTo(cx - bodyW * 0.8 - clawSize * 1.2, cy - bodyH * 0.5);
+  ctx.lineTo(cx - bodyW * 0.8 - clawSize * 0.8, cy - bodyH * 0.1);
+  ctx.closePath();
+  ctx.fill();
+  // Right claw (smaller)
+  ctx.beginPath();
+  ctx.moveTo(cx + bodyW * 0.8, cy - bodyH * 0.2);
+  ctx.lineTo(cx + bodyW * 0.8 + clawSize * 0.8, cy - bodyH * 0.5);
+  ctx.lineTo(cx + bodyW * 0.8 + clawSize * 0.5, cy - bodyH * 0.1);
+  ctx.closePath();
+  ctx.fill();
+
+  // Eyes on stalks
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.moveTo(cx - 6 * scale, cy - bodyH * 0.6);
+  ctx.lineTo(cx - 8 * scale, cy - bodyH * 0.9);
+  ctx.moveTo(cx + 6 * scale, cy - bodyH * 0.6);
+  ctx.lineTo(cx + 8 * scale, cy - bodyH * 0.9);
+  ctx.stroke();
+  ctx.fillStyle = '#1A0D00';
+  ctx.beginPath();
+  ctx.arc(cx - 8 * scale, cy - bodyH * 0.9, 2 * scale, 0, Math.PI * 2);
+  ctx.arc(cx + 8 * scale, cy - bodyH * 0.9, 2 * scale, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawWorm(ctx, cx, cy, scale, t, rgb, color) {
+  // Bioluminescent worm — sinusoidal body with glow spots
+  const amplitude = 14 * scale;
+  const bodyLen = 80 * scale;
+  const startX = cx - bodyLen / 2;
+  const segments = 40;
+  const thickness = 6 * scale;
+
+  // Body path — sinusoidal bezier
+  ctx.strokeStyle = color;
+  ctx.lineWidth = thickness;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(startX, cy);
+  for (let i = 1; i <= segments; i++) {
+    const px = startX + (bodyLen * i) / segments;
+    const py = cy + Math.sin((i / segments) * Math.PI * 2.5) * amplitude;
+    ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Glow spots
+  const spotCount = Math.round(3 + t * 3);
+  const glowRadius = (4 + t * 8) * scale;
+  const glowOpacity = 0.3 + t * 0.5;
+
+  ctx.save();
+  for (let i = 0; i < spotCount; i++) {
+    const frac = (i + 0.5) / spotCount;
+    const sx = startX + bodyLen * frac;
+    const sy = cy + Math.sin(frac * Math.PI * 2.5) * amplitude;
+
+    // Radial gradient glow
+    const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, glowRadius);
+    grad.addColorStop(0, `rgba(${Math.min(255, rgb.r + 60)},${Math.min(255, rgb.g + 40)},${Math.min(255, rgb.b + 80)},${glowOpacity})`);
+    grad.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(sx, sy, glowRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bright center dot
+    ctx.fillStyle = `rgba(255,255,255,${0.4 + t * 0.4})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 2 * scale, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Head
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(startX, cy, 4 * scale, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ── DETAIL PANEL STATE ──
+let detailPanelSpecies = -1; // -1 = card list mode, 0-4 = showing detail
+
+const SPECIES_SUBTITLES = [
+  'The Amber Marsh Stalker',
+  'The Deep-Water Predator',
+  'The Patient Burrower',
+  'The Armored Scavenger',
+  'The Living Lantern'
+];
+
+const PREDATOR_MAP = {
+  0: [1],       // Velothrix hunted by Leviathan
+  1: [],        // apex
+  2: [],
+  3: [],
+  4: [0, 1]     // Worm hunted by Velothrix and Leviathan
+};
+
+const PREY_MAP = {
+  0: [4],       // Velothrix eats Worm
+  1: [0, 4],    // Leviathan eats Velothrix and Worm
+  2: [],
+  3: [],
+  4: []
+};
+
+function showSpeciesDetail(speciesIdx) {
+  detailPanelSpecies = speciesIdx;
+  selectSpecies(speciesIdx);
+}
+
+function hideSpeciesDetail() {
+  detailPanelSpecies = -1;
+  renderSpeciesList();
+}
+
+function renderSpeciesDetail(speciesIdx) {
+  const listEl = document.getElementById('species-list');
+  const sp = SPECIES[speciesIdx];
+  const pop = pyodide.runPython(`get_global_pop(${speciesIdx})`);
+  const trait = pyodide.runPython(`get_global_trait(${speciesIdx})`);
+
+  // Get detail data from Python
+  let detailData;
+  try {
+    const detailJson = pyodide.runPython(`get_species_detail(${speciesIdx})`);
+    detailData = JSON.parse(detailJson);
+  } catch(e) {
+    detailData = { pop: pop, tiles_occupied: 0, total_tiles: 144, trait_mean: trait, trait_var: 0, trait_min: 0, trait_max: 1, fst: 0, speciated: false, top_biomes: [] };
+  }
+
+  const isExtinct = knownExtinctions.some(e => e.species === speciesIdx);
+
+  // Build predator/prey strings
+  const predators = PREDATOR_MAP[speciesIdx].map(p => SPECIES[p].name).join(', ') || 'None';
+  const prey = PREY_MAP[speciesIdx].map(p => SPECIES[p].name).join(', ') || 'None (herbivore/detritivore)';
+  const biomes = detailData.top_biomes.map(b => b.replace('_', ' ')).join(', ') || '—';
+
+  let html = `<div class="creature-detail">`;
+  html += `<span class="creature-detail-back" onclick="hideSpeciesDetail()">← Back to species list</span>`;
+
+  // Portrait at 120px
+  html += `<div class="creature-detail-portrait"><canvas id="detail-portrait" width="120" height="120" style="width:120px;height:120px;"></canvas></div>`;
+
+  html += `<div class="creature-detail-name" style="color:${sp.color}">${sp.fullName}</div>`;
+  html += `<div class="creature-detail-subtitle">"${SPECIES_SUBTITLES[speciesIdx]}"</div>`;
+
+  if (isExtinct) {
+    html += `<div style="color:#C0392B;font-size:11px;font-weight:700;margin-bottom:8px;">EXTINCT</div>`;
+  }
+
+  html += `<div class="creature-detail-stats">`;
+  html += `<div class="stat-row"><span class="stat-label">Population</span><span class="stat-value">${detailData.pop.toLocaleString()}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Habitat</span><span class="stat-value">${biomes}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Predators</span><span class="stat-value">${predators}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Prey</span><span class="stat-value">${prey}</span></div>`;
+
+  // Trait section with mini histogram
+  html += `<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;">`;
+  html += `<div class="stat-row"><span class="stat-label">${sp.trait}</span><span class="stat-value" style="color:${sp.color}">${detailData.trait_mean.toFixed(3)}</span></div>`;
+  html += `<div class="creature-detail-hist"><canvas id="detail-hist" width="200" height="40" style="width:100%;height:40px;"></canvas></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Variance</span><span class="stat-value">${detailData.trait_var.toFixed(4)}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Range</span><span class="stat-value">${detailData.trait_min.toFixed(2)} – ${detailData.trait_max.toFixed(2)}</span></div>`;
+  html += `</div>`;
+
+  // Genetics
+  html += `<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;">`;
+  html += `<div class="stat-row"><span class="stat-label">Genetic Div. (FST)</span><span class="stat-value">${detailData.fst.toFixed(3)}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Tiles occupied</span><span class="stat-value">${detailData.tiles_occupied} / ${detailData.total_tiles}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Speciated</span><span class="stat-value">${detailData.speciated ? 'Yes' : 'No'}</span></div>`;
+  html += `</div>`;
+
+  html += `</div></div>`;
+
+  listEl.innerHTML = html;
+
+  // Draw the portrait
+  const pCanvas = document.getElementById('detail-portrait');
+  if (pCanvas) {
+    const pCtx = pCanvas.getContext('2d');
+    drawCreaturePortrait(pCtx, speciesIdx, trait, 120);
+  }
+
+  // Draw mini histogram
+  drawDetailHistogram(speciesIdx);
+}
+
+function drawDetailHistogram(speciesIdx) {
+  const canvas = document.getElementById('detail-hist');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  try {
+    const histJson = pyodide.runPython(`get_trait_histogram(${speciesIdx})`);
+    const hist = JSON.parse(histJson);
+    if (!hist || hist.length === 0) return;
+
+    const sp = SPECIES[speciesIdx];
+    const rgb = hexToRgb(sp.color);
+    const maxCount = Math.max(...hist.map(b => b.count), 1);
+    const barW = w / hist.length;
+
+    // Filled bars
+    for (let i = 0; i < hist.length; i++) {
+      const barH = (hist[i].count / maxCount) * (h - 4);
+      ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.4)`;
+      ctx.fillRect(i * barW, h - barH, barW - 1, barH);
+    }
+
+    // Top line
+    ctx.strokeStyle = sp.color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < hist.length; i++) {
+      const barH = (hist[i].count / maxCount) * (h - 4);
+      const x = i * barW + barW / 2;
+      const y = h - barH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Mean marker
+    const trait = pyodide.runPython(`get_global_trait(${speciesIdx})`);
+    ctx.strokeStyle = '#DDC165';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 2]);
+    const meanX = trait * w;
+    ctx.beginPath();
+    ctx.moveTo(meanX, 0);
+    ctx.lineTo(meanX, h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } catch(e) { /* ignore */ }
+}
+
+// ── POPULATION MOSAIC ──
+function renderPopMosaic() {
+  const canvas = document.getElementById('pop-mosaic-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const totalDots = 200;
+  const dotSize = 3;
+  const cols = Math.floor(w / (dotSize + 1));
+
+  // Get populations
+  const pops = [];
+  let totalPop = 0;
+  for (let s = 0; s < 5; s++) {
+    const p = pyodide.runPython(`get_global_pop(${s})`);
+    pops.push(p);
+    totalPop += p;
+  }
+  if (totalPop === 0) return;
+
+  // Allocate dots proportionally
+  let dotIdx = 0;
+  for (let s = 0; s < 5; s++) {
+    const count = Math.round((pops[s] / totalPop) * totalDots);
+    ctx.fillStyle = SPECIES[s].color;
+    for (let d = 0; d < count && dotIdx < totalDots; d++) {
+      const col = dotIdx % cols;
+      const row = Math.floor(dotIdx / cols);
+      ctx.fillRect(col * (dotSize + 1), row * (dotSize + 1), dotSize, dotSize);
+      dotIdx++;
+    }
+  }
 }
 
 // ── UTIL ──
@@ -4803,6 +5373,7 @@ def init_grid(seed_str=None):
                 'traits': [0.5]*NUM_SPECIES,
                 'trait_var': [0.01]*NUM_SPECIES,
                 'has_river': False,
+                'volcanic_age': 0,  # generations since last eruption (0 = never)
             }
 
             # Set initial populations based on biome suitability
@@ -4908,6 +5479,9 @@ def step():
             # Moisture trend affects water on tiles above water table
             if tile['elevation'] > WATER_TABLE:
                 tile['water'] = max(0, min(1.0, tile['water'] + 0.001 * (env_trends['moisture'] - 0.5)))
+            # Age volcanic substrate (fades visually over ~200 gens)
+            if tile.get('volcanic_age', 0) > 0:
+                tile['volcanic_age'] += 1
 
     # 2. Environmental trends
     _update_env_trends()
@@ -6392,6 +6966,7 @@ def _do_volcanic_event(center_r, center_c, tectonic=False):
     for ar, ac in affected_tiles:
         grid[ar][ac]['temp'] = min(1.0, grid[ar][ac]['temp'] + 0.3)
         grid[ar][ac]['food'] = max(0.0, grid[ar][ac]['food'] - 0.5)
+        grid[ar][ac]['volcanic_age'] = 1  # mark as freshly erupted
         # Population impact: immediate die-off on affected tiles
         for s in range(NUM_SPECIES):
             grid[ar][ac]['pops'][s] = max(0, int(grid[ar][ac]['pops'][s] * 0.3))
@@ -7001,6 +7576,7 @@ def get_map_data(species_idx):
     elevations = []
     biomes = []
     variants = []  # 0 = no speciation or parent, 1 = variant
+    volc_ages = []  # volcanic_age per tile (0 = never erupted)
     max_pop = 1
     has_speciation = species_idx in speciation_events
     split_trait = speciation_events[species_idx]['split_trait'] if has_speciation else 0
@@ -7010,12 +7586,14 @@ def get_map_data(species_idx):
         elev_row = []
         biome_row = []
         var_row = []
+        volc_row = []
         for c in range(GRID_SIZE):
             p = grid[r][c]['pops'][species_idx]
             e = grid[r][c]['elevation']
             pop_row.append(p)
             elev_row.append(e)
             biome_row.append(get_biome(e))
+            volc_row.append(grid[r][c].get('volcanic_age', 0))
             if has_speciation and p > 0:
                 var_row.append(1 if grid[r][c]['traits'][species_idx] > split_trait else 0)
             else:
@@ -7026,7 +7604,56 @@ def get_map_data(species_idx):
         elevations.append(elev_row)
         biomes.append(biome_row)
         variants.append(var_row)
-    return json.dumps({'pops': pops, 'elevations': elevations, 'biomes': biomes, 'max_pop': max_pop, 'variants': variants, 'speciated': has_speciation})
+        volc_ages.append(volc_row)
+
+    # River paths for overlay rendering
+    river_paths = []
+    for rv in rivers:
+        if rv['active'] and len(rv['path']) > 1:
+            river_paths.append({
+                'path': rv['path'],
+                'width': rv['width'],
+                'age': rv['age'],
+                'complete': rv['complete'],
+            })
+
+    # Oxbow lakes
+    oxbow_tiles = []
+    for lake in oxbow_lakes:
+        for t in lake['tiles']:
+            oxbow_tiles.append(t)
+
+    # Plate boundary tiles
+    plate_boundary_tiles = []
+    try:
+        boundaries = _get_plate_boundaries()
+        seen = set()
+        for (r, c, pid_a, pid_b) in boundaries:
+            if (r, c) not in seen:
+                plate_boundary_tiles.append([r, c])
+                seen.add((r, c))
+    except:
+        pass
+
+    # Ghost population territories (tiles where ghosts are located)
+    ghost_territories = []
+    for ghost in ghost_populations:
+        if ghost.get('status') == 'active' and ghost.get('tiles'):
+            ghost_territories.append({
+                'tiles': ghost['tiles'],
+                'id': ghost.get('id', 0),
+                'fst': ghost.get('fst_vs_followed', 0),
+            })
+
+    return json.dumps({
+        'pops': pops, 'elevations': elevations, 'biomes': biomes,
+        'max_pop': max_pop, 'variants': variants, 'speciated': has_speciation,
+        'volcanic_ages': volc_ages,
+        'rivers': river_paths,
+        'oxbow_tiles': oxbow_tiles,
+        'plate_boundaries': plate_boundary_tiles,
+        'ghost_territories': ghost_territories,
+    })
 
 def get_speciation_info():
     """Return all speciation events for JS."""
@@ -7082,6 +7709,60 @@ def get_trait_histogram(species_idx):
     for i in range(num_bins):
         result.append({'low': i/num_bins, 'high': (i+1)/num_bins, 'count': bins[i]})
     return json.dumps(result)
+
+def get_species_detail(species_idx):
+    """Return detailed species info for the detail panel."""
+    total_pop = 0
+    tiles_occupied = 0
+    trait_vals = []
+    trait_weights = []
+    biome_pops = {}
+
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            p = grid[r][c]['pops'][species_idx]
+            if p > 0:
+                total_pop += p
+                tiles_occupied += 1
+                t = grid[r][c]['traits'][species_idx]
+                if species_idx == VELOTHRIX:
+                    t = grid[r][c]['alleles']['CREST']
+                trait_vals.append(t)
+                trait_weights.append(p)
+                b = get_biome(grid[r][c]['elevation'])
+                biome_pops[b] = biome_pops.get(b, 0) + p
+
+    if len(trait_vals) == 0:
+        trait_mean = 0.5
+        trait_var = 0.0
+        trait_min = 0.0
+        trait_max = 1.0
+    else:
+        total_w = sum(trait_weights)
+        trait_mean = sum(v * w for v, w in zip(trait_vals, trait_weights)) / max(1, total_w)
+        trait_var = sum(w * (v - trait_mean) ** 2 for v, w in zip(trait_vals, trait_weights)) / max(1, total_w)
+        trait_min = min(trait_vals)
+        trait_max = max(trait_vals)
+
+    sorted_biomes = sorted(biome_pops.items(), key=lambda x: -x[1])
+    top_biomes = [b[0] for b in sorted_biomes[:3]]
+
+    fst_avg = sum(fst_values.values()) / max(1, len(fst_values))
+
+    speciated = species_idx in speciation_events
+
+    return json.dumps({
+        'pop': total_pop,
+        'tiles_occupied': tiles_occupied,
+        'total_tiles': GRID_SIZE * GRID_SIZE,
+        'trait_mean': trait_mean,
+        'trait_var': trait_var,
+        'trait_min': trait_min,
+        'trait_max': trait_max,
+        'fst': fst_avg,
+        'speciated': speciated,
+        'top_biomes': top_biomes,
+    })
 
 def get_ghost_populations():
     """Return ghost population data for UI."""
