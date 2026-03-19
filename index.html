@@ -963,6 +963,132 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* ── RUN SUMMARY OVERLAY ── */
+#summary-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,5,0,0.9);
+  z-index: 250;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  padding: 40px 20px;
+}
+#summary-overlay.visible { display: flex; }
+.summary-card {
+  background: var(--card);
+  border: 2px solid var(--gold);
+  border-radius: 6px;
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+}
+.summary-title { font-family: var(--sans); font-size: 20px; font-weight: 800; color: var(--gold); text-align: center; margin-bottom: 4px; }
+.summary-seed { font-size: 11px; color: var(--dim); text-align: center; margin-bottom: 20px; }
+.summary-challenge { text-align: center; padding: 8px; margin-bottom: 16px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+.challenge-win { background: rgba(46,204,113,0.15); color: #2ECC71; border: 1px solid rgba(46,204,113,0.3); }
+.challenge-fail { background: rgba(192,57,43,0.15); color: #C0392B; border: 1px solid rgba(192,57,43,0.3); }
+.summary-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.summary-stat { text-align: center; padding: 8px; background: var(--bg); border-radius: 4px; }
+.summary-stat-value { font-size: 18px; font-weight: 700; color: var(--gold); }
+.summary-stat-label { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.summary-species-list { margin-bottom: 16px; }
+.summary-species-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.summary-species-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.summary-species-name { font-size: 12px; flex: 1; }
+.summary-species-status { font-size: 10px; white-space: nowrap; }
+.summary-achievements { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 16px; }
+.summary-ach-badge { font-size: 11px; background: rgba(221,193,101,0.1); border: 1px solid var(--gold); border-radius: 3px; padding: 4px 8px; color: var(--gold); }
+.summary-actions { display: flex; gap: 8px; justify-content: center; }
+
+/* ── HALL OF EXTINCTIONS ── */
+#hall-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,5,0,0.9);
+  z-index: 260;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: 40px 20px;
+}
+#hall-overlay.visible { display: flex; }
+.hall-content {
+  background: var(--card);
+  border: 2px solid var(--gold);
+  border-radius: 6px;
+  padding: 32px;
+  max-width: 520px;
+  width: 100%;
+}
+.hall-title { font-family: var(--sans); font-size: 20px; font-weight: 800; color: var(--gold); text-align: center; margin-bottom: 16px; }
+.hall-empty { text-align: center; color: var(--dim); padding: 20px; }
+.hall-stats-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px; padding: 8px; background: var(--bg); border-radius: 4px; }
+.hall-stat-item { font-size: 10px; color: var(--dim); }
+.hall-list { max-height: 320px; overflow-y: auto; margin-bottom: 16px; }
+.hall-row { display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 11px; }
+.hall-row:hover { background: var(--bg); }
+.hall-notable { border-left: 2px solid var(--gold); }
+.hall-seed { color: var(--gold-light); font-weight: 600; min-width: 55px; }
+.hall-gens { color: var(--text); min-width: 80px; }
+.hall-alive { color: var(--dim); }
+.hall-star { color: var(--gold); }
+.hall-detail { padding: 6px 0 0 16px; }
+.hall-detail-species { font-size: 10px; color: var(--dim); padding: 2px 0; }
+.hall-actions { display: flex; justify-content: center; }
+
+/* ── ACHIEVEMENT TOAST ── */
+.achievement-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--card);
+  border: 2px solid var(--gold);
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gold);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.4s, transform 0.4s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.achievement-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.ach-toast-icon { font-size: 16px; margin-right: 6px; }
+
+/* ── SETUP PROGRESSION UI ── */
+.setup-hall-stats { margin-top: 8px; }
+.hall-btn { border-color: var(--gold); color: var(--gold); }
+.setup-hall-best { font-size: 10px; color: var(--dim); text-align: center; margin-top: 4px; }
+.setup-ach-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px; max-width: 340px; }
+.setup-ach-item { text-align: center; padding: 6px 2px; border-radius: 4px; background: var(--bg); border: 1px solid var(--border); opacity: 0.3; }
+.setup-ach-item.ach-unlocked { opacity: 1; border-color: var(--gold); }
+.setup-ach-icon { display: block; font-size: 16px; margin-bottom: 2px; }
+.setup-ach-name { font-size: 7px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.ach-unlocked .setup-ach-name { color: var(--gold); }
+.setup-challenge-grid { display: flex; flex-direction: column; gap: 6px; max-width: 340px; margin-top: 8px; }
+.setup-challenge-card { padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+.setup-challenge-card:hover { border-color: var(--gold); }
+.setup-challenge-card.ch-active { border-color: var(--gold); background: rgba(221,193,101,0.08); }
+.setup-challenge-card.ch-done { opacity: 0.5; }
+.ch-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.ch-desc { font-size: 10px; color: var(--dim); margin-top: 2px; }
+.ch-diff { font-size: 9px; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+/* ── END OBSERVATION BUTTON ── */
+#btn-end-obs {
+  background: rgba(192,57,43,0.15);
+  border: 1px solid rgba(192,57,43,0.4);
+  color: #C0392B;
+}
+#btn-end-obs:hover { background: rgba(192,57,43,0.25); }
+.challenge-indicator { font-size: 10px; color: var(--gold); padding: 2px 8px; border: 1px solid var(--gold); border-radius: 3px; white-space: nowrap; }
+
 /* ── LAB MODE TABS ── */
 .lab-tabs {
   display: none;
@@ -1623,6 +1749,9 @@ body.atmo-reef #atmosphere-layer {
     <button class="setup-btn" onclick="generateMapPreview()">Generate</button>
   </div>
   <button id="btn-begin" onclick="beginObservation()">Begin Observation</button>
+  <div id="setup-hall-stats"></div>
+  <div id="setup-challenges"></div>
+  <div id="setup-achievements"></div>
 </div>
 
 <!-- ATMOSPHERE LAYER (behind everything) -->
@@ -1654,7 +1783,9 @@ body.atmo-reef #atmosphere-layer {
       <button onclick="setSpeed(5)" class="speed-btn" data-speed="5">5x</button>
       <button onclick="setSpeed(20)" class="speed-btn" data-speed="20">20x</button>
       <button onclick="setSpeed(100)" class="speed-btn" data-speed="100">100x</button>
+      <button id="btn-end-obs" onclick="endObservation()">End</button>
     </div>
+    <span id="challenge-indicator" class="challenge-indicator" style="display:none"></span>
     <div id="gen-counter">Gen <span id="gen-num">0</span></div>
     <div class="season-indicator" id="season-indicator">
       <div class="season-dot" style="color:#7ca8c4" data-season="winter"></div>
@@ -1912,6 +2043,16 @@ body.atmo-reef #atmosphere-layer {
   </div>
 </div>
 
+<!-- RUN SUMMARY OVERLAY -->
+<div id="summary-overlay">
+  <div class="summary-card"></div>
+</div>
+
+<!-- HALL OF EXTINCTIONS OVERLAY -->
+<div id="hall-overlay">
+  <div class="hall-content"></div>
+</div>
+
 <script>
 // ── GLOBALS ──
 let pyodide = null;
@@ -1932,6 +2073,8 @@ let animFrame = null;
 let stepsPerFrame = 1;
 let setupMapSize = 12;
 let previewData = null;
+let startTime = 0;
+let activeChallenge = null; // challenge id or null
 let previewCanvas, previewCtx;
 
 // ── EPOCH STATE ──
@@ -1998,6 +2141,9 @@ async function init() {
       document.getElementById('setup-screen').style.display = 'flex';
       resizePreviewCanvas();
       generateMapPreview();
+      renderSetupHallStats();
+      renderSetupChallenges();
+      renderSetupAchievements();
     }, 300);
   } catch (err) {
     console.error('Init failed:', err);
@@ -2172,6 +2318,7 @@ function beginObservation() {
   // Reset JS state
   popHistory = [];
   knownExtinctions = [];
+  startTime = Date.now();
   detailPanelSpecies = -1;
   lastPortraitTraits = [-1, -1, -1, -1, -1];
   selectedTile = null;
@@ -2193,6 +2340,16 @@ function beginObservation() {
   epochCheckCounter = 0;
   document.body.className = document.body.className.replace(/\batmo-\S+/g, '').trim();
 
+  // Challenge indicator
+  const chInd = document.getElementById('challenge-indicator');
+  if (activeChallenge) {
+    const ch = CHALLENGES.find(c => c.id === activeChallenge);
+    chInd.textContent = ch ? ch.name : '';
+    chInd.style.display = '';
+  } else {
+    chInd.style.display = 'none';
+  }
+
   resizeCanvases();
   setViewMode('field'); // Start in Field mode
 
@@ -2208,6 +2365,7 @@ function beginObservation() {
 function setupUI() {
   // Species tabs
   const tabsEl = document.getElementById('species-tabs');
+  tabsEl.innerHTML = '';
   SPECIES.forEach((sp, i) => {
     const btn = document.createElement('button');
     btn.className = 'species-tab' + (i === 0 ? ' active' : '');
@@ -3328,6 +3486,407 @@ function closePostMortem() {
   document.getElementById('postmortem-overlay').style.display = 'none';
 }
 
+// ── PROGRESSION SYSTEM ──
+
+// Challenges
+const CHALLENGES = [
+  {
+    id: 'all_survive_3k',
+    name: 'The Conservationist',
+    description: 'Keep all 5 species alive for 3,000 generations.',
+    check: (s) => s.species_alive.length === 5 && s.generation >= 3000,
+    difficulty: 'Medium',
+  },
+  {
+    id: 'speciation_1k',
+    name: 'The Diverger',
+    description: 'Achieve speciation within 1,000 generations.',
+    check: (s) => s.speciation_count > 0 && s.generation <= 1000,
+    difficulty: 'Hard',
+  },
+  {
+    id: 'all_survive_5k',
+    name: 'Perfect Ecosystem',
+    description: 'All 5 species survive to generation 5,000.',
+    check: (s) => s.species_alive.length === 5 && s.generation >= 5000,
+    difficulty: 'Hard',
+  },
+  {
+    id: 'survive_extinction',
+    name: 'Resilience',
+    description: 'A species recovers from below 50 to above 500.',
+    check: (s) => s.resilience_events && s.resilience_events.length > 0,
+    difficulty: 'Medium',
+  },
+  {
+    id: 'speed_run',
+    name: 'Speed Observer',
+    description: 'Reach generation 10,000.',
+    check: (s) => s.generation >= 10000,
+    difficulty: 'Easy',
+  },
+];
+
+// Achievements
+const ACHIEVEMENTS = [
+  { id: 'first_run', name: 'First Observation', desc: 'Complete your first run.', icon: '\u{1F52C}',
+    check: (s, hall) => true },
+  { id: 'first_extinction', name: 'Circle of Life', desc: 'Witness your first extinction.', icon: '\u{1F480}',
+    check: (s, hall) => s.species_dead.length > 0 },
+  { id: 'first_speciation', name: 'Divergence', desc: 'Witness your first speciation event.', icon: '\u{1F9EC}',
+    check: (s, hall) => s.speciation_count > 0 },
+  { id: 'gen_1k', name: 'Patient Observer', desc: 'Reach generation 1,000.', icon: '\u231B',
+    check: (s, hall) => s.generation >= 1000 },
+  { id: 'gen_5k', name: 'Dedicated Watcher', desc: 'Reach generation 5,000.', icon: '\u{1F570}',
+    check: (s, hall) => s.generation >= 5000 },
+  { id: 'gen_10k', name: 'Eternal Vigil', desc: 'Reach generation 10,000.', icon: '\u{1F31F}',
+    check: (s, hall) => s.generation >= 10000 },
+  { id: 'all_alive_3k', name: 'Conservationist', desc: 'All 5 species alive at gen 3,000.', icon: '\u{1F33F}',
+    check: (s, hall) => s.species_alive.length === 5 && s.generation >= 3000 },
+  { id: 'total_wipeout', name: 'Silent World', desc: 'All species go extinct.', icon: '\u{1FAA6}',
+    check: (s, hall) => s.species_alive.length === 0 },
+  { id: 'five_runs', name: 'Frequent Visitor', desc: 'Complete 5 observation runs.', icon: '\u{1F4CA}',
+    check: (s, hall) => hall.length >= 5 },
+  { id: 'oxbow_form', name: 'Geomorphologist', desc: 'Witness an oxbow lake form.', icon: '\u{1F3DE}',
+    check: (s, hall) => s.oxbow_count > 0 },
+];
+
+// localStorage helpers
+function saveRunToHall(record) {
+  const hall = JSON.parse(localStorage.getItem('velothrix_hall') || '[]');
+  hall.push(record);
+  if (hall.length > 50) hall.splice(0, hall.length - 50);
+  localStorage.setItem('velothrix_hall', JSON.stringify(hall));
+}
+function getHall() {
+  return JSON.parse(localStorage.getItem('velothrix_hall') || '[]');
+}
+function getCompletedChallenges() {
+  return JSON.parse(localStorage.getItem('velothrix_challenges') || '[]');
+}
+function markChallengeComplete(challengeId, seed) {
+  const completed = getCompletedChallenges();
+  if (!completed.find(c => c.id === challengeId)) {
+    completed.push({ id: challengeId, seed, date: new Date().toISOString() });
+    localStorage.setItem('velothrix_challenges', JSON.stringify(completed));
+  }
+}
+function getUnlockedAchievements() {
+  return JSON.parse(localStorage.getItem('velothrix_achievements') || '[]');
+}
+function saveAchievement(achId) {
+  const unlocked = getUnlockedAchievements();
+  if (!unlocked.find(a => a.id === achId)) {
+    unlocked.push({ id: achId, date: new Date().toISOString() });
+    localStorage.setItem('velothrix_achievements', JSON.stringify(unlocked));
+  }
+}
+
+function generateRunSummary() {
+  const summaryJson = pyodide.runPython('get_run_summary()');
+  const py = JSON.parse(summaryJson);
+  const seed = document.getElementById('seed-input').value;
+  const gen = py.generation;
+
+  // Determine longest survivor
+  let longestSurvivor = { species: 0, gens: 0 };
+  for (let s = 0; s < 5; s++) {
+    const ext = py.extinctions.find(e => e.species === s);
+    const survived = ext ? ext.gens_survived : gen;
+    if (survived > longestSurvivor.gens) {
+      longestSurvivor = { species: s, gens: survived };
+    }
+  }
+
+  // Most dramatic extinction
+  let mostDramatic = null;
+  py.extinctions.forEach(ext => {
+    if (!mostDramatic || ext.peak_pop > mostDramatic.peak) {
+      mostDramatic = { species: ext.species, peak: ext.peak_pop, cause: ext.cause };
+    }
+  });
+
+  return {
+    id: Date.now(),
+    seed: seed,
+    gridSize: setupMapSize,
+    generation: gen,
+    date: new Date().toISOString(),
+    duration_ms: Date.now() - startTime,
+    species_alive: py.species_alive,
+    species_dead: py.species_dead,
+    extinctions: py.extinctions,
+    speciation_count: py.speciation_count,
+    dominant_species: py.dominant_species,
+    total_population: py.total_population,
+    river_count: py.river_count,
+    oxbow_count: py.oxbow_count,
+    peaks: py.peaks,
+    resilience_events: py.resilience_events || [],
+    longest_survivor: longestSurvivor,
+    most_dramatic_extinction: mostDramatic,
+  };
+}
+
+function checkAchievements(summary) {
+  const hall = getHall();
+  const unlocked = getUnlockedAchievements();
+  const newlyUnlocked = [];
+  ACHIEVEMENTS.forEach(ach => {
+    if (unlocked.find(a => a.id === ach.id)) return;
+    if (ach.check(summary, hall)) {
+      saveAchievement(ach.id);
+      newlyUnlocked.push(ach);
+    }
+  });
+  return newlyUnlocked;
+}
+
+function showAchievementToast(ach) {
+  const toast = document.createElement('div');
+  toast.className = 'achievement-toast';
+  toast.innerHTML = `<span class="ach-toast-icon">${ach.icon}</span> Achievement Unlocked: <strong>${ach.name}</strong>`;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('visible'));
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
+
+function showRunSummary(summary) {
+  if (playing) togglePlay();
+
+  // Save to hall
+  saveRunToHall(summary);
+
+  // Check challenge
+  let challengeResult = null;
+  if (activeChallenge) {
+    const ch = CHALLENGES.find(c => c.id === activeChallenge);
+    if (ch) {
+      challengeResult = ch.check(summary) ? 'complete' : 'failed';
+      if (challengeResult === 'complete') {
+        markChallengeComplete(ch.id, summary.seed);
+      }
+    }
+  }
+
+  // Check achievements
+  const newAchs = checkAchievements(summary);
+
+  // Build summary card
+  const overlay = document.getElementById('summary-overlay');
+  const card = overlay.querySelector('.summary-card');
+
+  let html = `<div class="summary-title">OBSERVATION COMPLETE</div>`;
+  html += `<div class="summary-seed">Seed: ${summary.seed} \u2022 ${summary.gridSize}\u00D7${summary.gridSize}</div>`;
+
+  // Challenge result
+  if (challengeResult) {
+    const ch = CHALLENGES.find(c => c.id === activeChallenge);
+    const isWin = challengeResult === 'complete';
+    html += `<div class="summary-challenge ${isWin ? 'challenge-win' : 'challenge-fail'}">${isWin ? '\u2713 CHALLENGE COMPLETE' : '\u2717 CHALLENGE FAILED'}: ${ch.name}</div>`;
+  }
+
+  // Stats grid
+  html += `<div class="summary-stats">`;
+  html += `<div class="summary-stat"><div class="summary-stat-value">${summary.generation.toLocaleString()}</div><div class="summary-stat-label">Generations</div></div>`;
+  html += `<div class="summary-stat"><div class="summary-stat-value">${summary.species_alive.length}</div><div class="summary-stat-label">Survived</div></div>`;
+  html += `<div class="summary-stat"><div class="summary-stat-value">${summary.total_population.toLocaleString()}</div><div class="summary-stat-label">Total Pop</div></div>`;
+  html += `<div class="summary-stat"><div class="summary-stat-value">${summary.speciation_count}</div><div class="summary-stat-label">Speciation</div></div>`;
+  html += `</div>`;
+
+  // Species rows
+  html += `<div class="summary-species-list">`;
+  for (let s = 0; s < 5; s++) {
+    const sp = SPECIES[s];
+    const ext = summary.extinctions.find(e => e.species === s);
+    const alive = summary.species_alive.includes(s);
+    const status = alive ? '<span style="color:#2ECC71">ALIVE</span>'
+      : `<span style="color:#C0392B">\u2020Gen ${ext ? ext.gen.toLocaleString() : '?'}</span>`;
+    const causeTag = ext ? ` \u2022 ${ext.cause.replace('_', ' ')}` : '';
+    html += `<div class="summary-species-row">
+      <div class="summary-species-dot" style="background:${sp.color}${alive ? '' : ';opacity:0.4'}"></div>
+      <div class="summary-species-name" style="${alive ? '' : 'opacity:0.5;text-decoration:line-through'}">${sp.fullName}</div>
+      <div class="summary-species-status">${status}${causeTag}</div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // New achievements
+  if (newAchs.length > 0) {
+    html += `<div class="summary-achievements">`;
+    newAchs.forEach(a => {
+      html += `<div class="summary-ach-badge">${a.icon} ${a.name}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Actions
+  html += `<div class="summary-actions">
+    <button class="outcome-btn" onclick="returnToSetup()">New Run</button>
+    <button class="outcome-btn" onclick="showHallOfExtinctions()">View History</button>
+    <button class="outcome-btn outcome-btn-alt" onclick="shareRun()">Share</button>
+  </div>`;
+
+  card.innerHTML = html;
+  overlay.classList.add('visible');
+
+  // Show achievement toasts with stagger
+  newAchs.forEach((a, i) => setTimeout(() => showAchievementToast(a), 500 + i * 800));
+}
+
+function endObservation() {
+  const summary = generateRunSummary();
+  showRunSummary(summary);
+}
+
+function returnToSetup() {
+  // Hide overlays
+  document.getElementById('summary-overlay').classList.remove('visible');
+  document.getElementById('hall-overlay').classList.remove('visible');
+
+  // Stop sim
+  if (playing) togglePlay();
+  if (animFrame) { cancelAnimationFrame(animFrame); clearTimeout(animFrame); animFrame = null; }
+
+  // Hide app, show setup
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+
+  // New seed
+  document.getElementById('seed-input').value = generateRandomSeed();
+  activeChallenge = null;
+  generateMapPreview();
+  renderSetupHallStats();
+  renderSetupAchievements();
+}
+
+function shareRun() {
+  const seed = document.getElementById('seed-input').value;
+  const gen = pyodide.runPython('generation');
+  const aliveCount = document.querySelector('.summary-stat-value') ? document.querySelector('.summary-stat-value').textContent : '?';
+  const text = `Velothrix \u2014 Seed ${seed}\n${gen.toLocaleString()} generations observed\nevo.ianhandy.com`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.summary-actions .outcome-btn-alt');
+    if (btn) { const orig = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = orig, 1500); }
+  });
+}
+
+// ── HALL OF EXTINCTIONS ──
+function showHallOfExtinctions() {
+  const hall = getHall();
+  const overlay = document.getElementById('hall-overlay');
+  const content = overlay.querySelector('.hall-content');
+
+  let html = `<div class="hall-title">HALL OF EXTINCTIONS</div>`;
+
+  if (hall.length === 0) {
+    html += `<div class="hall-empty">No observations recorded yet.</div>`;
+  } else {
+    // Stats
+    const best = hall.reduce((a, b) => b.species_alive.length > a.species_alive.length || (b.species_alive.length === a.species_alive.length && b.generation > a.generation) ? b : a);
+    const worst = hall.reduce((a, b) => b.species_dead.length > a.species_dead.length ? b : a);
+    html += `<div class="hall-stats-row">`;
+    html += `<span class="hall-stat-item">Best: ${best.seed} (${best.species_alive.length} survived, ${best.generation.toLocaleString()} gens)</span>`;
+    html += `<span class="hall-stat-item">Worst: ${worst.seed} (${worst.species_dead.length} extinct by gen ${worst.generation.toLocaleString()})</span>`;
+    html += `</div>`;
+
+    // Runs list
+    html += `<div class="hall-list">`;
+    [...hall].reverse().forEach((run, idx) => {
+      const notable = run.species_alive.length === 5 || run.generation >= 5000;
+      html += `<div class="hall-row${notable ? ' hall-notable' : ''}" onclick="toggleHallDetail(this)">
+        <span class="hall-seed">${run.seed}</span>
+        <span class="hall-gens">${run.generation.toLocaleString()} gens</span>
+        <span class="hall-alive">${run.species_alive.length} alive</span>
+        ${notable ? '<span class="hall-star">\u2605</span>' : ''}
+        <div class="hall-detail" style="display:none">
+          ${SPECIES.map((sp, s) => {
+            const ext = run.extinctions.find(e => e.species === s);
+            const alive = run.species_alive.includes(s);
+            return `<div class="hall-detail-species"><span style="color:${sp.color}">\u25CF</span> ${sp.name} — ${alive ? 'Alive' : '\u2020' + (ext ? 'Gen ' + ext.gen + ' (' + ext.cause.replace('_', ' ') + ')' : 'Extinct')}</div>`;
+          }).join('')}
+          ${run.speciation_count > 0 ? `<div style="color:var(--gold);margin-top:4px">Speciation events: ${run.speciation_count}</div>` : ''}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="hall-actions"><button class="outcome-btn" onclick="document.getElementById('hall-overlay').classList.remove('visible')">Close</button></div>`;
+  content.innerHTML = html;
+  overlay.classList.add('visible');
+}
+
+function toggleHallDetail(row) {
+  const detail = row.querySelector('.hall-detail');
+  if (detail) detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── SETUP SCREEN PROGRESSION UI ──
+function renderSetupHallStats() {
+  const el = document.getElementById('setup-hall-stats');
+  if (!el) return;
+  const hall = getHall();
+  if (hall.length === 0) {
+    el.innerHTML = `<button class="setup-btn" onclick="showHallOfExtinctions()" style="opacity:0.4" disabled>Hall of Extinctions (0 runs)</button>`;
+    return;
+  }
+  const best = hall.reduce((a, b) => b.species_alive.length > a.species_alive.length || (b.species_alive.length === a.species_alive.length && b.generation > a.generation) ? b : a);
+  el.innerHTML = `<button class="setup-btn hall-btn" onclick="showHallOfExtinctions()">Hall of Extinctions (${hall.length} runs)</button>
+    <div class="setup-hall-best">Best: Seed ${best.seed} \u2014 ${best.species_alive.length}/5 survived, ${best.generation.toLocaleString()} gens</div>`;
+}
+
+function renderSetupAchievements() {
+  const el = document.getElementById('setup-achievements');
+  if (!el) return;
+  const unlocked = getUnlockedAchievements();
+  let html = '<div class="setup-ach-grid">';
+  ACHIEVEMENTS.forEach(ach => {
+    const done = unlocked.find(a => a.id === ach.id);
+    html += `<div class="setup-ach-item${done ? ' ach-unlocked' : ''}" title="${ach.desc}">
+      <span class="setup-ach-icon">${ach.icon}</span>
+      <span class="setup-ach-name">${ach.name}</span>
+    </div>`;
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderSetupChallenges() {
+  const el = document.getElementById('setup-challenges');
+  if (!el) return;
+  const completed = getCompletedChallenges();
+  let html = '<div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;text-align:center">Challenge (optional)</div><div class="setup-challenge-grid">';
+  CHALLENGES.forEach(ch => {
+    const done = completed.find(c => c.id === ch.id);
+    const active = activeChallenge === ch.id;
+    html += `<div class="setup-challenge-card${done ? ' ch-done' : ''}${active ? ' ch-active' : ''}" onclick="selectChallenge('${ch.id}')">
+      <div class="ch-name">${ch.name}${done ? ' \u2713' : ''}</div>
+      <div class="ch-desc">${ch.description}</div>
+      <div class="ch-diff">${ch.difficulty}</div>
+    </div>`;
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function selectChallenge(id) {
+  activeChallenge = activeChallenge === id ? null : id;
+  renderSetupChallenges();
+}
+
+// Auto-check for all-extinct
+function checkAllExtinct() {
+  if (knownExtinctions.length >= 5) {
+    endObservation();
+    return true;
+  }
+  return false;
+}
+
 // ── KPI STRIP ──
 function updateKPIStrip() {
   try {
@@ -3726,6 +4285,11 @@ function tick() {
       const newExt = allExts[allExts.length - 1];
       knownExtinctions = allExts;
       showEulogy(newExt);
+      // Auto-end if all species extinct
+      if (knownExtinctions.length >= 5) {
+        setTimeout(() => endObservation(), 1500);
+        return;
+      }
     }
   } catch(e) { /* ignore parse errors */ }
 
@@ -7889,6 +8453,54 @@ def _record_pop_check():
 
 def get_extinctions():
     return json.dumps(extinctions)
+
+
+def get_run_summary():
+    alive = [s for s in range(NUM_SPECIES) if sum(grid[r][c]['pops'][s] for r in range(GRID_SIZE) for c in range(GRID_SIZE)) > 0]
+    dead = [s for s in range(NUM_SPECIES) if s not in alive]
+
+    pops = {}
+    for s in range(NUM_SPECIES):
+        pops[s] = sum(grid[r][c]['pops'][s] for r in range(GRID_SIZE) for c in range(GRID_SIZE))
+    dominant = max(pops, key=pops.get) if pops else 0
+
+    speciation_count = len(speciation_events)
+
+    river_count = len([r for r in rivers if r.get('active', False)])
+    oxbow_count = len(oxbow_lakes)
+
+    # Peak populations from pop_check_history
+    peaks = {s: 0 for s in range(NUM_SPECIES)}
+    for entry in pop_check_history:
+        for s in range(NUM_SPECIES):
+            if entry[s] > peaks[s]:
+                peaks[s] = entry[s]
+
+    # Resilience tracking: species that dropped below 50 then recovered above 500
+    resilience_events = []
+    for s in range(NUM_SPECIES):
+        hit_low = False
+        for entry in pop_check_history:
+            if entry[s] < 50:
+                hit_low = True
+            elif hit_low and entry[s] > 500:
+                resilience_events.append(s)
+                break
+
+    return json.dumps({
+        'generation': generation,
+        'species_alive': alive,
+        'species_dead': dead,
+        'extinctions': extinctions,
+        'speciation_count': speciation_count,
+        'dominant_species': dominant,
+        'total_population': sum(pops.values()),
+        'river_count': river_count,
+        'oxbow_count': oxbow_count,
+        'events_count': len(events_buffer),
+        'peaks': peaks,
+        'resilience_events': resilience_events,
+    })
 
 
 # ── API FUNCTIONS (called from JS) ──
