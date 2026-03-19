@@ -201,11 +201,11 @@ body {
 /* ── EVENT FEED OVERLAY ── */
 #event-feed {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  max-height: 120px;
+  bottom: 28px; left: 0; right: 0;
+  max-height: 100px;
   overflow-y: auto;
   background: linear-gradient(transparent, rgba(26,13,0,0.95));
-  padding: 40px 12px 8px;
+  padding: 40px 12px 4px;
   pointer-events: none;
 }
 #event-feed div {
@@ -1276,6 +1276,95 @@ body {
   }
 }
 
+/* ── MAP CONTROLS BAR ── */
+.map-controls {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  gap: 8px;
+  padding: 4px 8px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--dim);
+  background: rgba(26,13,0,0.85);
+  border-top: 1px solid var(--border);
+  z-index: 40;
+}
+.map-controls input[type="range"] { flex: 1; accent-color: var(--gold); height: 12px; }
+.tilt-preset {
+  background: none; border: 1px solid var(--border); color: var(--dim);
+  font-size: 9px; padding: 2px 6px; border-radius: 3px; cursor: pointer;
+  font-family: var(--mono);
+}
+.tilt-preset:hover, .tilt-preset.active { color: var(--gold); border-color: var(--gold); }
+
+/* ── MAP VIEW MODES ── */
+.map-modes {
+  position: absolute;
+  top: 8px; right: 8px;
+  display: flex; gap: 4px;
+  z-index: 40;
+}
+.mode-btn {
+  background: rgba(26,13,0,0.8); border: 1px solid var(--border); color: var(--dim);
+  font-size: 9px; padding: 2px 8px; border-radius: 3px; cursor: pointer;
+  font-family: var(--mono);
+}
+.mode-btn:hover { color: var(--gold-light); border-color: var(--gold); }
+.mode-btn.active { color: var(--gold); border-color: var(--gold); background: rgba(221,193,101,0.1); }
+
+/* ── ECOSYSTEM CARDS ── */
+#ecosystem-cards {
+  position: absolute;
+  bottom: 32px; left: 8px;
+  display: flex; flex-wrap: wrap; gap: 4px;
+  z-index: 40;
+  max-width: 50%;
+  pointer-events: none;
+}
+.eco-card {
+  background: rgba(26,13,0,0.88);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 9px;
+  color: var(--dim);
+  pointer-events: auto;
+  min-width: 100px;
+}
+.eco-card-title {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1px;
+}
+.eco-card-pops {
+  display: flex; gap: 4px;
+}
+.eco-card-pops span { font-size: 8px; }
+
+/* ── SEASONAL INDICATOR ── */
+.season-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+}
+.season-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  opacity: 0.3;
+  transition: opacity 0.3s, box-shadow 0.3s;
+}
+.season-dot.active {
+  opacity: 1;
+  box-shadow: 0 0 6px currentColor;
+}
+.season-label {
+  font-size: 9px;
+  color: var(--dim);
+  min-width: 40px;
+}
+
 /* ── EPOCH BANNER ── */
 #epoch-banner {
   position: absolute;
@@ -1567,6 +1656,13 @@ body.atmo-reef #atmosphere-layer {
       <button onclick="setSpeed(100)" class="speed-btn" data-speed="100">100x</button>
     </div>
     <div id="gen-counter">Gen <span id="gen-num">0</span></div>
+    <div class="season-indicator" id="season-indicator">
+      <div class="season-dot" style="color:#7ca8c4" data-season="winter"></div>
+      <div class="season-dot" style="color:#5aa855" data-season="spring"></div>
+      <div class="season-dot" style="color:#ddc165" data-season="summer"></div>
+      <div class="season-dot" style="color:#cc7733" data-season="autumn"></div>
+      <span class="season-label" id="season-label">—</span>
+    </div>
   </div>
 
   <!-- KPI STRIP -->
@@ -1587,7 +1683,20 @@ body.atmo-reef #atmosphere-layer {
       <div id="epoch-name"></div>
       <div id="epoch-subtitle"></div>
     </div>
+    <div class="map-modes">
+      <button class="mode-btn active" data-mode="terrain" onclick="setMapMode('terrain')">Terrain</button>
+      <button class="mode-btn" data-mode="biome" onclick="setMapMode('biome')">Biome</button>
+      <button class="mode-btn" data-mode="population" onclick="setMapMode('population')">Pop</button>
+    </div>
     <canvas id="map-canvas"></canvas>
+    <div id="ecosystem-cards"></div>
+    <div class="map-controls">
+      <span>Tilt</span>
+      <button class="tilt-preset" onclick="setTilt(0.15)">Top</button>
+      <input type="range" id="tilt-slider" min="15" max="75" value="50" step="1">
+      <button class="tilt-preset" onclick="setTilt(0.5)">Iso</button>
+      <button class="tilt-preset" onclick="setTilt(0.75)">Low</button>
+    </div>
     <div id="event-feed"></div>
   </div>
 
@@ -1835,6 +1944,9 @@ let camTilt = 0.5;    // 0.25 = nearly flat, 0.75 = steep
 let camZoom = 1.0;
 let camPanX = 0;
 let camPanY = 0;
+let mapMode = 'terrain'; // 'terrain', 'biome', 'population'
+let lastBiomeSummaryGen = -1;
+let cachedBiomeSummary = null;
 let isDragging = false;
 let dragLastX = 0;
 let dragLastY = 0;
@@ -2136,7 +2248,9 @@ function setupUI() {
     dragLastX = e.clientX;
     dragLastY = e.clientY;
     if (e.shiftKey) {
-      camTilt = Math.max(0.2, Math.min(0.8, camTilt + dy * 0.004));
+      camTilt = Math.max(0.15, Math.min(0.75, camTilt + dy * 0.004));
+      const ts = document.getElementById('tilt-slider');
+      if (ts) ts.value = Math.round(camTilt * 100);
     } else {
       camPanX += dx;
       camPanY += dy;
@@ -2209,9 +2323,18 @@ function setupUI() {
   // Double-click/tap to reset camera
   mapCanvas.addEventListener('dblclick', () => {
     camTilt = 0.5; camZoom = 1.0; camPanX = 0; camPanY = 0;
+    const ts = document.getElementById('tilt-slider');
+    if (ts) ts.value = 50;
     renderMap();
   });
   mapCanvas.style.cursor = 'grab';
+
+  // Tilt slider
+  const tiltSlider = document.getElementById('tilt-slider');
+  tiltSlider.addEventListener('input', e => {
+    camTilt = parseInt(e.target.value) / 100;
+    renderMap();
+  });
 
   window.addEventListener('resize', () => {
     if (document.getElementById('app').style.display === 'grid') {
@@ -2327,6 +2450,83 @@ function setSpeed(s) {
   document.querySelectorAll('.speed-btn').forEach(btn => {
     btn.classList.toggle('active', parseInt(btn.dataset.speed) === s);
   });
+}
+
+// ── MAP MODE & TILT CONTROLS ──
+function setMapMode(mode) {
+  mapMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  renderMap();
+}
+
+function setTilt(val) {
+  camTilt = val;
+  const ts = document.getElementById('tilt-slider');
+  if (ts) ts.value = Math.round(val * 100);
+  renderMap();
+}
+
+function updateSeasonIndicator() {
+  try {
+    const seasonFactor = pyodide.runPython('get_season()');
+    // Map season factor to season: 0-0.25=Winter, 0.25-0.5=Spring, 0.5-0.75=Summer, 0.75-1.0=Autumn
+    // get_season() = 0.5 + 0.5*sin(...), range [0,1], 0=harsh winter, 1=peak summer
+    let seasonName, seasonIdx;
+    if (seasonFactor < 0.25) { seasonName = 'Winter'; seasonIdx = 0; }
+    else if (seasonFactor < 0.5) { seasonName = 'Spring'; seasonIdx = 1; }
+    else if (seasonFactor < 0.75) { seasonName = 'Summer'; seasonIdx = 2; }
+    else { seasonName = 'Autumn'; seasonIdx = 3; }
+
+    const dots = document.querySelectorAll('.season-dot');
+    dots.forEach((dot, i) => dot.classList.toggle('active', i === seasonIdx));
+    const label = document.getElementById('season-label');
+    if (label) label.textContent = `${seasonName} ${seasonFactor.toFixed(2)}`;
+  } catch(e) {}
+}
+
+function updateEcosystemCards() {
+  const container = document.getElementById('ecosystem-cards');
+  if (!container) return;
+  try {
+    const gen = pyodide.runPython('generation');
+    if (gen === lastBiomeSummaryGen && cachedBiomeSummary) return;
+    lastBiomeSummaryGen = gen;
+
+    const summaryJson = pyodide.runPython('get_biome_summary()');
+    cachedBiomeSummary = JSON.parse(summaryJson);
+
+    const BIOME_ICONS = {
+      deep_water: '🌊', shallow_marsh: '🌿', reed_beds: '🌾',
+      tidal_flats: '🏖', rocky_shore: '🪨'
+    };
+    const BIOME_NAMES = {
+      deep_water: 'Deep Water', shallow_marsh: 'Shallow Marsh', reed_beds: 'Reed Beds',
+      tidal_flats: 'Tidal Flats', rocky_shore: 'Rocky Shore'
+    };
+    const specAbbrev = ['V', 'L', 'Cr', 'Cb', 'W'];
+    const specColors = SPECIES.map(s => s.color);
+
+    // Sort by tile count descending
+    const sorted = Object.entries(cachedBiomeSummary).sort((a, b) => b[1].tiles - a[1].tiles);
+
+    let html = '';
+    for (const [biome, info] of sorted) {
+      const icon = BIOME_ICONS[biome] || '';
+      const name = BIOME_NAMES[biome] || biome;
+      const popsStr = specAbbrev.map((a, i) =>
+        `<span style="color:${specColors[i]}">${a}:${info.total_pop[i]}</span>`
+      ).join(' ');
+      const totalK = info.total_k.reduce((a, b) => a + b, 0);
+      html += `<div class="eco-card">
+        <div class="eco-card-title">${icon} ${name} (${info.tiles})</div>
+        <div class="eco-card-pops">${popsStr}</div>
+        <div style="font-size:8px;color:var(--dim)">K: ${totalK.toLocaleString()}</div>
+      </div>`;
+    }
+    container.innerHTML = html;
+  } catch(e) {}
 }
 
 // ── FIELD / LAB MODE ──
@@ -3555,6 +3755,8 @@ function renderAll() {
   renderSpeciesList();
   renderPopChart();
   renderGraveyard();
+  updateSeasonIndicator();
+  updateEcosystemCards();
   if (viewMode === 'lab') {
     if (currentLabTab === 'overview') renderTraitChart();
     if (currentLabTab === 'stats') renderScatterPlot();
@@ -3609,30 +3811,74 @@ function renderMap() {
       const biome = data.biomes[r][c];
       const maxPop = data.max_pop || 1;
 
-      // Base color from biome
-      const bc = BIOME_COLORS[biome] || [30, 20, 10];
-      let tr = bc[0] + elev * 25;
-      let tg = bc[1] + elev * 18;
-      let tb = bc[2] + elev * 12;
+      // Tile color depends on map mode
+      let tr, tg, tb, shade, biomeLabel = '';
 
-      // Species density overlay — blend into tile color
-      if (pop > 0) {
-        const intensity = Math.min(1, pop / (maxPop * 0.7));
-        const tileColor = (data.speciated && data.variants[r][c] === 1)
-          ? SPECIES[si].variantColor : color;
-        const rgb = hexToRgb(tileColor);
-        const a = intensity * 0.7;
-        tr = tr * (1 - a) + rgb.r * a;
-        tg = tg * (1 - a) + rgb.g * a;
-        tb = tb * (1 - a) + rgb.b * a;
-      }
+      if (mapMode === 'biome') {
+        // Flat biome colors, no elevation shading
+        const BIOME_FLAT = {
+          deep_water:    [20, 45, 90],
+          shallow_marsh: [40, 80, 55],
+          reed_beds:     [65, 85, 40],
+          tidal_flats:   [90, 75, 50],
+          rocky_shore:   [110, 85, 65],
+        };
+        const bf = BIOME_FLAT[biome] || [50, 40, 30];
+        tr = bf[0]; tg = bf[1]; tb = bf[2];
+        shade = 0.85;
+        const BIOME_ABBREV = { deep_water:'DW', shallow_marsh:'SM', reed_beds:'RB', tidal_flats:'TF', rocky_shore:'RS' };
+        biomeLabel = BIOME_ABBREV[biome] || '';
+      } else if (mapMode === 'population') {
+        // Heatmap: dark base, species color intensity = pop/maxPop
+        tr = 15; tg = 10; tb = 8;
+        if (pop > 0) {
+          const intensity = Math.min(1, pop / (maxPop * 0.7));
+          const rgb = hexToRgb(color);
+          tr = tr * (1 - intensity) + rgb.r * intensity;
+          tg = tg * (1 - intensity) + rgb.g * intensity;
+          tb = tb * (1 - intensity) + rgb.b * intensity;
+        }
+        shade = 0.9;
+      } else {
+        // Terrain mode (default): biome colors + elevation + species overlay
+        const bc = BIOME_COLORS[biome] || [30, 20, 10];
+        tr = bc[0] + elev * 25;
+        tg = bc[1] + elev * 18;
+        tb = bc[2] + elev * 12;
 
-      // Shading: basic directional light
-      let shade = 0.7;
-      if (r > 0 && c > 0) {
-        const hLeft = data.elevations[r][c - 1] || elev;
-        const hUp = data.elevations[r - 1][c] || elev;
-        shade = 0.55 + 0.45 * Math.max(0, Math.min(1, 0.5 + (elev - hLeft) * 2 + (elev - hUp) * 1.5));
+        // Species density overlay — blend into tile color
+        if (pop > 0) {
+          const intensity = Math.min(1, pop / (maxPop * 0.7));
+          const tileColor = (data.speciated && data.variants[r][c] === 1)
+            ? SPECIES[si].variantColor : color;
+          const rgb = hexToRgb(tileColor);
+          const a = intensity * 0.7;
+          tr = tr * (1 - a) + rgb.r * a;
+          tg = tg * (1 - a) + rgb.g * a;
+          tb = tb * (1 - a) + rgb.b * a;
+        }
+
+        // Volcanic substrate tint — dark rock that fades over 200 gens
+        const vAge = data.volcanic_ages ? data.volcanic_ages[r][c] : 0;
+        if (vAge > 0) {
+          const vFade = Math.min(1, vAge / 200);
+          const vIntensity = 1 - vFade;
+          tr = tr * (1 - vIntensity * 0.7) + 20 * vIntensity * 0.7;
+          tg = tg * (1 - vIntensity * 0.7) + 15 * vIntensity * 0.7;
+          tb = tb * (1 - vIntensity * 0.7) + 12 * vIntensity * 0.7;
+          if (vAge < 20) {
+            const glow = (20 - vAge) / 20;
+            tr += 80 * glow;
+            tg += 20 * glow;
+          }
+        }
+
+        shade = 0.7;
+        if (r > 0 && c > 0) {
+          const hLeft = data.elevations[r][c - 1] || elev;
+          const hUp = data.elevations[r - 1][c] || elev;
+          shade = 0.55 + 0.45 * Math.max(0, Math.min(1, 0.5 + (elev - hLeft) * 2 + (elev - hUp) * 1.5));
+        }
       }
 
       // Isometric transform
@@ -3642,13 +3888,12 @@ function renderMap() {
       const sx = offsetX + ix;
       const sy = offsetY + iy - iz;
 
-      // Pillar height — all sides extend down to elevation = -1 baseline
-      // baselineY = iso position at elevation -1 for this tile's (r,c)
-      const baselineY = offsetY + (c + r) * (tileH * 0.5) + tileH * 0.5 + heightScale;
-      const pillarH = baselineY - (sy + tileH * 0.5);
+      // Pillar height — extend pillars to a deep global baseline well below viewport
+      const deepBaseline = offsetY + gs * tileH + heightScale * 0.5;
+      const pillarH = deepBaseline - (sy + tileH * 0.5);
 
       if (pillarH > 0) {
-      // Right side face (darker) — from bottom-right edge of top diamond
+      // Right side face (south-east, darker)
       ctx.fillStyle = `rgb(${tr * shade * 0.45 | 0},${tg * shade * 0.45 | 0},${tb * shade * 0.45 | 0})`;
       ctx.beginPath();
       ctx.moveTo(sx + tileW * 0.5, sy);              // right point of diamond
@@ -3657,13 +3902,13 @@ function renderMap() {
       ctx.lineTo(sx + tileW * 0.5, sy + pillarH);    // right point + pillar
       ctx.fill();
 
-      // Left side face (darkest) — from bottom-left edge of top diamond
+      // Front side face (south-west, darkest)
       ctx.fillStyle = `rgb(${tr * shade * 0.3 | 0},${tg * shade * 0.3 | 0},${tb * shade * 0.3 | 0})`;
       ctx.beginPath();
-      ctx.moveTo(sx - tileW * 0.5, sy);              // left point of diamond
-      ctx.lineTo(sx, sy + tileH * 0.5);              // bottom point of diamond
-      ctx.lineTo(sx, sy + tileH * 0.5 + pillarH);    // bottom point + pillar
+      ctx.moveTo(sx, sy + tileH * 0.5);              // bottom point of diamond
+      ctx.lineTo(sx - tileW * 0.5, sy);              // left point of diamond
       ctx.lineTo(sx - tileW * 0.5, sy + pillarH);    // left point + pillar
+      ctx.lineTo(sx, sy + tileH * 0.5 + pillarH);    // bottom point + pillar
       ctx.fill();
       }
 
@@ -3701,6 +3946,15 @@ function renderMap() {
       ctx.closePath();
       ctx.stroke();
 
+      // Biome label in biome mode
+      if (biomeLabel && tileW > 16) {
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.font = `${Math.max(7, tileW * 0.18) | 0}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(biomeLabel, sx, sy);
+      }
+
       // Selected tile glow
       if (selectedTile && selectedTile.r === r && selectedTile.c === c) {
         ctx.strokeStyle = '#FFE9A3';
@@ -3717,6 +3971,113 @@ function renderMap() {
         ctx.fill();
       }
     }
+  }
+
+  // ── ENVIRONMENTAL OVERLAYS ──
+
+  // Helper: iso position for a tile
+  function tileIso(r, c) {
+    const e = data.elevations[r] ? (data.elevations[r][c] || 0) : 0;
+    const ix = (c - r) * (tileW * 0.5);
+    const iy = (c + r) * (tileH * 0.5);
+    const iz = e * heightScale;
+    return { x: offsetX + ix, y: offsetY + iy - iz };
+  }
+
+  // River overlays — directional blue channels between path tiles
+  if (data.rivers && data.rivers.length > 0) {
+    data.rivers.forEach(rv => {
+      const path = rv.path;
+      if (path.length < 2) return;
+      const baseWidth = Math.max(1.5, (rv.width || 1) * 2 * camZoom);
+      const ageAlpha = Math.min(0.7, 0.3 + (rv.age || 0) * 0.005);
+      ctx.strokeStyle = `rgba(30, 80, 140, ${ageAlpha})`;
+      ctx.lineWidth = baseWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      const start = tileIso(path[0][0], path[0][1]);
+      ctx.moveTo(start.x, start.y);
+      for (let i = 1; i < path.length; i++) {
+        const pt = tileIso(path[i][0], path[i][1]);
+        ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.stroke();
+      // River shimmer highlight
+      ctx.strokeStyle = `rgba(60, 140, 200, ${ageAlpha * 0.4})`;
+      ctx.lineWidth = baseWidth * 0.4;
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      for (let i = 1; i < path.length; i++) {
+        const pt = tileIso(path[i][0], path[i][1]);
+        ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.stroke();
+    });
+  }
+
+  // Oxbow lakes — small crescents on detached river tiles
+  if (data.oxbow_tiles && data.oxbow_tiles.length > 0) {
+    ctx.fillStyle = 'rgba(25, 60, 100, 0.4)';
+    data.oxbow_tiles.forEach(t => {
+      const [or, oc] = t;
+      if (or >= 0 && or < gs && oc >= 0 && oc < gs) {
+        const pos = tileIso(or, oc);
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, tileW * 0.15, 0.3, Math.PI + 0.3);
+        ctx.fill();
+      }
+    });
+  }
+
+  // Plate boundary edges — subtle tectonic fault lines
+  if (data.plate_boundaries && data.plate_boundaries.length > 0) {
+    ctx.strokeStyle = 'rgba(180, 80, 30, 0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 4]);
+    const boundarySet = new Set(data.plate_boundaries.map(b => `${b[0]},${b[1]}`));
+    data.plate_boundaries.forEach(b => {
+      const [br, bc] = b;
+      if (br >= 0 && br < gs && bc >= 0 && bc < gs) {
+        const pos = tileIso(br, bc);
+        // Draw diamond outline for boundary tiles
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y - tileH * 0.5);
+        ctx.lineTo(pos.x + tileW * 0.5, pos.y);
+        ctx.lineTo(pos.x, pos.y + tileH * 0.5);
+        ctx.lineTo(pos.x - tileW * 0.5, pos.y);
+        ctx.closePath();
+        ctx.stroke();
+      }
+    });
+    ctx.setLineDash([]);
+  }
+
+  // Ghost population territories — faded outlines
+  if (data.ghost_territories && data.ghost_territories.length > 0) {
+    data.ghost_territories.forEach((ghost, gi) => {
+      const hue = (gi * 60 + 200) % 360;
+      const alpha = 0.15 + Math.min(0.2, ghost.fst * 0.4);
+      ctx.strokeStyle = `hsla(${hue}, 40%, 50%, ${alpha + 0.15})`;
+      ctx.fillStyle = `hsla(${hue}, 30%, 40%, ${alpha * 0.5})`;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ghost.tiles.forEach(t => {
+        const [gr, gc] = t;
+        if (gr >= 0 && gr < gs && gc >= 0 && gc < gs) {
+          const pos = tileIso(gr, gc);
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y - tileH * 0.5);
+          ctx.lineTo(pos.x + tileW * 0.5, pos.y);
+          ctx.lineTo(pos.x, pos.y + tileH * 0.5);
+          ctx.lineTo(pos.x - tileW * 0.5, pos.y);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      });
+      ctx.setLineDash([]);
+    });
   }
 
   // Extinction last-stand markers
@@ -7654,6 +8015,24 @@ def get_map_data(species_idx):
         'plate_boundaries': plate_boundary_tiles,
         'ghost_territories': ghost_territories,
     })
+
+def get_biome_summary():
+    """Return biome summary stats for ecosystem cards."""
+    summary = {}
+    season = get_season()
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            tile = grid[r][c]
+            biome = get_biome(tile['elevation'])
+            if biome not in summary:
+                summary[biome] = {'tiles': 0, 'total_pop': [0]*5, 'total_k': [0]*5}
+            summary[biome]['tiles'] += 1
+            for s in range(5):
+                summary[biome]['total_pop'][s] += tile['pops'][s]
+                suit = habitat_suitability(tile['elevation'], s)
+                k = int(BASE_K[s] * suit * (0.7 + 0.3 * tile['food']) * (0.85 + 0.15 * season))
+                summary[biome]['total_k'][s] += k
+    return json.dumps(summary)
 
 def get_speciation_info():
     """Return all speciation events for JS."""
