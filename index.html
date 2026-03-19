@@ -1438,6 +1438,14 @@ body {
 }
 .mode-btn:hover { color: var(--gold-light); border-color: var(--gold); }
 .mode-btn.active { color: var(--gold); border-color: var(--gold); background: rgba(221,193,101,0.1); }
+.map-modes-divider { color: var(--border); font-size: 10px; margin: 0 2px; }
+.overlay-btn {
+  background: none; border: 1px solid transparent; color: var(--dim);
+  font-size: 8px; padding: 1px 5px; border-radius: 2px; cursor: pointer;
+  font-family: var(--mono); opacity: 0.5; transition: all 0.15s;
+}
+.overlay-btn:hover { opacity: 0.8; }
+.overlay-btn.active { opacity: 1; color: var(--text); border-color: var(--border); }
 
 /* ── ECOSYSTEM CARDS ── */
 #ecosystem-cards {
@@ -1738,9 +1746,9 @@ body.atmo-reef #atmosphere-layer {
     <div class="setup-row">
       <label>Size</label>
       <div class="size-options">
-        <button class="size-option" data-size="8" onclick="selectMapSize(8)">Small 8&times;8</button>
-        <button class="size-option active" data-size="12" onclick="selectMapSize(12)">Medium 12&times;12</button>
-        <button class="size-option" data-size="16" onclick="selectMapSize(16)">Large 16&times;16</button>
+        <button class="size-option active" data-size="32" onclick="selectMapSize(32)">Small 32&times;32</button>
+        <button class="size-option" data-size="64" onclick="selectMapSize(64)">Medium 64&times;64</button>
+        <button class="size-option" data-size="128" onclick="selectMapSize(128)">Large 128&times;128</button>
       </div>
     </div>
   </div>
@@ -1818,6 +1826,11 @@ body.atmo-reef #atmosphere-layer {
       <button class="mode-btn active" data-mode="terrain" onclick="setMapMode('terrain')">Terrain</button>
       <button class="mode-btn" data-mode="biome" onclick="setMapMode('biome')">Biome</button>
       <button class="mode-btn" data-mode="population" onclick="setMapMode('population')">Pop</button>
+      <span class="map-modes-divider">|</span>
+      <button class="overlay-btn active" data-overlay="rivers" onclick="toggleOverlay('rivers')">Rivers</button>
+      <button class="overlay-btn active" data-overlay="volcanic" onclick="toggleOverlay('volcanic')">Volcanics</button>
+      <button class="overlay-btn active" data-overlay="plates" onclick="toggleOverlay('plates')">Plates</button>
+      <button class="overlay-btn active" data-overlay="ghosts" onclick="toggleOverlay('ghosts')">Ghosts</button>
     </div>
     <canvas id="map-canvas"></canvas>
     <div id="ecosystem-cards"></div>
@@ -2071,7 +2084,7 @@ let scatterCanvas, scatterCtx;
 let scatterMode = 'spatial'; // 'spatial' or 'temporal'
 let animFrame = null;
 let stepsPerFrame = 1;
-let setupMapSize = 12;
+let setupMapSize = 32;
 let previewData = null;
 let startTime = 0;
 let activeChallenge = null; // challenge id or null
@@ -2088,6 +2101,7 @@ let camZoom = 1.0;
 let camPanX = 0;
 let camPanY = 0;
 let mapMode = 'terrain'; // 'terrain', 'biome', 'population'
+let mapOverlays = { rivers: true, volcanic: true, plates: true, ghosts: true };
 let lastBiomeSummaryGen = -1;
 let cachedBiomeSummary = null;
 let isDragging = false;
@@ -2615,6 +2629,14 @@ function setMapMode(mode) {
   mapMode = mode;
   document.querySelectorAll('.mode-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  renderMap();
+}
+
+function toggleOverlay(name) {
+  mapOverlays[name] = !mapOverlays[name];
+  document.querySelectorAll('.overlay-btn').forEach(btn => {
+    if (btn.dataset.overlay === name) btn.classList.toggle('active', mapOverlays[name]);
   });
   renderMap();
 }
@@ -4371,9 +4393,28 @@ function renderMap() {
   for (let r = 0; r < gs; r++) {
     for (let c = 0; c < gs; c++) {
       const pop = data.pops[r][c];
-      const elev = data.elevations[r][c];
+      let elev = data.elevations[r][c];
       const biome = data.biomes[r][c];
+      const tileType = data.tile_types ? data.tile_types[r][c] : 'land';
       const maxPop = data.max_pop || 1;
+
+      // Water tiles render at the same visual height as adjacent coastal tiles
+      // so the sea surface meets the shoreline flush
+      if (tileType === 'ocean' || tileType === 'lake') {
+        // Find the highest adjacent coastal/land tile to match its elevation
+        let coastalElev = elev;
+        for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+          const nr = r+dr, nc = c+dc;
+          if (nr >= 0 && nr < gs && nc >= 0 && nc < gs) {
+            const nType = data.tile_types ? data.tile_types[nr][nc] : 'land';
+            if (nType === 'coastal' || nType === 'land') {
+              coastalElev = Math.max(coastalElev, data.elevations[nr][nc]);
+            }
+          }
+        }
+        // Render water just barely below the coastal level
+        if (coastalElev > elev) elev = coastalElev - 0.005;
+      }
 
       // Tile color depends on map mode
       let tr, tg, tb, shade, biomeLabel = '';
@@ -4423,7 +4464,7 @@ function renderMap() {
         }
 
         // Volcanic substrate tint — dark rock that fades over 200 gens
-        const vAge = data.volcanic_ages ? data.volcanic_ages[r][c] : 0;
+        const vAge = (mapOverlays.volcanic && data.volcanic_ages) ? data.volcanic_ages[r][c] : 0;
         if (vAge > 0) {
           const vFade = Math.min(1, vAge / 200);
           const vIntensity = 1 - vFade;
@@ -4549,7 +4590,7 @@ function renderMap() {
   }
 
   // River overlays — directional blue channels between path tiles
-  if (data.rivers && data.rivers.length > 0) {
+  if (mapOverlays.rivers && data.rivers && data.rivers.length > 0) {
     data.rivers.forEach(rv => {
       const path = rv.path;
       if (path.length < 2) return;
@@ -4581,7 +4622,7 @@ function renderMap() {
   }
 
   // Oxbow lakes — small crescents on detached river tiles
-  if (data.oxbow_tiles && data.oxbow_tiles.length > 0) {
+  if (mapOverlays.rivers && data.oxbow_tiles && data.oxbow_tiles.length > 0) {
     ctx.fillStyle = 'rgba(25, 60, 100, 0.4)';
     data.oxbow_tiles.forEach(t => {
       const [or, oc] = t;
@@ -4595,7 +4636,7 @@ function renderMap() {
   }
 
   // Plate boundary edges — subtle tectonic fault lines
-  if (data.plate_boundaries && data.plate_boundaries.length > 0) {
+  if (mapOverlays.plates && data.plate_boundaries && data.plate_boundaries.length > 0) {
     ctx.strokeStyle = 'rgba(180, 80, 30, 0.2)';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([3, 4]);
@@ -4618,7 +4659,7 @@ function renderMap() {
   }
 
   // Ghost population territories — faded outlines
-  if (data.ghost_territories && data.ghost_territories.length > 0) {
+  if (mapOverlays.ghosts && data.ghost_territories && data.ghost_territories.length > 0) {
     data.ghost_territories.forEach((ghost, gi) => {
       const hue = (gi * 60 + 200) % 360;
       const alpha = 0.15 + Math.min(0.2, ghost.fst * 0.4);
@@ -6031,9 +6072,9 @@ WATER_TABLE = 0.2  # tiles below this are standing water
 EROSION_RATE = 0.0003  # elevation loss per gen for high tiles (hundreds of gens for biome transition)
 
 # River overlay: geological timescale
-RIVER_GEOLOGICAL_TICK = 200  # generations between river advance steps
-RIVER_SPAWN_PROB = 0.003     # probability per gen of spawning a new river at a high-elevation tile
-RIVER_STALL_GENS = 500       # generations before a stalled river dries up
+RIVER_GEOLOGICAL_TICK = 50   # generations between river advance steps
+RIVER_SPAWN_PROB = 0.012     # probability per gen of spawning a new river at a high-elevation tile
+RIVER_STALL_GENS = 400       # generations before a stalled river dries up
 RIVER_BARRIER_K = 0.01       # gene flow barrier scaling: m_eff = m / (1 + k * width * age)
 
 # River erosion-deposition (drives emergent meandering)
@@ -6101,32 +6142,58 @@ def _octave_noise(x, y, seed, octaves=4, lacunarity=2.0, persistence=0.5):
     return total / max_val
 
 def generate_elevation(seed=None, grid_size=None):
-    """Multi-octave value noise terrain with water bodies and ridges."""
+    """Coastal geography: ocean on right side, beach transition, mountain peak top-left.
+    Rivers flow naturally from highlands toward the coast via steepest descent."""
     if seed is None:
         seed = TERRAIN_SEED if TERRAIN_SEED is not None else random.randint(0, 999999)
     if grid_size is None:
         grid_size = GRID_SIZE
     elev = [[0.0]*grid_size for _ in range(grid_size)]
-    scale = 0.35  # Controls feature size relative to grid
+    # Scale noise features relative to grid size so terrain looks similar at any resolution
+    scale = 8.0 / grid_size
 
-    # Generate raw noise
     for r in range(grid_size):
         for c in range(grid_size):
+            # Normalized coordinates 0-1
+            nr = r / grid_size
+            nc = c / grid_size
+
+            # 1. Coastal gradient: elevation drops toward right edge (c = grid_size)
+            # Smooth sigmoid transition from land to sea
+            coast_x = (nc - 0.65) / 0.12  # transition zone centered at 65% across
+            coastal = 1.0 / (1.0 + math.exp(coast_x * 4))  # 1=land, 0=sea
+
+            # 2. Mountain gradient: peak in top-left corner (0,0)
+            # Distance from top-left, weighted to create a single dominant peak
+            mtn_dist = math.sqrt(nr * nr + nc * nc) / 1.41  # 0 at corner, 1 at far corner
+            mountain = max(0, 1.0 - mtn_dist * 1.4) ** 1.8  # Sharp peak
+
+            # 3. Noise for natural variation
             nx = c * scale
             ny = r * scale
-            # Base terrain: multi-octave noise
             base = _octave_noise(nx, ny, seed, octaves=4, persistence=0.45)
-            # Ridge layer: fold noise to create ridge lines
+            # Ridge layer for mountain ranges
             ridge = _octave_noise(nx + 50, ny + 50, seed + 100, octaves=3, persistence=0.5)
-            ridge = 1.0 - abs(ridge * 2 - 1)  # Fold into ridges
-            ridge = ridge * ridge  # Sharpen ridges
-            # Combine: base terrain + subtle ridge influence
-            combined = base * 0.7 + ridge * 0.3
-            # Basin effect: lower center to create water body
-            cx, cy = grid_size / 2.0, grid_size / 2.0
-            dist = math.sqrt((r - cy)**2 + (c - cx)**2) / (grid_size * 0.6)
-            basin = max(0, 1.0 - dist * dist) * 0.25
-            combined = combined - basin
+            ridge = 1.0 - abs(ridge * 2 - 1)
+            ridge = ridge * ridge
+            noise = base * 0.65 + ridge * 0.35
+
+            # 4. Combine: coastal mask × (mountain + noise)
+            # The coastal gradient controls where land exists
+            # Mountain adds the highland peak, noise adds natural variation
+            land_elev = mountain * 0.55 + noise * 0.45
+            combined = coastal * land_elev
+
+            # 5. Beach zone: flatten the transition slightly for a beach strip
+            if 0.55 < nc < 0.72 and combined > 0.1 and combined < 0.4:
+                beach_factor = 1.0 - max(0, min(1, (nc - 0.55) / 0.17))
+                combined = combined * (0.6 + 0.4 * beach_factor)
+
+            # 6. Ocean floor: give submerged areas some depth variation
+            if combined < 0.15:
+                ocean_noise = _octave_noise(nx + 200, ny + 200, seed + 300, octaves=2, persistence=0.3)
+                combined = combined * 0.5 + ocean_noise * 0.05
+
             elev[r][c] = combined
 
     # Normalize to 0-1
@@ -6137,53 +6204,91 @@ def generate_elevation(seed=None, grid_size=None):
         for c in range(grid_size):
             elev[r][c] = (elev[r][c] - lo) / span
 
-    # Flood-fill to connect low regions into water bodies
-    # Push lowest 20% of tiles further down to form coherent water
-    threshold = sorted(flat)[max(1, len(flat) // 5)]
-    threshold_norm = (threshold - lo) / span
-    for r in range(grid_size):
-        for c in range(grid_size):
-            if elev[r][c] < threshold_norm:
-                elev[r][c] = elev[r][c] * 0.7  # Deepen low areas
+    # Enforce standing water levels (initial pass before coastal smoothing)
+    elev, _ = enforce_water_level(elev, grid_size)
 
-    # Re-normalize after deepening
-    flat2 = [elev[r][c] for r in range(grid_size) for c in range(grid_size)]
-    lo2, hi2 = min(flat2), max(flat2)
-    span2 = hi2 - lo2 if hi2 > lo2 else 1.0
-    for r in range(grid_size):
-        for c in range(grid_size):
-            elev[r][c] = (elev[r][c] - lo2) / span2
+    # Coastal erosion equilibrium: land tiles adjacent to water should be
+    # nearly level with the water surface. Over geological time, wave action
+    # and runoff would have eroded any cliffs at the shoreline.
+    # Apply multiple smoothing passes — each pass pulls coastal tiles toward WATER_TABLE,
+    # and subsequent passes smooth the tiles behind them, creating a natural beach gradient.
+    for smooth_pass in range(4):
+        new_elev = [row[:] for row in elev]
+        for r in range(grid_size):
+            for c in range(grid_size):
+                if elev[r][c] >= WATER_TABLE:
+                    # Check if any neighbor is water
+                    has_water_neighbor = False
+                    for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                        nr, nc = r+dr, c+dc
+                        if 0 <= nr < grid_size and 0 <= nc < grid_size:
+                            if elev[nr][nc] < WATER_TABLE:
+                                has_water_neighbor = True
+                                break
+                    if has_water_neighbor:
+                        # Pull toward just above water table — stronger in early passes
+                        target = WATER_TABLE + 0.02 + smooth_pass * 0.03
+                        blend = 0.7 - smooth_pass * 0.12  # 0.7, 0.58, 0.46, 0.34
+                        new_elev[r][c] = elev[r][c] * (1 - blend) + target * blend
+        elev = new_elev
 
-    # Enforce standing water levels
-    elev = enforce_water_level(elev, grid_size)
+    # Final water level enforcement with tile type classification
+    elev, tile_types = enforce_water_level(elev, grid_size)
 
-    return elev
+    return elev, tile_types
 
 def enforce_water_level(elev, grid_size):
-    """Flood-fill: connected tiles below WATER_TABLE get normalized to the same elevation."""
+    """Flood-fill water bodies. Classifies each as ocean (touches edge) or lake (enclosed).
+    Sets water surface elevation to the lowest adjacent coastal tile so water visually
+    meets the shoreline. Returns (elev, tile_types) where tile_types is a 2D grid of
+    'ocean', 'lake', 'coastal', or 'land'."""
+    tile_types = [['land']*grid_size for _ in range(grid_size)]
     visited = [[False]*grid_size for _ in range(grid_size)]
+
     for r in range(grid_size):
         for c in range(grid_size):
             if not visited[r][c] and elev[r][c] < WATER_TABLE:
                 # BFS to find connected water body
                 body = []
+                touches_edge = False
                 queue = [(r, c)]
                 visited[r][c] = True
                 while queue:
                     cr, cc = queue.pop(0)
                     body.append((cr, cc))
+                    if cr == 0 or cr == grid_size-1 or cc == 0 or cc == grid_size-1:
+                        touches_edge = True
                     for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
                         nr, nc = cr+dr, cc+dc
                         if 0 <= nr < grid_size and 0 <= nc < grid_size:
                             if not visited[nr][nc] and elev[nr][nc] < WATER_TABLE:
                                 visited[nr][nc] = True
                                 queue.append((nr, nc))
-                # All tiles in this body get the minimum elevation
-                if body:
-                    min_elev = min(elev[br][bc] for br, bc in body)
-                    for br, bc in body:
-                        elev[br][bc] = min_elev
-    return elev
+
+                water_type = 'ocean' if touches_edge else 'lake'
+
+                # Find the lowest coastal tile elevation adjacent to this water body
+                # Water surface should be at this level (equilibrium)
+                coastal_min = WATER_TABLE  # fallback
+                body_set = set(body)
+                for br, bc in body:
+                    for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                        nr, nc = br+dr, bc+dc
+                        if 0 <= nr < grid_size and 0 <= nc < grid_size:
+                            if (nr, nc) not in body_set and elev[nr][nc] >= WATER_TABLE:
+                                coastal_min = min(coastal_min, elev[nr][nc])
+                                tile_types[nr][nc] = 'coastal'
+
+                # Set all tiles in this water body to the coastal surface level
+                # (slightly below coastal_min so they're still classified as water)
+                # Water surface stays below WATER_TABLE for biome classification
+                # JS renderer will override the visual height to match coastal tiles
+                surface_elev = min(coastal_min - 0.005, WATER_TABLE - 0.01)
+                for br, bc in body:
+                    elev[br][bc] = surface_elev
+                    tile_types[br][bc] = water_type
+
+    return elev, tile_types
 
 def get_biome(elev):
     """Classify elevation into biome type."""
@@ -6224,9 +6329,9 @@ def set_grid_size(n):
 def generate_preview(seed_str, grid_size):
     """Generate terrain for preview without starting sim."""
     seed = _string_to_seed(seed_str)
-    elev = generate_elevation(seed=seed, grid_size=grid_size)
+    elev, tile_types = generate_elevation(seed=seed, grid_size=grid_size)
     biomes = [[get_biome(elev[r][c]) for c in range(grid_size)] for r in range(grid_size)]
-    return json.dumps({'elevations': elev, 'biomes': biomes, 'grid_size': grid_size})
+    return json.dumps({'elevations': elev, 'biomes': biomes, 'tile_types': tile_types, 'grid_size': grid_size})
 
 def init_grid(seed_str=None):
     global grid, generation, events_buffer, active_events, speciation_events, trait_divergence_counter
@@ -6283,7 +6388,7 @@ def init_grid(seed_str=None):
     antagonist_history = []   # [{gen, leviathan, beetle, caterpillar}, ...]
     fitness_history = []      # [{gen, w_bar, viability, stress}, ...]
     seed = _string_to_seed(seed_str) if seed_str else random.randint(0, 999999)
-    elevations = generate_elevation(seed=seed, grid_size=GRID_SIZE)
+    elevations, tile_type_grid = generate_elevation(seed=seed, grid_size=GRID_SIZE)
     grid = []
     for r in range(GRID_SIZE):
         row = []
@@ -6291,6 +6396,7 @@ def init_grid(seed_str=None):
             elev = elevations[r][c]
             tile = {
                 'elevation': elev,
+                'tile_type': tile_type_grid[r][c],  # 'ocean', 'lake', 'coastal', 'land'
                 'food': 0.7 + random.uniform(-0.1, 0.1),
                 'water': max(0, 1.0 - elev + random.uniform(-0.1, 0.1)),
                 'temp': 0.5 + random.uniform(-0.1, 0.1),
@@ -7410,10 +7516,11 @@ def _apply_erosion():
     if changed:
         # Re-enforce standing water level rule
         elev_grid = [[grid[r][c]['elevation'] for c in range(GRID_SIZE)] for r in range(GRID_SIZE)]
-        elev_grid = enforce_water_level(elev_grid, GRID_SIZE)
+        elev_grid, new_types = enforce_water_level(elev_grid, GRID_SIZE)
         for r in range(GRID_SIZE):
             for c in range(GRID_SIZE):
                 grid[r][c]['elevation'] = elev_grid[r][c]
+                grid[r][c]['tile_type'] = new_types[r][c]
 
 def _spawn_river():
     """Attempt to spawn a new river at a high-elevation tile."""
@@ -7422,16 +7529,17 @@ def _spawn_river():
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
             elev = grid[r][c]['elevation']
-            if elev > 0.7:  # high elevation sources
-                # Don't spawn on tiles that already have a river
+            if elev > 0.7 and r > 1 and c > 1 and r < GRID_SIZE - 2 and c < GRID_SIZE - 2:
+                # Don't spawn on tiles that already have a river, or at grid edges
                 has_existing = any((r, c) in rv['path_set'] for rv in rivers if rv['active'])
                 if not has_existing:
                     candidates.append((r, c, elev))
     if not candidates:
         return
-    # Weight by elevation
+    # Weight by elevation — pick from top candidates with randomness
     candidates.sort(key=lambda x: -x[2])
-    r, c, _ = candidates[0]
+    pick_from = min(len(candidates), max(3, len(candidates) // 4))
+    r, c, _ = random.choice(candidates[:pick_from])
     river = {
         'id': next_river_id,
         'path': [(r, c)],
@@ -7457,9 +7565,9 @@ def _advance_river(river):
     head_r, head_c = river['path'][-1]
     head_elev = grid[head_r][head_c]['elevation']
 
-    # Find lowest adjacent non-river tile that's downhill
+    # Find lowest adjacent non-river tile that's downhill (or at same level with tolerance)
     best = None
-    best_elev = head_elev
+    best_elev = head_elev + 0.005  # slight tolerance allows flow across nearly-flat terrain
     for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
         nr, nc = head_r+dr, head_c+dc
         if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
@@ -7468,8 +7576,35 @@ def _advance_river(river):
                 if ne < best_elev:
                     best = (nr, nc)
                     best_elev = ne
+        elif nc >= GRID_SIZE:
+            # Reached right edge (coast side) — treat as reaching the sea
+            river['complete'] = True
+            events_buffer.append({
+                'gen': generation,
+                'text': f'The waterway from ({river["path"][0][0]},{river["path"][0][1]}) has reached the open sea'
+            })
+            return
+
     if best is None:
-        # Stalled — no downhill neighbor
+        # Stalled — no downhill neighbor. Try eroding the lowest adjacent tile slightly
+        # to let water eventually push through (water finds a way)
+        lowest = None
+        lowest_elev = 999
+        for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+            nr, nc = head_r+dr, head_c+dc
+            if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
+                if (nr, nc) not in river['path_set']:
+                    ne = grid[nr][nc]['elevation']
+                    if ne < lowest_elev:
+                        lowest = (nr, nc)
+                        lowest_elev = ne
+        if lowest:
+            # Water pressure erodes the blocking tile — stronger for longer rivers
+            # (more water = more erosive force)
+            lr, lc = lowest
+            erosion_force = RIVER_EROSION_RATE * (1 + len(river['path']) * 0.3)
+            grid[lr][lc]['elevation'] = max(WATER_TABLE * 0.5,
+                grid[lr][lc]['elevation'] - erosion_force)
         river['stall_gens'] += RIVER_GEOLOGICAL_TICK
         if river['stall_gens'] >= RIVER_STALL_GENS:
             _deactivate_river(river)
@@ -7812,10 +7947,11 @@ def _update_tectonics():
 
     # Re-enforce standing water level rule after tectonic changes
     elev_grid = [[grid[r][c]['elevation'] for c in range(GRID_SIZE)] for r in range(GRID_SIZE)]
-    elev_grid = enforce_water_level(elev_grid, GRID_SIZE)
+    elev_grid, new_types = enforce_water_level(elev_grid, GRID_SIZE)
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
             grid[r][c]['elevation'] = elev_grid[r][c]
+            grid[r][c]['tile_type'] = new_types[r][c]
 
 def _update_terrain():
     """Master terrain update function called each generation."""
@@ -7831,7 +7967,12 @@ def _update_terrain():
         geo_tick_num = generation // RIVER_GEOLOGICAL_TICK
         for river in rivers:
             if river['active']:
-                _advance_river(river)
+                # Advance multiple tiles per tick scaled to grid size
+                # (larger grids need more steps per tick to reach coast)
+                advance_steps = max(2, GRID_SIZE // 8)
+                for _ in range(advance_steps):
+                    if river['active'] and not river['complete']:
+                        _advance_river(river)
                 # Erosion-deposition feedback (drives emergent meandering)
                 _river_erode_deposit(river)
                 # Periodically reroute along new terrain (path follows gradient)
@@ -7898,10 +8039,11 @@ def _do_volcanic_event(center_r, center_c, tectonic=False):
 
     # Re-enforce standing water level rule if volcanic elevation change affects coastal tiles
     elev_grid = [[grid[r][c]['elevation'] for c in range(GRID_SIZE)] for r in range(GRID_SIZE)]
-    elev_grid = enforce_water_level(elev_grid, GRID_SIZE)
+    elev_grid, new_types = enforce_water_level(elev_grid, GRID_SIZE)
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
             grid[r][c]['elevation'] = elev_grid[r][c]
+            grid[r][c]['tile_type'] = new_types[r][c]
 
     cause = 'Tectonic stress released — a' if tectonic else 'A'
     events_buffer.append({
@@ -8550,6 +8692,7 @@ def get_map_data(species_idx):
     biomes = []
     variants = []  # 0 = no speciation or parent, 1 = variant
     volc_ages = []  # volcanic_age per tile (0 = never erupted)
+    ttypes = []     # tile_type per tile
     max_pop = 1
     has_speciation = species_idx in speciation_events
     split_trait = speciation_events[species_idx]['split_trait'] if has_speciation else 0
@@ -8560,6 +8703,7 @@ def get_map_data(species_idx):
         biome_row = []
         var_row = []
         volc_row = []
+        ttype_row = []
         for c in range(GRID_SIZE):
             p = grid[r][c]['pops'][species_idx]
             e = grid[r][c]['elevation']
@@ -8567,6 +8711,7 @@ def get_map_data(species_idx):
             elev_row.append(e)
             biome_row.append(get_biome(e))
             volc_row.append(grid[r][c].get('volcanic_age', 0))
+            ttype_row.append(grid[r][c].get('tile_type', 'land'))
             if has_speciation and p > 0:
                 var_row.append(1 if grid[r][c]['traits'][species_idx] > split_trait else 0)
             else:
@@ -8578,6 +8723,7 @@ def get_map_data(species_idx):
         biomes.append(biome_row)
         variants.append(var_row)
         volc_ages.append(volc_row)
+        ttypes.append(ttype_row)
 
     # River paths for overlay rendering
     river_paths = []
@@ -8622,6 +8768,7 @@ def get_map_data(species_idx):
         'pops': pops, 'elevations': elevations, 'biomes': biomes,
         'max_pop': max_pop, 'variants': variants, 'speciated': has_speciation,
         'volcanic_ages': volc_ages,
+        'tile_types': ttypes,
         'rivers': river_paths,
         'oxbow_tiles': oxbow_tiles,
         'plate_boundaries': plate_boundary_tiles,
