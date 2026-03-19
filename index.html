@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Velothrix aurantis — Ecosystem Observation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
@@ -36,7 +36,9 @@ body {
   font-family: var(--mono);
   font-size: 12px;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* ── LOADING SCREEN ── */
@@ -156,6 +158,7 @@ body {
   display: block;
   width: 100%;
   height: 100%;
+  touch-action: none;
 }
 
 /* ── ACTIVE EVENTS BAR ── */
@@ -774,6 +777,36 @@ body {
   transform: translateY(0);
 }
 
+/* ── SETUP SCREEN MOBILE ── */
+@media (max-width: 480px) {
+  #setup-screen { gap: 14px; padding: 16px; justify-content: flex-start; padding-top: 10vh; }
+  #setup-screen h1 { font-size: 28px; }
+  #setup-screen .setup-subtitle { font-size: 11px; }
+  .setup-controls { gap: 12px; }
+  #seed-input { font-size: 16px; padding: 10px 12px; /* prevents iOS zoom */ }
+  .setup-btn { min-height: 44px; font-size: 12px; padding: 8px 14px; }
+  .size-option { min-height: 44px; font-size: 12px; padding: 10px 0; }
+  #preview-canvas { height: 200px; max-width: 100%; }
+  .setup-actions .setup-btn { min-height: 44px; }
+  #btn-begin { min-height: 48px; font-size: 15px; padding: 12px 20px; }
+}
+
+/* ── OVERLAY MODALS MOBILE ── */
+@media (max-width: 480px) {
+  .outcome-card, .eulogy-card, .summary-card {
+    padding: 20px 16px;
+    max-width: calc(100vw - 32px);
+    margin: 16px;
+  }
+  .outcome-title, .eulogy-species, .summary-title { font-size: 18px; }
+  .outcome-text, .eulogy-cause { font-size: 11px; }
+  .outcome-btn, .eulogy-dismiss { min-height: 44px; font-size: 12px; }
+  .outcome-actions, .summary-actions { flex-wrap: wrap; }
+  #postmortem-overlay { padding: 20px 12px; }
+  .postmortem-card { padding: 16px; max-width: calc(100vw - 24px); }
+  .hall-list { max-height: 50vh; }
+}
+
 /* ── GAME OUTCOME OVERLAY ── */
 #outcome-overlay {
   display: none;
@@ -1259,79 +1292,237 @@ body {
 @media (max-width: 768px) {
   #app {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto 1fr auto;
     height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
   }
 
+  /* ── HEADER: two-row compact layout ── */
   #header {
-    flex-wrap: wrap;
-    padding: 8px 10px;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    padding: 6px 10px;
+    gap: 4px 8px;
   }
 
   #header h1 {
-    font-size: 16px;
-  }
-
-  .species-tabs {
-    order: 3;
-    margin-left: 0;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .species-tabs::-webkit-scrollbar { display: none; }
-
-  .header-controls {
-    margin-left: auto;
+    font-size: 15px;
+    grid-row: 1;
+    grid-column: 1;
   }
 
   #gen-counter {
-    order: 2;
+    grid-row: 1;
+    grid-column: 2;
     margin-left: 0;
+    text-align: center;
+    font-size: 11px;
   }
 
+  .header-controls {
+    grid-row: 1;
+    grid-column: 3;
+    margin-left: 0;
+    gap: 4px;
+  }
+
+  .header-controls button {
+    padding: 4px 8px;
+    font-size: 10px;
+    min-height: 36px;
+    min-width: 36px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Speed buttons: hide labels, just show number */
+  .speed-btn { padding: 4px 6px; }
+
+  /* Mode toggle + species tabs: second row, full width */
+  .mode-toggle {
+    grid-row: 2;
+    grid-column: 1;
+  }
+  .mode-toggle button {
+    padding: 4px 10px;
+    font-size: 10px;
+    min-height: 32px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .species-tabs {
+    grid-row: 2;
+    grid-column: 2 / 4;
+    margin-left: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0;
+    justify-content: flex-end;
+  }
+  .species-tabs::-webkit-scrollbar { display: none; }
+
+  .species-tab {
+    padding: 4px 10px;
+    font-size: 10px;
+    min-height: 32px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+
+  /* Season indicator: inline with gen counter */
+  .season-indicator {
+    grid-row: 1;
+    grid-column: 2;
+    margin-left: 4px;
+    display: inline-flex;
+  }
+
+  /* Challenge indicator */
+  .challenge-indicator {
+    grid-row: 1;
+    grid-column: 2;
+    font-size: 9px;
+  }
+
+  /* ── KPI: horizontal scroll, compact ── */
+  #kpi-strip {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 4px 10px;
+    flex-wrap: nowrap;
+  }
+  #kpi-strip::-webkit-scrollbar { display: none; }
+  .kpi-item {
+    min-width: 65px;
+    flex-shrink: 0;
+  }
+  .kpi-label { font-size: 8px; }
+  .kpi-value { font-size: 13px; }
+
+  /* ── Active events: horizontal scroll ── */
+  #active-events-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    padding: 2px 10px;
+  }
+  #active-events-bar::-webkit-scrollbar { display: none; }
+  #active-events-bar:not(:empty) { min-height: 22px; padding: 3px 10px; }
+
+  /* ── MAP: fill remaining space ── */
   #map-area {
     min-height: 0;
+    flex: 1;
   }
 
-  /* Panel becomes a bottom tray */
+  /* Map mode buttons: single row, scrollable */
+  .map-modes {
+    padding: 4px 8px;
+    gap: 3px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .map-modes::-webkit-scrollbar { display: none; }
+  .mode-btn, .overlay-btn {
+    font-size: 9px;
+    padding: 4px 8px;
+    min-height: 30px;
+    flex-shrink: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Map controls bar */
+  .map-controls {
+    padding: 3px 8px;
+    gap: 4px;
+  }
+  .tilt-preset {
+    min-height: 28px;
+    min-width: 32px;
+    touch-action: manipulation;
+  }
+
+  /* Epoch banner */
+  #epoch-banner { font-size: 10px; padding: 3px 8px; }
+
+  /* Event feed: shorter */
+  #event-feed {
+    max-height: 60px;
+    bottom: 26px;
+    padding: 30px 8px 2px;
+  }
+  #event-feed div { font-size: 9px; }
+
+  /* Ecosystem cards: horizontal scroll */
+  #ecosystem-cards {
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    padding: 4px 8px;
+  }
+  #ecosystem-cards::-webkit-scrollbar { display: none; }
+  .eco-card {
+    flex-shrink: 0;
+    min-width: 100px;
+    font-size: 9px;
+  }
+
+  /* ── PANEL: bottom tray with swipe handle ── */
   #panel {
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 100;
     border-left: none;
     border-top: 1px solid var(--border);
-    max-height: 60vh;
+    max-height: 55vh;
     overflow-y: auto;
-    background: rgba(26,13,0,0.95);
+    -webkit-overflow-scrolling: touch;
+    background: rgba(26,13,0,0.97);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     transform: translateY(100%);
     transition: transform 0.3s ease;
+    padding: 8px;
+    gap: 8px;
+    border-radius: 12px 12px 0 0;
   }
   #panel.tray-open {
     transform: translateY(0);
   }
 
-  .chart-canvas {
-    height: 100px;
+  /* Lab tabs: bigger touch targets in tray */
+  .lab-tabs { gap: 3px; }
+  .lab-tab {
+    padding: 8px 10px;
+    font-size: 10px;
+    min-height: 36px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
-  .chart-canvas.tall {
-    height: 130px;
-  }
+
+  .chart-canvas { height: 90px; }
+  .chart-canvas.tall { height: 120px; }
 
   #event-log {
     grid-column: 1;
-    max-height: 100px;
+    max-height: 90px;
   }
 
-  #event-feed {
-    max-height: 80px;
-  }
+  .panel-section { padding: 8px; }
+  .panel-section h3 { font-size: 11px; margin-bottom: 6px; }
 
-  /* Folder tab */
+  /* ── Tray pull tab ── */
   .tray-tab {
     display: flex;
     align-items: center;
@@ -1342,10 +1533,10 @@ body {
     left: 50%;
     transform: translateX(-50%);
     z-index: 101;
-    background: rgba(26,13,0,0.95);
+    background: rgba(26,13,0,0.97);
     border: 1px solid var(--border);
     border-bottom: none;
-    border-radius: 10px 10px 0 0;
+    border-radius: 12px 12px 0 0;
     padding: 10px 24px;
     cursor: pointer;
     touch-action: manipulation;
@@ -1356,6 +1547,7 @@ body {
     font-family: var(--mono);
     box-shadow: 0 -2px 12px rgba(0,0,0,0.4);
     min-width: 120px;
+    min-height: 44px;
   }
   .tray-tab:active {
     background: rgba(229,89,28,0.2);
@@ -1378,28 +1570,77 @@ body {
   }
 }
 
+/* ── SMALL PHONE (≤420px) ── */
 @media (max-width: 420px) {
   body { font-size: 11px; }
 
-  #header h1 { font-size: 14px; }
+  #header {
+    padding: 4px 6px;
+    gap: 3px 6px;
+  }
+  #header h1 { font-size: 13px; }
+
+  .mode-toggle button {
+    padding: 3px 8px;
+    font-size: 9px;
+    min-height: 30px;
+  }
 
   .header-controls button {
-    padding: 4px 7px;
-    font-size: 10px;
+    padding: 3px 6px;
+    font-size: 9px;
+    min-height: 32px;
+    min-width: 32px;
   }
+  /* Hide speed labels on tiny screens, keep just number */
+  .speed-btn { padding: 3px 5px; font-size: 9px; }
 
   .species-tab {
     font-size: 9px;
+    padding: 3px 7px;
+    min-height: 28px;
+  }
+
+  #kpi-strip {
     padding: 3px 6px;
+    gap: 6px;
+  }
+  .kpi-item { min-width: 55px; }
+  .kpi-label { font-size: 7px; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 11px; }
+
+  .map-modes { padding: 3px 6px; }
+  .mode-btn {
+    font-size: 8px;
+    padding: 3px 6px;
+    min-height: 28px;
+  }
+  .overlay-btn {
+    font-size: 7px;
+    padding: 2px 5px;
+    min-height: 24px;
   }
 
-  .panel-section {
-    padding: 8px;
-  }
+  .map-controls { padding: 2px 6px; }
+  .tilt-preset { min-height: 26px; min-width: 28px; font-size: 8px; }
 
-  .panel-section h3 {
-    font-size: 11px;
+  .panel-section { padding: 6px; }
+  .panel-section h3 { font-size: 10px; }
+
+  .tray-tab {
+    padding: 8px 18px;
+    min-width: 100px;
+    min-height: 40px;
   }
+  .tray-tab-label { font-size: 11px; }
+
+  .eco-card { font-size: 8px; min-width: 80px; }
+
+  #event-feed { max-height: 50px; }
+  #event-feed div { font-size: 8px; }
+
+  .chart-canvas { height: 80px; }
+  .chart-canvas.tall { height: 100px; }
 }
 
 /* ── MAP CONTROLS BAR ── */
@@ -1719,6 +1960,86 @@ body.atmo-reef #atmosphere-layer {
 }
 #epoch-history-bar:empty {
   display: none;
+}
+
+/* ── MOBILE OVERRIDES (must be after base styles) ── */
+@media (max-width: 768px) {
+  #epoch-banner {
+    top: auto;
+    bottom: 55px;
+    z-index: 35;
+  }
+  #epoch-name { font-size: 12px; }
+  #epoch-subtitle { font-size: 9px; }
+
+  .map-modes {
+    top: 6px; left: 6px; right: auto;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 60%;
+    justify-content: flex-start;
+  }
+  .mode-btn {
+    font-size: 10px;
+    padding: 5px 10px;
+    min-height: 32px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .map-modes-divider { display: none; }
+  .overlay-btn {
+    font-size: 9px;
+    padding: 4px 8px;
+    min-height: 28px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .map-controls {
+    padding: 8px 10px;
+    gap: 6px;
+    font-size: 11px;
+  }
+  .map-controls input[type="range"] {
+    height: 20px;
+  }
+  .tilt-preset {
+    font-size: 10px;
+    padding: 5px 10px;
+    min-height: 32px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #ecosystem-cards {
+    bottom: 50px;
+    max-width: 65%;
+  }
+  .eco-card { font-size: 9px; }
+
+  #event-feed {
+    bottom: 44px;
+  }
+}
+
+@media (max-width: 420px) {
+  .map-modes { max-width: 70%; }
+  .mode-btn {
+    font-size: 9px;
+    padding: 4px 8px;
+    min-height: 28px;
+  }
+  .overlay-btn {
+    font-size: 8px;
+    padding: 3px 6px;
+    min-height: 24px;
+  }
+  .eco-card { font-size: 8px; min-width: 80px; }
+  .tilt-preset {
+    font-size: 9px;
+    padding: 4px 8px;
+    min-height: 28px;
+  }
 }
 </style>
 </head>
@@ -2096,10 +2417,21 @@ let currentAtmosphere = null;
 let epochCheckCounter = 0;
 
 // ── ISOMETRIC CAMERA ──
+// Target values (set by user input)
 let camTilt = 0.5;    // 0.25 = nearly flat, 0.75 = steep
 let camZoom = 1.0;
 let camPanX = 0;
 let camPanY = 0;
+// Rendered values (smoothly interpolated toward targets)
+let _camTiltR = 0.5, _camZoomR = 1.0, _camPanXR = 0, _camPanYR = 0;
+const CAM_LERP = 0.25; // Camera smoothing factor
+
+function _updateCameraSmooth() {
+  _camTiltR += (camTilt - _camTiltR) * CAM_LERP;
+  _camZoomR += (camZoom - _camZoomR) * CAM_LERP;
+  _camPanXR += (camPanX - _camPanXR) * CAM_LERP;
+  _camPanYR += (camPanY - _camPanYR) * CAM_LERP;
+}
 let mapMode = 'terrain'; // 'terrain', 'biome', 'population'
 let mapOverlays = { rivers: true, volcanic: true, plates: true, ghosts: true };
 let lastBiomeSummaryGen = -1;
@@ -2328,6 +2660,7 @@ function beginObservation() {
   // Set grid size and init
   pyodide.runPython(`set_grid_size(${setupMapSize})`);
   pyodide.runPython(`init_grid("${seed}")`);
+  _cachedGridSize = setupMapSize;
 
   // Reset JS state
   popHistory = [];
@@ -2338,6 +2671,7 @@ function beginObservation() {
   selectedTile = null;
   playing = false;
   camTilt = 0.5; camZoom = 1.0; camPanX = 0; camPanY = 0;
+  _camTiltR = 0.5; _camZoomR = 1.0; _camPanXR = 0; _camPanYR = 0;
 
   // Setup UI and show app
   setupUI();
@@ -2443,13 +2777,21 @@ function setupUI() {
     camZoom = Math.max(0.4, Math.min(3.0, camZoom + (e.deltaY > 0 ? -0.1 : 0.1)));
     renderMap();
   }, { passive: false });
-  // Touch: one-finger pan, two-finger zoom
+  // Touch: one-finger pan with momentum, two-finger zoom
   let lastTouchDist = 0;
+  let _panVelX = 0, _panVelY = 0, _panMomentumId = 0;
+  let _lastTouchTime = 0;
+
   mapCanvas.addEventListener('touchstart', (e) => {
+    // Kill any ongoing momentum
+    if (_panMomentumId) { cancelAnimationFrame(_panMomentumId); _panMomentumId = 0; }
+    _panVelX = 0; _panVelY = 0;
+
     if (e.touches.length === 1) {
       isDragging = true;
       clickStartX = dragLastX = e.touches[0].clientX;
       clickStartY = dragLastY = e.touches[0].clientY;
+      _lastTouchTime = Date.now();
     } else if (e.touches.length === 2) {
       isDragging = false;
       lastTouchDist = Math.hypot(
@@ -2458,13 +2800,21 @@ function setupUI() {
       );
     }
   }, { passive: true });
+
   mapCanvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
     if (e.touches.length === 1 && isDragging) {
+      const now = Date.now();
+      const dt = Math.max(1, now - _lastTouchTime);
       const dx = e.touches[0].clientX - dragLastX;
       const dy = e.touches[0].clientY - dragLastY;
+      // Exponential moving average for velocity
+      const alpha = 0.4;
+      _panVelX = alpha * (dx / dt * 16) + (1 - alpha) * _panVelX;
+      _panVelY = alpha * (dy / dt * 16) + (1 - alpha) * _panVelY;
       dragLastX = e.touches[0].clientX;
       dragLastY = e.touches[0].clientY;
+      _lastTouchTime = now;
       camPanX += dx;
       camPanY += dy;
       renderMap();
@@ -2481,13 +2831,32 @@ function setupUI() {
       lastTouchDist = dist;
     }
   }, { passive: false });
+
   mapCanvas.addEventListener('touchend', (e) => {
     if (e.touches.length === 0 && isDragging) {
       const dist = Math.hypot(
         e.changedTouches[0].clientX - clickStartX,
         e.changedTouches[0].clientY - clickStartY
       );
-      if (dist < 10) onMapClick(e.changedTouches[0]);
+      if (dist < 10) {
+        onMapClick(e.changedTouches[0]);
+      } else if (Math.abs(_panVelX) > 0.5 || Math.abs(_panVelY) > 0.5) {
+        // Momentum coast
+        const friction = 0.92;
+        function coastFrame() {
+          _panVelX *= friction;
+          _panVelY *= friction;
+          if (Math.abs(_panVelX) < 0.3 && Math.abs(_panVelY) < 0.3) {
+            _panMomentumId = 0;
+            return;
+          }
+          camPanX += _panVelX;
+          camPanY += _panVelY;
+          renderMap();
+          _panMomentumId = requestAnimationFrame(coastFrame);
+        }
+        _panMomentumId = requestAnimationFrame(coastFrame);
+      }
       isDragging = false;
     }
     lastTouchDist = 0;
@@ -2495,6 +2864,7 @@ function setupUI() {
   // Double-click/tap to reset camera
   mapCanvas.addEventListener('dblclick', () => {
     camTilt = 0.5; camZoom = 1.0; camPanX = 0; camPanY = 0;
+  _camTiltR = 0.5; _camZoomR = 1.0; _camPanXR = 0; _camPanYR = 0;
     const ts = document.getElementById('tilt-slider');
     if (ts) ts.value = 50;
     renderMap();
@@ -2562,17 +2932,17 @@ function onMapClick(e) {
   const sx = e.clientX - rect.left;
   const sy = e.clientY - rect.top;
 
-  const gs = pyodide.runPython('GRID_SIZE');
+  const gs = _cachedGridSize;
   const dpr = window.devicePixelRatio || 1;
   const w = mapCanvas.width / dpr;
   const h = mapCanvas.height / dpr;
-  const baseTileW = (w / gs) * 0.9 * camZoom;
+  const baseTileW = (w / gs) * 0.9 * _camZoomR;
   const tileW = baseTileW;
-  const tileH = tileW * camTilt;
-  const heightScale = 80 * camZoom;
+  const tileH = tileW * _camTiltR;
+  const heightScale = 80 * _camZoomR;
   const totalIsoH = gs * tileH * 0.5;
-  const offsetX = w / 2 + camPanX;
-  const offsetY = (h - totalIsoH + heightScale) / 2 + camPanY;
+  const offsetX = w / 2 + _camPanXR;
+  const offsetY = (h - totalIsoH + heightScale) / 2 + _camPanYR;
 
   // Brute force: find which tile's diamond contains the click point
   // Check front-to-back so topmost tile wins
@@ -3912,11 +4282,10 @@ function checkAllExtinct() {
 // ── KPI STRIP ──
 function updateKPIStrip() {
   try {
-    const allelesJson = pyodide.runPython('get_velothrix_alleles()');
-    const alleles = JSON.parse(allelesJson);
-    const fstJson = pyodide.runPython('get_fst_data()');
-    const fst = JSON.parse(fstJson);
-    const pop = pyodide.runPython('get_global_pop(0)');
+    if (!_frameState) return;
+    const alleles = _frameState.alleles;
+    const fst = { mean: _frameState.fst_mean };
+    const pop = _frameState.pops[0];
 
     // Mean fitness: approximate from heterozygosity and population health
     const meanH = alleles.mean_H;
@@ -3991,7 +4360,8 @@ function drawPentagon(canvasId, labels, values, color, thresholdRing) {
 
   // Threshold ring (pulsing dashed)
   if (thresholdRing) {
-    ctx.strokeStyle = 'rgba(229,89,28,0.4)';
+    const pulseAlpha = 0.25 + 0.2 * Math.sin(Date.now() / 800);
+    ctx.strokeStyle = `rgba(229,89,28,${pulseAlpha.toFixed(3)})`;
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -4034,30 +4404,51 @@ function drawPentagon(canvasId, labels, values, color, thresholdRing) {
   }
 }
 
+// Smooth pentagon interpolation state
+let _pentTraitTarget = [0.5, 0.5, 0.5, 0.5, 0.5];
+let _pentTraitDisplay = [0.5, 0.5, 0.5, 0.5, 0.5];
+let _pentStatusTarget = [0.5, 0.5, 0.5, 0.5, 0.5];
+let _pentStatusDisplay = [0.5, 0.5, 0.5, 0.5, 0.5];
+const PENT_LERP = 0.15; // Smoothing factor (0=frozen, 1=instant)
+
+function _lerpArray(display, target, t) {
+  for (let i = 0; i < display.length; i++) {
+    display[i] += (target[i] - display[i]) * t;
+  }
+}
+
 function updatePentagons() {
   try {
-    const allelesJson = pyodide.runPython('get_velothrix_alleles()');
-    const alleles = JSON.parse(allelesJson);
-    const fstJson = pyodide.runPython('get_fst_data()');
-    const fst = JSON.parse(fstJson);
-    const pop = pyodide.runPython('get_global_pop(0)');
+    if (!_frameState) return;
+    const alleles = _frameState.alleles;
+    const fst = { mean: _frameState.fst_mean };
+    const pop = _frameState.pops[0];
 
-    // Trait pentagon: CREST, SPINE, BODY, LITTER, DISP
-    drawPentagon('trait-pentagon',
-      ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP'],
-      [alleles.CREST, alleles.SPINE, alleles.BODY, alleles.LITTER, alleles.DISP],
-      '#DDC165', 0.85
-    );
+    // Update targets
+    _pentTraitTarget = [alleles.CREST, alleles.SPINE, alleles.BODY, alleles.LITTER, alleles.DISP];
 
-    // Status pentagon: Fitness, Viability, Diversity, Stress, Divergence
     const meanH = alleles.mean_H;
     const wBar = 0.5 + 0.5 * meanH;
     const viability = Math.min(1, pop / 500);
     const stress = Math.abs(alleles.CREST - 0.5) * alleles.leviathan_acuity +
                    Math.abs(alleles.SPINE - 0.5) * alleles.beetle_pressure;
+    _pentStatusTarget = [wBar, viability, meanH, Math.min(1, stress * 2), Math.min(1, fst.mean)];
+
+    // Lerp displayed values toward targets
+    _lerpArray(_pentTraitDisplay, _pentTraitTarget, PENT_LERP);
+    _lerpArray(_pentStatusDisplay, _pentStatusTarget, PENT_LERP);
+
+    // Trait pentagon: CREST, SPINE, BODY, LITTER, DISP
+    drawPentagon('trait-pentagon',
+      ['CREST', 'SPINE', 'BODY', 'LITTER', 'DISP'],
+      _pentTraitDisplay,
+      '#DDC165', 0.85
+    );
+
+    // Status pentagon
     drawPentagon('status-pentagon',
       ['w\u0304', 'VIAB', 'DIV', 'STRESS', 'DIVERG'],
-      [wBar, viability, meanH, Math.min(1, stress * 2), Math.min(1, fst.mean)],
+      _pentStatusDisplay,
       '#E5591C', 0.85
     );
   } catch(e) { /* ignore during init */ }
@@ -4217,35 +4608,41 @@ function toFieldVoice(text) {
 }
 
 // ── SIM TICK ──
+let _perfStepAccum = 0, _perfStepCount = 0;
+let _frameState = null; // cached per-frame state from get_frame_state()
 function tick() {
   if (!playing) return;
 
   const steps = Math.max(1, Math.floor(stepsPerFrame));
+  const _tStart = performance.now();
   for (let i = 0; i < steps; i++) {
     pyodide.runPython('step()');
   }
+  const _tEnd = performance.now();
+  _perfStepAccum += (_tEnd - _tStart) / steps;
+  _perfStepCount++;
+  if (_perfStepCount % 200 === 0) {
+    const avgMs = (_perfStepAccum / 200).toFixed(1);
+    console.log(`[perf] avg step: ${avgMs}ms over last 200 ticks`);
+    _perfStepAccum = 0;
+  }
 
-  // Get state
-  const gen = pyodide.runPython('generation');
+  // Get all frame state in one batched call (was ~35 individual pyodide calls)
+  const frameJson = pyodide.runPython('get_frame_state()');
+  const frame = JSON.parse(frameJson);
+  _frameState = frame; // cache for renderSpeciesList etc.
+
+  const gen = frame.gen;
   document.getElementById('gen-num').textContent = gen.toLocaleString();
 
-  // Collect global populations for history
-  const globalPops = [];
-  for (let s = 0; s < 5; s++) {
-    globalPops.push(pyodide.runPython(`get_global_pop(${s})`));
-  }
-  // Collect global traits and season for scatter temporal mode
-  const globalTraits = [];
-  for (let s = 0; s < 5; s++) {
-    globalTraits.push(pyodide.runPython(`get_global_trait(${s})`));
-  }
-  const season = pyodide.runPython('get_season()');
+  const globalPops = frame.pops;
+  const globalTraits = frame.traits;
+  const season = frame.season;
   popHistory.push({ gen, pops: globalPops, traits: globalTraits, season });
   if (popHistory.length > MAX_HISTORY) popHistory.shift();
 
   // Update active events bar
-  const activeEvJson = pyodide.runPython('get_active_events_info()');
-  const activeEvs = JSON.parse(activeEvJson);
+  const activeEvs = frame.active_events;
   const evBar = document.getElementById('active-events-bar');
   evBar.innerHTML = '';
   const evIcons = { algal_bloom: '🌿', tidal_surge: '🌊', migration_corridor: '🔀', reef_formation: '🪸' };
@@ -4260,8 +4657,7 @@ function tick() {
   });
 
   // Check events
-  const eventsJson = pyodide.runPython('get_and_clear_events()');
-  const events = JSON.parse(eventsJson);
+  const events = frame.events;
   if (events.length > 0) {
     const feed = document.getElementById('event-feed');
     const log = document.getElementById('event-log');
@@ -4300,20 +4696,16 @@ function tick() {
   }
 
   // Check for new extinctions
-  try {
-    const extJson = pyodide.runPython('get_extinctions()');
-    const allExts = JSON.parse(extJson);
-    if (allExts.length > knownExtinctions.length) {
-      const newExt = allExts[allExts.length - 1];
-      knownExtinctions = allExts;
-      showEulogy(newExt);
-      // Auto-end if all species extinct
-      if (knownExtinctions.length >= 5) {
-        setTimeout(() => endObservation(), 1500);
-        return;
-      }
+  const allExts = frame.extinctions;
+  if (allExts.length > knownExtinctions.length) {
+    const newExt = allExts[allExts.length - 1];
+    knownExtinctions = allExts;
+    showEulogy(newExt);
+    if (knownExtinctions.length >= 5) {
+      setTimeout(() => endObservation(), 1500);
+      return;
     }
-  } catch(e) { /* ignore parse errors */ }
+  }
 
   // Update epoch (every 10 frames to match Python-side check interval)
   epochCheckCounter++;
@@ -4335,6 +4727,22 @@ function tick() {
   }
 }
 
+// ── PORTRAIT IDLE ANIMATION ──
+let _detailPortraitAnim = null; // { canvas, species, trait }
+
+function _animatePortraits() {
+  // Animate detail portrait if visible
+  if (_detailPortraitAnim && _detailPortraitAnim.canvas) {
+    const a = _detailPortraitAnim;
+    if (a.canvas.offsetParent !== null) { // visible check
+      const ctx = a.canvas.getContext('2d');
+      drawCreaturePortrait(ctx, a.species, a.trait, 120, true);
+    }
+  }
+  requestAnimationFrame(_animatePortraits);
+}
+requestAnimationFrame(_animatePortraits);
+
 // ── RENDER ALL ──
 function renderAll() {
   renderMap();
@@ -4353,8 +4761,19 @@ function renderAll() {
 }
 
 // ── RENDER MAP (Isometric 3D) ──
+let _cachedGridSize = 32;
+const _BIOME_FLAT = {
+  deep_water:    [20, 45, 90],
+  shallow_marsh: [40, 80, 55],
+  reed_beds:     [65, 85, 40],
+  tidal_flats:   [90, 75, 50],
+  rocky_shore:   [110, 85, 65],
+};
+const _BIOME_FLAT_DEFAULT = [50, 40, 30];
+const _BIOME_ABBREV = { deep_water:'DW', shallow_marsh:'SM', reed_beds:'RB', tidal_flats:'TF', rocky_shore:'RS' };
 function renderMap() {
-  const gs = pyodide.runPython('GRID_SIZE');
+  _updateCameraSmooth();
+  const gs = _cachedGridSize;
   const dpr = window.devicePixelRatio || 1;
   const w = mapCanvas.width / dpr;
   const h = mapCanvas.height / dpr;
@@ -4365,6 +4784,7 @@ function renderMap() {
 
   const si = selectedSpecies;
   const color = SPECIES[si].color;
+  const colorRgb = hexToRgb(color);
 
   // Get density data
   const dataJson = pyodide.runPython(`get_map_data(${si})`);
@@ -4379,15 +4799,15 @@ function renderMap() {
     rocky_shore:   [75, 58, 45],
   };
 
-  // Isometric projection params
-  const baseTileW = (w / gs) * 0.9 * camZoom;
+  // Isometric projection params (using smooth camera values)
+  const baseTileW = (w / gs) * 0.9 * _camZoomR;
   const tileW = baseTileW;
-  const tileH = tileW * camTilt;
-  const heightScale = 80 * camZoom;
+  const tileH = tileW * _camTiltR;
+  const heightScale = 80 * _camZoomR;
 
   const totalIsoH = gs * tileH * 0.5;
-  const offsetX = w / 2 + camPanX;
-  const offsetY = (h - totalIsoH + heightScale) / 2 + camPanY;
+  const offsetX = w / 2 + _camPanXR;
+  const offsetY = (h - totalIsoH + heightScale) / 2 + _camPanYR;
 
   // Draw back-to-front for proper occlusion
   for (let r = 0; r < gs; r++) {
@@ -4421,27 +4841,18 @@ function renderMap() {
 
       if (mapMode === 'biome') {
         // Flat biome colors, no elevation shading
-        const BIOME_FLAT = {
-          deep_water:    [20, 45, 90],
-          shallow_marsh: [40, 80, 55],
-          reed_beds:     [65, 85, 40],
-          tidal_flats:   [90, 75, 50],
-          rocky_shore:   [110, 85, 65],
-        };
-        const bf = BIOME_FLAT[biome] || [50, 40, 30];
+        const bf = _BIOME_FLAT[biome] || _BIOME_FLAT_DEFAULT;
         tr = bf[0]; tg = bf[1]; tb = bf[2];
         shade = 0.85;
-        const BIOME_ABBREV = { deep_water:'DW', shallow_marsh:'SM', reed_beds:'RB', tidal_flats:'TF', rocky_shore:'RS' };
-        biomeLabel = BIOME_ABBREV[biome] || '';
+        biomeLabel = _BIOME_ABBREV[biome] || '';
       } else if (mapMode === 'population') {
         // Heatmap: dark base, species color intensity = pop/maxPop
         tr = 15; tg = 10; tb = 8;
         if (pop > 0) {
           const intensity = Math.min(1, pop / (maxPop * 0.7));
-          const rgb = hexToRgb(color);
-          tr = tr * (1 - intensity) + rgb.r * intensity;
-          tg = tg * (1 - intensity) + rgb.g * intensity;
-          tb = tb * (1 - intensity) + rgb.b * intensity;
+          tr = tr * (1 - intensity) + colorRgb.r * intensity;
+          tg = tg * (1 - intensity) + colorRgb.g * intensity;
+          tb = tb * (1 - intensity) + colorRgb.b * intensity;
         }
         shade = 0.9;
       } else {
@@ -4454,9 +4865,8 @@ function renderMap() {
         // Species density overlay — blend into tile color
         if (pop > 0) {
           const intensity = Math.min(1, pop / (maxPop * 0.7));
-          const tileColor = (data.speciated && data.variants[r][c] === 1)
-            ? SPECIES[si].variantColor : color;
-          const rgb = hexToRgb(tileColor);
+          const isVariant = data.speciated && data.variants[r][c] === 1;
+          const rgb = isVariant ? hexToRgb(SPECIES[si].variantColor) : colorRgb;
           const a = intensity * 0.7;
           tr = tr * (1 - a) + rgb.r * a;
           tg = tg * (1 - a) + rgb.g * a;
@@ -4540,16 +4950,44 @@ function renderMap() {
         ctx.fill();
       }
 
-      // Grid lines on top face
-      ctx.strokeStyle = 'rgba(221,193,101,0.08)';
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy - tileH * 0.5);
-      ctx.lineTo(sx + tileW * 0.5, sy);
-      ctx.lineTo(sx, sy + tileH * 0.5);
-      ctx.lineTo(sx - tileW * 0.5, sy);
-      ctx.closePath();
-      ctx.stroke();
+      // Grid lines on top face (skip for small tiles — not visible anyway)
+      if (tileW > 8) {
+        ctx.strokeStyle = 'rgba(221,193,101,0.08)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - tileH * 0.5);
+        ctx.lineTo(sx + tileW * 0.5, sy);
+        ctx.lineTo(sx, sy + tileH * 0.5);
+        ctx.lineTo(sx - tileW * 0.5, sy);
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      // Species density particles — small glowing dots on populated tiles
+      if (pop > 0 && tileW > 6 && mapMode !== 'biome') {
+        const density = Math.min(1, pop / (data.max_pop * 0.6));
+        const numDots = Math.min(5, Math.round(density * 4) + 1);
+        const dotAlpha = 0.3 + density * 0.5;
+        const dotR = Math.max(0.8, tileW * 0.04);
+        // Seeded positions from tile coords (stable between frames)
+        let _seed = r * 73 + c * 137;
+        for (let d = 0; d < numDots; d++) {
+          _seed = (_seed * 1103515245 + 12345) & 0x7fffffff;
+          const fx = (_seed % 100) / 100 - 0.5;  // -0.5 to 0.5
+          _seed = (_seed * 1103515245 + 12345) & 0x7fffffff;
+          const fy = (_seed % 100) / 100 - 0.5;
+          // Map to diamond: constrain to |fx| + |fy| < 0.4
+          if (Math.abs(fx) + Math.abs(fy) > 0.4) continue;
+          const dx = sx + fx * tileW;
+          const dy = sy + fy * tileH;
+          // Shimmer — slight alpha variation over time
+          const shimmer = 0.8 + 0.2 * Math.sin(Date.now() / 400 + d * 2.1 + r * 0.5 + c * 0.7);
+          ctx.fillStyle = `rgba(${colorRgb.r},${colorRgb.g},${colorRgb.b},${(dotAlpha * shimmer).toFixed(2)})`;
+          ctx.beginPath();
+          ctx.arc(dx, dy, dotR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
 
       // Biome label in biome mode
       if (biomeLabel && tileW > 16) {
@@ -4594,7 +5032,7 @@ function renderMap() {
     data.rivers.forEach(rv => {
       const path = rv.path;
       if (path.length < 2) return;
-      const baseWidth = Math.max(1.5, (rv.width || 1) * 2 * camZoom);
+      const baseWidth = Math.max(1.5, (rv.width || 1) * 2 * _camZoomR);
       const ageAlpha = Math.min(0.7, 0.3 + (rv.age || 0) * 0.005);
       ctx.strokeStyle = `rgba(30, 80, 140, ${ageAlpha})`;
       ctx.lineWidth = baseWidth;
@@ -4731,15 +5169,15 @@ function renderSpeciesList() {
   }
 
   let html = '';
-  const specInfoJson = pyodide.runPython('get_speciation_info()');
-  const specInfo = JSON.parse(specInfoJson);
+  // Use cached frame state when available (avoids ~16 extra pyodide calls)
+  const specInfo = _frameState ? _frameState.speciation_info : {};
   const extinctSet = {};
   knownExtinctions.forEach(ext => { extinctSet[ext.species] = ext; });
 
   if (panelMode === 'global') {
     for (let s = 0; s < 5; s++) {
-      const pop = pyodide.runPython(`get_global_pop(${s})`);
-      const trait = pyodide.runPython(`get_global_trait(${s})`);
+      const pop = _frameState ? _frameState.pops[s] : pyodide.runPython(`get_global_pop(${s})`);
+      const trait = _frameState ? _frameState.traits[s] : pyodide.runPython(`get_global_trait(${s})`);
       const info = specInfo[String(s)];
       const isExtinct = s in extinctSet;
       const isSelected = s === selectedSpecies;
@@ -4793,7 +5231,7 @@ function renderSpeciesList() {
     const canvas = document.getElementById(`portrait-${s}`);
     if (!canvas) continue;
     const trait = panelMode === 'global'
-      ? pyodide.runPython(`get_global_trait(${s})`)
+      ? (_frameState ? _frameState.traits[s] : pyodide.runPython(`get_global_trait(${s})`))
       : (selectedTile ? pyodide.runPython(`get_tile_trait(${selectedTile.r},${selectedTile.c},${s})`) : 0.5);
     const traitRounded = Math.round(trait * 100);
     if (Math.abs(traitRounded - lastPortraitTraits[s]) >= 1) {
@@ -4941,15 +5379,27 @@ function renderTraitChart() {
 // ── CREATURE PORTRAITS ──
 const portraitCache = new Map(); // key: `${species}_${size}_${traitRounded}` → ImageData
 
-function drawCreaturePortrait(ctx, species, traitValue, size) {
+function drawCreaturePortrait(ctx, species, traitValue, size, animate = false) {
   const t = Math.max(0, Math.min(1, traitValue));
   const s = size;
   const cx = s / 2;
   const cy = s / 2;
   const scale = s / 120; // normalize to 120px reference
 
+  // Idle animation: subtle breathing bob
+  const time = animate ? Date.now() / 1000 : 0;
+  const bob = animate ? Math.sin(time * 1.5 + species * 1.3) * 2 * scale : 0;
+  const breathe = animate ? 1.0 + Math.sin(time * 2.0 + species * 0.7) * 0.02 : 1.0;
+
   ctx.clearRect(0, 0, s, s);
   ctx.save();
+  // Apply idle motion
+  if (animate) {
+    ctx.translate(0, bob);
+    ctx.translate(cx, cy);
+    ctx.scale(breathe, breathe);
+    ctx.translate(-cx, -cy);
+  }
 
   const color = SPECIES[species].color;
   const rgb = hexToRgb(color);
@@ -5355,12 +5805,14 @@ function renderSpeciesDetail(speciesIdx) {
 
   listEl.innerHTML = html;
 
-  // Draw the portrait
+  // Draw the portrait (with idle animation)
   const pCanvas = document.getElementById('detail-portrait');
   if (pCanvas) {
     const pCtx = pCanvas.getContext('2d');
-    drawCreaturePortrait(pCtx, speciesIdx, trait, 120);
+    drawCreaturePortrait(pCtx, speciesIdx, trait, 120, true);
   }
+  // Start idle animation for detail portrait
+  _detailPortraitAnim = { canvas: pCanvas, species: speciesIdx, trait: trait };
 
   // Draw mini histogram
   drawDetailHistogram(speciesIdx);
@@ -5691,6 +6143,7 @@ WORM = 4
 
 # Carrying capacities per tile
 BASE_K = [60, 45, 55, 50, 58]  # Velothrix, Leviathan, Crawler, Crab, Worm
+SUM_BASE_K = sum(BASE_K)
 
 # Minimum effective K on any suitable tile (prevents stochastic extinction spirals)
 MIN_K = 15
@@ -5811,6 +6264,11 @@ LOCUS_CONFIG = {
     'DISP':   {'s': 0.01, 'h': 0.3, 'type': 'neutral'},
     'LONG':   {'s': 0.015, 'h': 0.5, 'type': 'life_history'},
 }
+# Pre-extracted for hot-loop speed (indexed by locus order: CREST=0, SPINE=1, BODY=2, LITTER=3, DISP=4, LONG=5)
+_LOCUS_S = [0.02, 0.015, 0.02, 0.02, 0.01, 0.015]
+_LOCUS_H = [0.5, 0.5, 0.5, 0.5, 0.3, 0.5]
+_BODY_THETA = 0.5
+_BODY_OMEGA2 = 0.1
 
 # ── ENVIRONMENTAL TREND SYSTEM ──
 # Four axes that drift directionally + noise each playthrough.
@@ -6303,17 +6761,43 @@ def get_biome(elev):
     else:
         return 'rocky_shore'
 
+# Biome index: 0=deep_water, 1=shallow_marsh, 2=reed_beds, 3=tidal_flats, 4=rocky_shore
+def _biome_idx(elev):
+    """Fast biome classification returning integer index."""
+    if elev < BIOME_DEEP_WATER: return 0
+    if elev < BIOME_SHALLOW_MARSH: return 1
+    if elev < BIOME_REED_BEDS: return 2
+    if elev < BIOME_TIDAL_FLATS: return 3
+    return 4
+
+# Pre-computed flat suitability table: _SUIT_TABLE[species][biome_idx]
+_SUIT_TABLE = [
+    [0.25, 1.0,  0.7,  0.4,  0.15],  # VELOTHRIX
+    [1.0,  0.7,  0.35, 0.1,  0.0 ],  # LEVIATHAN
+    [0.2,  0.75, 1.0,  0.55, 0.35],  # CRAWLER
+    [0.05, 0.15, 0.35, 0.75, 1.0 ],  # CRAB
+    [0.75, 0.9,  0.7,  0.4,  0.1 ],  # WORM
+]
+
 def habitat_suitability(elev, species_idx):
     """Returns 0-1 suitability for species at given elevation/biome."""
-    biome = get_biome(elev)
-    suits = {
-        VELOTHRIX: {'shallow_marsh': 1.0, 'reed_beds': 0.7, 'tidal_flats': 0.4, 'deep_water': 0.25, 'rocky_shore': 0.15},
-        LEVIATHAN: {'deep_water': 1.0, 'shallow_marsh': 0.7, 'reed_beds': 0.35, 'tidal_flats': 0.1, 'rocky_shore': 0.0},
-        CRAWLER: {'reed_beds': 1.0, 'shallow_marsh': 0.75, 'tidal_flats': 0.55, 'deep_water': 0.2, 'rocky_shore': 0.35},
-        CRAB: {'rocky_shore': 1.0, 'tidal_flats': 0.75, 'reed_beds': 0.35, 'shallow_marsh': 0.15, 'deep_water': 0.05},
-        WORM: {'deep_water': 0.75, 'shallow_marsh': 0.9, 'reed_beds': 0.7, 'tidal_flats': 0.4, 'rocky_shore': 0.1},
-    }
-    return suits.get(species_idx, {}).get(biome, 0.5)
+    return _SUIT_TABLE[species_idx][_biome_idx(elev)]
+
+# Per-step cached suitability grid: _suit_cache[r][c][s]
+_suit_cache = None
+
+def _build_suit_cache():
+    """Pre-compute habitat suitability for all tiles. Call once per step."""
+    global _suit_cache
+    gs = GRID_SIZE
+    _suit_cache = [None] * gs
+    for r in range(gs):
+        row = [None] * gs
+        for c in range(gs):
+            bi = _biome_idx(grid[r][c]['elevation'])
+            row[c] = (_SUIT_TABLE[0][bi], _SUIT_TABLE[1][bi], _SUIT_TABLE[2][bi],
+                       _SUIT_TABLE[3][bi], _SUIT_TABLE[4][bi])
+        _suit_cache[r] = row
 
 def _string_to_seed(s):
     """Convert alphanumeric string to integer seed."""
@@ -6492,27 +6976,33 @@ def _update_coevolving_antagonists():
     if caterpillar_C_star > 0.85 or caterpillar_C_star < 0.15:
         caterpillar_C_star = max(0.15, min(0.85, caterpillar_C_star))
 
+_perf_accum = {}
+_perf_count = 0
+
 def step():
     """Advance one generation."""
-    global generation
+    global generation, _perf_count
+    import time as _time
     generation += 1
     season = get_season()
+    _t_step_start = _time.monotonic()
 
     # 1. Environment update (affected by env_trends)
+    _food_regrow = 0.01 * season * (0.6 + 0.8 * env_trends['productivity'])
+    _temp_base = 0.3 + 0.2 * env_trends['temperature'] + 0.2 * season
+    _moisture_delta = 0.001 * (env_trends['moisture'] - 0.5)
+    _wt = WATER_TABLE
     for r in range(GRID_SIZE):
+        grid_row = grid[r]
         for c in range(GRID_SIZE):
-            tile = grid[r][c]
-            # Food regrows — rate modulated by productivity trend
-            food_regrow = 0.01 * season * (0.6 + 0.8 * env_trends['productivity'])
-            tile['food'] = min(1.0, tile['food'] + food_regrow)
-            # Temperature: seasonal + global temperature trend
-            tile['temp'] = 0.3 + 0.2 * env_trends['temperature'] + 0.2 * season + random.uniform(-0.02, 0.02)
-            # Moisture trend affects water on tiles above water table
-            if tile['elevation'] > WATER_TABLE:
-                tile['water'] = max(0, min(1.0, tile['water'] + 0.001 * (env_trends['moisture'] - 0.5)))
-            # Age volcanic substrate (fades visually over ~200 gens)
-            if tile.get('volcanic_age', 0) > 0:
-                tile['volcanic_age'] += 1
+            tile = grid_row[c]
+            tile['food'] = min(1.0, tile['food'] + _food_regrow)
+            tile['temp'] = _temp_base + random.uniform(-0.02, 0.02)
+            if tile['elevation'] > _wt:
+                tile['water'] = max(0, min(1.0, tile['water'] + _moisture_delta))
+            va = tile.get('volcanic_age', 0)
+            if va > 0:
+                tile['volcanic_age'] = va + 1
 
     # 2. Environmental trends
     _update_env_trends()
@@ -6531,12 +7021,17 @@ def step():
     _update_terrain()
 
     # 6. Per-tile, per-species dynamics
+    _t0 = _time.monotonic()
+    _build_suit_cache()
     for r in range(GRID_SIZE):
         for c in range(GRID_SIZE):
             _update_tile(r, c, season)
+    _t1 = _time.monotonic()
 
     # 7. Migration (with river gene flow barriers)
+    _build_river_barrier_cache()
     _migrate()
+    _t2 = _time.monotonic()
 
     # 8. FST / lineage divergence (every 10 gens)
     if generation % 10 == 0:
@@ -6561,6 +7056,16 @@ def step():
     # 13. Record pop snapshot & check extinctions (every gen)
     _record_pop_check()
     _check_extinction()
+
+    # Perf logging (every 50 gens)
+    _t_end = _time.monotonic()
+    _perf_count += 1
+    for k_name, v in [('update_tile', (_t1 - _t0)*1000), ('migrate', (_t2 - _t1)*1000), ('total', (_t_end - _t_step_start)*1000)]:
+        _perf_accum[k_name] = _perf_accum.get(k_name, 0) + v
+    if _perf_count % 200 == 0:
+        avg = {k_name: v / 200 for k_name, v in _perf_accum.items()}
+        print(f"[perf gen {generation}] update_tile: {avg.get('update_tile',0):.1f}ms  migrate: {avg.get('migrate',0):.1f}ms  total: {avg.get('total',0):.1f}ms")
+        _perf_accum.clear()
 
 def _check_win_loss_conditions():
     """Check for win and loss conditions."""
@@ -7062,19 +7567,31 @@ def _update_tile(r, c, season):
     """Update populations and traits for one tile."""
     tile = grid[r][c]
     elev = tile['elevation']
+    suits = _suit_cache[r][c]  # pre-computed (vel, lev, craw, crab, worm) suitabilities
+    pops = tile['pops']
+    traits = tile['traits']
+    _random = random.random
+    _gauss = random.gauss
+    _uniform = random.uniform
+    _sqrt = math.sqrt
+
+    # Only check recolonization every 3 gens per tile (stagger by position)
+    _check_recol = ((generation + r * 7 + c) % 3 == 0)
 
     for s in range(NUM_SPECIES):
-        pop = tile['pops'][s]
+        pop = pops[s]
         if pop > 0:
             last_seen_tile[s] = (r, c)
         if pop <= 0:
+            if not _check_recol:
+                continue
             # Recolonization from nearby populations or seed bank
-            suit = habitat_suitability(elev, s)
-            if suit > 0.05 and random.random() < RECOLONIZATION_BASE * suit:
+            suit = suits[s]
+            if suit > 0.05 and _random() < RECOLONIZATION_BASE * 3.0 * suit:  # 3x rate to compensate for 1/3 frequency
                 # Check if species exists on any adjacent tile (local dispersal)
                 has_neighbor = False
                 neighbor_tile = None
-                for dr, dc in [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)]:
+                for dr, dc in ((-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)):
                     nr, nc = r + dr, c + dc
                     if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
                         if grid[nr][nc]['pops'][s] > 3:
@@ -7082,33 +7599,33 @@ def _update_tile(r, c, season):
                             neighbor_tile = grid[nr][nc]
                             break
                 if has_neighbor:
-                    tile['pops'][s] = max(2, int(MIN_K * suit * 0.3))
+                    pops[s] = max(2, int(MIN_K * suit * 0.3))
                     if s == VELOTHRIX and neighbor_tile:
                         # Colonizers bring alleles from source
                         for locus in LOCI:
-                            tile['alleles'][locus] = max(0.001, min(0.999, neighbor_tile['alleles'][locus] + random.uniform(-0.02, 0.02)))
-                        tile['traits'][s] = tile['alleles']['CREST']
+                            tile['alleles'][locus] = max(0.001, min(0.999, neighbor_tile['alleles'][locus] + _uniform(-0.02, 0.02)))
+                        traits[s] = tile['alleles']['CREST']
                     else:
-                        tile['traits'][s] = 0.5 + random.uniform(-0.1, 0.1)
-                elif random.random() < 0.005 * suit:
+                        traits[s] = 0.5 + _uniform(-0.1, 0.1)
+                elif _random() < 0.005 * suit:
                     # Rare long-distance dispersal / seed bank
-                    tile['pops'][s] = 1
+                    pops[s] = 1
                     if s == VELOTHRIX:
                         for locus in LOCI:
-                            tile['alleles'][locus] = max(0.001, min(0.999, 0.5 + random.uniform(-0.1, 0.1)))
-                        tile['traits'][s] = tile['alleles']['CREST']
+                            tile['alleles'][locus] = max(0.001, min(0.999, 0.5 + _uniform(-0.1, 0.1)))
+                        traits[s] = tile['alleles']['CREST']
                     else:
-                        tile['traits'][s] = 0.5 + random.uniform(-0.1, 0.1)
+                        traits[s] = 0.5 + _uniform(-0.1, 0.1)
             continue
 
-        trait = tile['traits'][s]
+        trait = traits[s]
         trait_v = tile['trait_var'][s]
 
         # Effective carrying capacity depends on habitat and food
-        suit = habitat_suitability(elev, s)
+        suit = suits[s]
         k = BASE_K[s] * suit * (0.7 + 0.3 * tile['food']) * (0.85 + 0.15 * season)
         # Tidal surge: boost K for water species on affected tiles
-        if (r, c) in _surge_tiles and s in (LEVIATHAN, WORM):
+        if _surge_tiles and (s == LEVIATHAN or s == WORM) and (r, c) in _surge_tiles:
             k *= 1.3
         # Algal bloom: boost K for Worm and Velothrix (food abundance)
         if _bloom_active and s in (WORM, VELOTHRIX):
@@ -7122,14 +7639,14 @@ def _update_tile(r, c, season):
             # Use CREST allele for predation visibility
             p_crest = tile['alleles']['CREST']
             # Predation by Leviathans (brighter crest = more visible)
-            lev_pop = tile['pops'][LEVIATHAN]
+            lev_pop = pops[LEVIATHAN]
             pred_rate = PREDATION_LEVIATHAN_VELOTHRIX
             # Algal bloom reduces Leviathan hunting efficiency
             if _bloom_active:
                 pred_rate *= 0.5
             predation_loss = lev_pop * pred_rate * (0.5 + p_crest * 0.5)
             # Competition with crawlers
-            craw_pop = tile['pops'][CRAWLER]
+            craw_pop = pops[CRAWLER]
             comp_loss = craw_pop * COMPETITION_VELOTHRIX_CRAWLER
             k = max(1, k - comp_loss * 10)
             # Euler-Lotka life history tradeoff:
@@ -7150,8 +7667,8 @@ def _update_tile(r, c, season):
             sel_pressure = 0.0
         elif s == LEVIATHAN:
             # Energy from prey — hunting efficiency boosted by acuity (coevolves with Velothrix CREST)
-            vel_pop = tile['pops'][VELOTHRIX]
-            worm_pop = tile['pops'][WORM]
+            vel_pop = pops[VELOTHRIX]
+            worm_pop = pops[WORM]
             prey_available = vel_pop + worm_pop * 0.5
             # Acuity affects hunting success — higher acuity = better at finding bright-crested prey
             hunt_bonus = trait * 0.005 * prey_available * (0.5 + 0.5 * leviathan_acuity) / max(1, BASE_K[VELOTHRIX])
@@ -7172,10 +7689,10 @@ def _update_tile(r, c, season):
             # Burrowing depth: deeper = safer but less food
             safety = trait * 0.8
             food_access = 1.0 - trait * 0.3
-            lev_pop = tile['pops'][LEVIATHAN]
+            lev_pop = pops[LEVIATHAN]
             predation_loss = lev_pop * 0.001 * (1 - safety)
             growth = GROWTH_RATES[s] * food_access
-            vel_pop = tile['pops'][VELOTHRIX]
+            vel_pop = pops[VELOTHRIX]
             comp_loss = vel_pop * COMPETITION_VELOTHRIX_CRAWLER
             k = max(1, k * food_access - comp_loss * 5)
             sel_pressure = 0
@@ -7189,17 +7706,17 @@ def _update_tile(r, c, season):
             mobility = 1.0 - trait * 0.3
             growth = GROWTH_RATES[s] * mobility
             # Space competition
-            total_pop = sum(tile['pops'])
+            total_pop = pops[0] + pops[1] + pops[2] + pops[3] + pops[4]
             space_pressure = total_pop * COMPETITION_CRAB_SPACE
             k = max(1, k - space_pressure * 5)
             predation_loss = 0
             sel_pressure = SELECTION_STRENGTH * (0.5 - trait) * 0.1  # stabilizing
-            if total_pop > sum(BASE_K) * 0.5:
+            if total_pop > SUM_BASE_K * 0.5:
                 sel_pressure += SELECTION_STRENGTH * 0.15  # thicker shells when crowded
         elif s == WORM:
             # Glow: brighter = more mates but more predators
-            vel_pop = tile['pops'][VELOTHRIX]
-            lev_pop = tile['pops'][LEVIATHAN]
+            vel_pop = pops[VELOTHRIX]
+            lev_pop = pops[LEVIATHAN]
             # Algal bloom reduces predation on worms (predators can't see through algae)
             bloom_pred_mod = 0.5 if _bloom_active else 1.0
             predation_loss = (vel_pop * PREDATION_VELOTHRIX_WORM + lev_pop * PREDATION_LEVIATHAN_WORM) * (0.3 + trait * 0.7) * bloom_pred_mod
@@ -7229,21 +7746,23 @@ def _update_tile(r, c, season):
         # Probabilistic rounding: preserves fractional growth
         floor_pop = int(raw_pop)
         frac = raw_pop - floor_pop
-        new_pop = floor_pop + (1 if random.random() < frac else 0)
+        new_pop = floor_pop + (1 if _random() < frac else 0)
         new_pop = max(0, new_pop)
 
         # Stochastic extinction only for truly tiny isolated populations
-        if new_pop == 1 and random.random() < 0.02:
+        if new_pop == 1 and _random() < 0.02:
             new_pop = 0
 
-        tile['pops'][s] = min(new_pop, int(k * 1.5))  # hard cap
+        pops[s] = min(new_pop, int(k * 1.5))  # hard cap
 
         # ── TRAIT / ALLELE EVOLUTION ──
-        if tile['pops'][s] > 0:
-            if s == VELOTHRIX:
-                # ── VELOTHRIX ALLELE-FREQUENCY UPDATE ──
+        # Allele updates every 2 gens (staggered by tile position) — drift/selection
+        # deltas are tiny per gen, so 2x step with 2x magnitude is equivalent
+        if pops[s] > 0:
+            if s == VELOTHRIX and (generation + r + c) % 2 == 0:
+                # ── VELOTHRIX ALLELE-FREQUENCY UPDATE (every 2 gens, 2x magnitude) ──
                 alleles = tile['alleles']
-                vel_pop = tile['pops'][s]
+                vel_pop = pops[s]
 
                 # Compute mean generation time T from LONG allele
                 p_long_val = alleles['LONG']
@@ -7253,15 +7772,15 @@ def _update_tile(r, c, season):
                 # Effective population size
                 N_e = max(2, vel_pop * T)
 
-                for locus in LOCI:
+                for _li in range(NUM_LOCI):
+                    locus = LOCI[_li]
                     p = alleles[locus]
                     q = 1.0 - p
                     if p <= 0.001 or p >= 0.999:
                         continue
 
-                    config = LOCUS_CONFIG[locus]
-                    s_coeff = config['s']
-                    h_dom = config['h']
+                    s_coeff = _LOCUS_S[_li]
+                    h_dom = _LOCUS_H[_li]
 
                     # === SELECTION ===
                     delta_p = 0.0
@@ -7271,7 +7790,7 @@ def _update_tile(r, c, season):
                         # Bright crest (high p) → sexual selection bonus but predation penalty
                         # Leviathan acuity tracks mean crest, so when population is bright,
                         # predators learn → stronger penalty → balancing selection
-                        lev_pop_loc = tile['pops'][LEVIATHAN]
+                        lev_pop_loc = pops[LEVIATHAN]
                         lev_density = lev_pop_loc / max(1, BASE_K[LEVIATHAN])
                         sex_bonus = 0.03  # sexual selection for bright crest
                         # Predation penalty scales with BOTH local Leviathan density AND global acuity
@@ -7298,8 +7817,8 @@ def _update_tile(r, c, season):
                     elif locus == 'BODY':
                         # Gaussian stabilizing selection: fitness = exp(-(trait - θ)² / 2σ²)
                         # θ shifts with food scarcity AND temperature trend
-                        theta = config['theta']
-                        omega2 = config['omega2']
+                        theta = _BODY_THETA
+                        omega2 = _BODY_OMEGA2
                         # Low food pushes θ up (larger body stores more)
                         food_shift = (1.0 - tile['food']) * 0.15
                         # High temperature favors smaller bodies (thermoregulation)
@@ -7321,7 +7840,7 @@ def _update_tile(r, c, season):
                     elif locus == 'DISP':
                         # Weak purifying selection against dispersal (founding mortality cost)
                         # But density-dependent: when pop is near K, dispersal is favored
-                        density = vel_pop / max(1, BASE_K[VELOTHRIX] * habitat_suitability(elev, VELOTHRIX))
+                        density = vel_pop / max(1, BASE_K[VELOTHRIX] * suits[VELOTHRIX])
                         if density > 0.8:
                             # Overcrowded: dispersal favored
                             delta_p = 0.003 * p * q * (density - 0.8)
@@ -7338,70 +7857,79 @@ def _update_tile(r, c, season):
                         long_optimum = 0.3 + 0.5 * stability  # 0.3-0.8 range
                         delta_p = -s_coeff * p * q * (p - long_optimum) / 0.12
 
-                    # === DRIFT ===
-                    drift_var = p * q / (2 * N_e)
-                    drift_val = random.gauss(0, math.sqrt(max(0, drift_var)))
+                    # === DRIFT (2x variance for 2-gen step) ===
+                    drift_var = p * q / N_e  # 2x: was p*q/(2*N_e), now covers 2 gens
+                    drift_val = _gauss(0, _sqrt(max(0, drift_var)))
 
-                    # === MUTATION ===
-                    mu = 0.0001
-                    nu = 0.0001
-                    mutation_delta = mu * q - nu * p
+                    # === MUTATION (2x for 2-gen step) ===
+                    mutation_delta = 0.0002 * q - 0.0002 * p  # 2x: was 0.0001
 
-                    # === APPLY ===
-                    new_p = p + delta_p + drift_val + mutation_delta
+                    # === APPLY (selection delta already per-gen, 2x for 2-gen step) ===
+                    new_p = p + 2.0 * delta_p + drift_val + mutation_delta
                     alleles[locus] = max(0.001, min(0.999, new_p))
 
                 # Update backward-compat trait value from CREST allele
-                tile['traits'][VELOTHRIX] = alleles['CREST']
-            else:
-                # ── SPECIES 1-4: ORIGINAL TRAIT EVOLUTION ──
-                new_trait = trait + sel_pressure
+                traits[VELOTHRIX] = alleles['CREST']
+            elif (generation + r + c) % 2 == 0:
+                # ── SPECIES 1-4: ORIGINAL TRAIT EVOLUTION (every 2 gens, 2x magnitude) ──
+                new_trait = trait + 2.0 * sel_pressure
 
                 # Soft boundaries
-                boundary_pressure = -0.005 * (2 * trait - 1) ** 3
+                boundary_pressure = -0.01 * (2 * trait - 1) ** 3  # 2x
                 new_trait += boundary_pressure
 
-                # Drift (inversely proportional to sqrt(pop))
-                if tile['pops'][s] > 0:
-                    drift_val = random.gauss(0, DRIFT_STRENGTH / math.sqrt(max(1, tile['pops'][s])))
+                # Drift (2x variance for 2-gen step)
+                if pops[s] > 0:
+                    drift_val = _gauss(0, DRIFT_STRENGTH * 1.414 / _sqrt(max(1, pops[s])))  # sqrt(2)x
                     new_trait += drift_val
 
-                # Mutation
-                if random.random() < MUTATION_RATE * tile['pops'][s]:
-                    new_trait += random.gauss(0, MUTATION_STEP)
+                # Mutation (2x probability for 2-gen window)
+                if _random() < MUTATION_RATE * pops[s] * 2.0:
+                    new_trait += _gauss(0, MUTATION_STEP)
 
                 # Clamp to 0-1
-                tile['traits'][s] = max(0.0, min(1.0, new_trait))
+                traits[s] = max(0.0, min(1.0, new_trait))
 
-                # Update variance (simplified)
-                tile['trait_var'][s] = max(0.001, tile['trait_var'][s] * 0.99 + MUTATION_RATE * 0.01)
+                # Update variance (2 steps of decay: 0.99^2 ≈ 0.98)
+                tile['trait_var'][s] = max(0.001, tile['trait_var'][s] * 0.98 + MUTATION_RATE * 0.02)
 
 def _river_between(r1, c1, r2, c2):
     """Check if there's a river tile between two adjacent tiles."""
-    # A river is "between" if either tile has_river, or if any river's path
-    # contains one of the tiles and the other is on the opposite side
     return grid[r1][c1].get('has_river', False) or grid[r2][c2].get('has_river', False)
 
-def _river_barrier_factor(r1, c1, r2, c2):
-    """Compute gene flow reduction factor due to river barrier.
-    Returns 0-1 where 1 = no barrier, 0 = complete barrier.
-    barrier_factor = 1 / (1 + k * width * age)"""
-    # Find the most significant river affecting this crossing
-    max_barrier = 0.0
+# Pre-computed river barrier factor per tile: _river_barrier_cache[(r,c)] = barrier_factor
+_river_barrier_cache = {}
+
+def _build_river_barrier_cache():
+    """Pre-compute max river barrier strength per tile. Call once per step before migration."""
+    global _river_barrier_cache
+    _river_barrier_cache = {}
     for river in rivers:
         if not river['active']:
             continue
-        if (r1, c1) in river['path_set'] or (r2, c2) in river['path_set']:
-            barrier_strength = RIVER_BARRIER_K * river['width'] * river['age']
-            max_barrier = max(max_barrier, barrier_strength)
+        strength = RIVER_BARRIER_K * river['width'] * river['age']
+        if strength > 0:
+            for (pr, pc) in river['path_set']:
+                existing = _river_barrier_cache.get((pr, pc), 0.0)
+                if strength > existing:
+                    _river_barrier_cache[(pr, pc)] = strength
+
+def _river_barrier_factor(r1, c1, r2, c2):
+    """Compute gene flow reduction factor due to river barrier.
+    Returns 0-1 where 1 = no barrier, 0 = complete barrier."""
+    b1 = _river_barrier_cache.get((r1, c1), 0.0)
+    b2 = _river_barrier_cache.get((r2, c2), 0.0)
+    max_barrier = max(b1, b2)
     if max_barrier > 0:
         return 1.0 / (1.0 + max_barrier)
     return 1.0
 
 def _migrate():
     """Species migrate between adjacent tiles."""
-    # Build migration deltas first, apply after
-    deltas = [[{s: 0 for s in range(NUM_SPECIES)} for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+    # Build migration deltas first, apply after (flat list per species for speed)
+    gs = GRID_SIZE
+    ns = NUM_SPECIES
+    deltas = [[[0]*ns for _ in range(gs)] for _ in range(gs)]
 
     # Track Velothrix allele migration events: list of (src_r, src_c, dst_r, dst_c, share)
     vel_allele_transfers = []
@@ -7423,7 +7951,7 @@ def _migrate():
                 if pop < 3:
                     continue
 
-                k = BASE_K[s] * habitat_suitability(tile['elevation'], s)
+                k = BASE_K[s] * _suit_cache[r][c][s]
                 if k <= 0:
                     continue
 
@@ -7439,7 +7967,7 @@ def _migrate():
                 # Distribute among neighbors based on suitability
                 suits = []
                 for nr, nc in neighbors:
-                    ns = habitat_suitability(grid[nr][nc]['elevation'], s)
+                    ns = _suit_cache[nr][nc][s]
                     npop = grid[nr][nc]['pops'][s]
                     nk = BASE_K[s] * ns
                     if nk > 0 and npop < nk:
@@ -8654,6 +9182,80 @@ def get_global_pop(species_idx):
             total += grid[r][c]['pops'][species_idx]
     return total
 
+def get_frame_state():
+    """Batched per-frame data: all global pops, traits, alleles, FST, events, extinctions in one call.
+    Eliminates ~35 individual pyodide calls per frame."""
+    # Global pops + traits + alleles in single grid pass
+    pops_total = [0] * NUM_SPECIES
+    trait_weighted = [0.0] * NUM_SPECIES
+    pop_weighted = [0] * NUM_SPECIES
+    allele_weighted = {locus: 0.0 for locus in LOCI}
+    vel_total_pop = 0
+    gs = GRID_SIZE
+    for r in range(gs):
+        row = grid[r]
+        for c in range(gs):
+            tile = row[c]
+            t_pops = tile['pops']
+            for s in range(NUM_SPECIES):
+                p = t_pops[s]
+                pops_total[s] += p
+                if p > 0:
+                    if s == VELOTHRIX:
+                        trait_weighted[s] += tile['alleles']['CREST'] * p
+                        for locus in LOCI:
+                            allele_weighted[locus] += tile['alleles'][locus] * p
+                        vel_total_pop += p
+                    else:
+                        trait_weighted[s] += tile['traits'][s] * p
+                    pop_weighted[s] += p
+    traits = []
+    for s in range(NUM_SPECIES):
+        traits.append(trait_weighted[s] / max(1, pop_weighted[s]) if pop_weighted[s] > 0 else 0.5)
+
+    # Allele frequencies
+    alleles = {}
+    for locus in LOCI:
+        alleles[locus] = allele_weighted[locus] / max(1, vel_total_pop) if vel_total_pop > 0 else 0.5
+    # Mean heterozygosity
+    mean_H = 0.0
+    for locus in LOCI:
+        p_val = alleles[locus]
+        mean_H += 2 * p_val * (1 - p_val)
+    alleles['mean_H'] = mean_H / NUM_LOCI
+    alleles['leviathan_acuity'] = leviathan_acuity
+    alleles['beetle_pressure'] = beetle_pressure
+
+    # Active events
+    active_evs = []
+    for ev in active_events:
+        info = {'type': ev['type'], 'remaining': max(0, ev['duration'] - (generation - ev['start_gen']))}
+        if ev['type'] == 'reef_formation':
+            info['progress'] = min(1.0, (generation - ev['start_gen']) / max(1, ev['duration']))
+        active_evs.append(info)
+
+    # Pending events (with clear)
+    pending = list(events_buffer)
+    events_buffer.clear()
+
+    # Speciation info
+    spec_info = {}
+    for sid, sdata in speciation_events.items():
+        spec_info[sid] = {'name': sdata.get('name',''), 'variant_name': sdata.get('variant_name',''), 'split_trait': sdata.get('split_trait', 0.5)}
+
+    return json.dumps({
+        'gen': generation,
+        'season': get_season(),
+        'pops': pops_total,
+        'traits': traits,
+        'alleles': alleles,
+        'fst_mean': fst_mean,
+        'active_events': active_evs,
+        'events': pending,
+        'extinctions': extinctions,
+        'speciation_info': spec_info,
+    })
+
 def get_global_trait(species_idx):
     if species_idx == VELOTHRIX:
         # Return population-weighted mean of CREST allele
@@ -8697,25 +9299,31 @@ def get_map_data(species_idx):
     has_speciation = species_idx in speciation_events
     split_trait = speciation_events[species_idx]['split_trait'] if has_speciation else 0
 
-    for r in range(GRID_SIZE):
-        pop_row = []
-        elev_row = []
-        biome_row = []
-        var_row = []
-        volc_row = []
-        ttype_row = []
-        for c in range(GRID_SIZE):
-            p = grid[r][c]['pops'][species_idx]
-            e = grid[r][c]['elevation']
-            pop_row.append(p)
-            elev_row.append(e)
-            biome_row.append(get_biome(e))
-            volc_row.append(grid[r][c].get('volcanic_age', 0))
-            ttype_row.append(grid[r][c].get('tile_type', 'land'))
+    gs = GRID_SIZE
+    _get_biome = get_biome
+    for r in range(gs):
+        pop_row = [0] * gs
+        elev_row = [0] * gs
+        biome_row = [''] * gs
+        var_row = [0] * gs
+        volc_row = [0] * gs
+        ttype_row = ['land'] * gs
+        grid_row = grid[r]
+        for c in range(gs):
+            tile = grid_row[c]
+            p = tile['pops'][species_idx]
+            e = tile['elevation']
+            pop_row[c] = p
+            elev_row[c] = e
+            biome_row[c] = _get_biome(e)
+            va = tile.get('volcanic_age', 0)
+            if va:
+                volc_row[c] = va
+            tt = tile.get('tile_type')
+            if tt:
+                ttype_row[c] = tt
             if has_speciation and p > 0:
-                var_row.append(1 if grid[r][c]['traits'][species_idx] > split_trait else 0)
-            else:
-                var_row.append(0)
+                var_row[c] = 1 if tile['traits'][species_idx] > split_trait else 0
             if p > max_pop:
                 max_pop = p
         pops.append(pop_row)
